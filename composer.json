@@ -1,0 +1,49 @@
+{
+    "name": "devzspace/kanban-workspaces",
+    "type": "typo3-cms-extension",
+    "version": "1.0.0",
+    "description": "Kanban Board Extension for TYPO3",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Devzspace",
+            "email": "info@devzspace.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2.0",
+        "typo3/cms-core": "^13.4",
+        "typo3/cms-extbase": "^13.4",
+        "typo3/cms-fluid": "^13.4",
+        "typo3/cms-backend": "^13.4"
+    },
+    "require-dev": {
+        "typo3/testing-framework": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devzspace\\KanbanWorkspaces\\": "Classes/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Devzspace\\KanbanWorkspaces\\Tests\\": "Tests/"
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "kanban_workspaces",
+            "web-dir": ".Build/public"
+        }
+    },
+    "config": {
+        "vendor-dir": ".Build/vendor",
+        "bin-dir": ".Build/bin"
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
+        ]
+    },
+    "minimum-stability": "stable"
+}

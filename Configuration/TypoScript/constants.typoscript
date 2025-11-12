@@ -1,0 +1,19 @@
+# TYPO3 v13 TypoScript constants for Kanban Workspaces
+
+module.tx_kanbanworkspaces {
+    view {
+        # cat=module.tx_kanbanworkspaces/file; type=string; label=Path to template root (BE)
+        templateRootPath = EXT:kanban_workspaces/Resources/Private/Templates/
+        
+        # cat=module.tx_kanbanworkspaces/file; type=string; label=Path to template partials (BE)
+        partialRootPath = EXT:kanban_workspaces/Resources/Private/Partials/
+        
+        # cat=module.tx_kanbanworkspaces/file; type=string; label=Path to template layouts (BE)
+        layoutRootPath = EXT:kanban_workspaces/Resources/Private/Layouts/
+    }
+    
+    persistence {
+        # cat=module.tx_kanbanworkspaces/store; type=string; label=Default storage PID
+        storagePid =
+    }
+}

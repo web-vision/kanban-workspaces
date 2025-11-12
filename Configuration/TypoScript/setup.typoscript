@@ -1,0 +1,44 @@
+# TYPO3 v13 TypoScript configuration for Kanban Workspaces
+
+module.tx_kanbanworkspaces {
+    view {
+        templateRootPaths {
+            0 = EXT:kanban_workspaces/Resources/Private/Templates/
+            1 = {$module.tx_kanbanworkspaces.view.templateRootPath}
+        }
+        partialRootPaths {
+            0 = EXT:kanban_workspaces/Resources/Private/Partials/
+            1 = {$module.tx_kanbanworkspaces.view.partialRootPath}
+        }
+        layoutRootPaths {
+            0 = EXT:kanban_workspaces/Resources/Private/Layouts/
+            1 = {$module.tx_kanbanworkspaces.view.layoutRootPath}
+        }
+    }
+    
+    persistence {
+        storagePid = {$module.tx_kanbanworkspaces.persistence.storagePid}
+    }
+    
+    settings {
+        kanban {
+            columns {
+                todo {
+                    title = To Do
+                    cssClass = kanban-todo
+                }
+                inprogress {
+                    title = In Progress
+                    cssClass = kanban-inprogress
+                }
+                done {
+                    title = Done
+                    cssClass = kanban-done
+                }
+            }
+        }
+    }
+}
+
+# Backend module configuration
+module.tx_kanbanworkspaces_backend < module.tx_kanbanworkspaces

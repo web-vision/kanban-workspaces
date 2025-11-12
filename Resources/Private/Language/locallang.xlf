@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf" date="2025-10-18T12:00:00Z" product-name="kanban_workspaces">
+		<header/>
+		<body>
+			<trans-unit id="page_tree">
+				<source>Page Tree</source>
+			</trans-unit>
+			<trans-unit id="kanban_board">
+				<source>Kanban Board</source>
+			</trans-unit>
+			<trans-unit id="status.todo">
+				<source>To Do</source>
+			</trans-unit>
+			<trans-unit id="status.inprogress">
+				<source>In Progress</source>
+			</trans-unit>
+			<trans-unit id="status.done">
+				<source>Done</source>
+			</trans-unit>
+			<trans-unit id="add_card">
+				<source>Add Card</source>
+			</trans-unit>
+			<trans-unit id="card_title">
+				<source>Card Title</source>
+			</trans-unit>
+			<trans-unit id="card_description">
+				<source>Description</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

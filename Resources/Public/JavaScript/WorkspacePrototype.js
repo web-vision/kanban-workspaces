@@ -81,21 +81,6 @@ export class WorkspaceBoard {
       selectedCards: new Set(),
       isMultiSelectMode: false,
     }
-    // API payload for fetching workspace data
-    this.apiPayload = {
-      action: "RemoteServer",
-      method: "getWorkspaceInfos",
-      data: [{
-        id: 1,
-        depth: 1,
-        language: 'all',
-        limit: 30,
-        query: '',
-        start: 0,
-        filterTxt: '',
-        stage: '-99', // Default to all stages
-      }]
-    }
 
     // Action history for undo/redo
     this.actionHistory = []
@@ -525,22 +510,11 @@ export class WorkspaceBoard {
       return
     }
 
-    if (this.data.activeFilters && Object.keys(this.data.activeFilters).length > 0) {
-      if (this.data.activeFilters.depth) {
-        this.apiPayload.data[0].depth = this.data.activeFilters.depth.join(",")
-      }
-      if (this.data.activeFilters.language) {
-        this.apiPayload.data[0].language = this.data.activeFilters.language.join(",")
-      }
-      if (this.data.activeFilters.stage) {
-        this.apiPayload.data[0].stage = this.data.activeFilters.stage.join(",")
-      }
-    }
-
     this.showLoading()
     this.fetchData()
       .then((data) => {
         this.data.cards = data.cards || []
+        console.log('Loaded cards from API:', this.data.cards);
         this.emit("data:loaded", this.data)
         this.renderBoard()
       })
@@ -558,7 +532,19 @@ export class WorkspaceBoard {
   // Fetch data from API
   fetchData() {
     const url = `${this.options.getDataApiUrl}`;
-    
+    const payload = {
+      action: "RemoteServer",
+      method: "getWorkspaceInfos",
+      data: [{
+        id: 1,
+        depth: 1,
+        language: 'all',
+        limit: 30,
+        query: '',
+        start: 0,
+        filterTxt: '',
+      }]
+    };
 
     return fetch(url, {
       method: "POST",
@@ -566,7 +552,7 @@ export class WorkspaceBoard {
         "Content-Type": "application/json",
         "X-Requested-With": "XMLHttpRequest",
       },
-      body: JSON.stringify(this.apiPayload)
+      body: JSON.stringify(payload)
     }).then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -575,6 +561,8 @@ export class WorkspaceBoard {
     }).then((apiResponse) => {
     // Convert the TYPO3 workspace data to kanban cards
     const cards = this.convertWorkspaceDataToCards(apiResponse);
+    
+    console.log('Converted workspace data to cards:', cards);
     
     return {
       cards: cards,
@@ -2063,6 +2051,69 @@ convertWorkspaceDate(dateString) {
   // Get filtered cards (global filters only)
   getFilteredCards() {
     let cards = [...this.data.cards]
+
+    // Apply search filter
+    if (this.data.searchQuery && this.data.searchQuery.trim()) {
+      const query = this.data.searchQuery.toLowerCase().trim()
+      cards = cards.filter(
+        (card) =>
+          card.title.toLowerCase().includes(query) ||
+          card.editor.toLowerCase().includes(query) ||
+          card.pageName.toLowerCase().includes(query) ||
+          card.uid.toString().includes(query) ||
+          (card.tags && card.tags.some((tag) => tag.toLowerCase().includes(query))),
+      )
+    }
+
+    // Apply active filters
+    if (this.data.activeFilters && Object.keys(this.data.activeFilters).length > 0) {
+      Object.entries(this.data.activeFilters).forEach(([filterType, filterValues]) => {
+        if (filterValues && filterValues.length > 0) {
+          cards = cards.filter((card) => {
+            let cardValue
+
+            switch (filterType) {
+              case "contentType":
+                cardValue = card.type
+                break
+              case "page":
+                const pageMap = {
+                  Home: "home",
+                  Products: "products",
+                  Contact: "contact",
+                  News: "news",
+                  About: "about",
+                  Global: "global",
+                }
+                cardValue = pageMap[card.pageName] || card.pageName.toLowerCase()
+                break
+              case "editor":
+                const editorMap = {
+                  "John Doe": "john",
+                  "Jane Smith": "jane",
+                  "Mike Johnson": "mike",
+                  "Sarah Wilson": "sarah",
+                  "Tom Brown": "tom",
+                }
+                cardValue = editorMap[card.editor] || card.editorId
+                break
+              case "language":
+                cardValue = card.language
+                break
+              case "assignedUsers":
+                // Special handling for assignedUsers filter if needed in future
+                // For now, editor filter also covers single user assignment from header
+                return filterValues.some((val) => (card.assignedUsers || []).includes(val))
+              default:
+                cardValue = card[filterType]
+            }
+
+            return filterValues.includes(cardValue)
+          })
+        }
+      })
+    }
+
     return cards
   }
 
@@ -2487,8 +2538,7 @@ convertWorkspaceDate(dateString) {
     }
 
     this.updateActiveFiltersCount()
-    this.loadData()
-    // this.renderBoard()
+    this.renderBoard()
   }
 
   handleFilterClear() {
@@ -2505,8 +2555,6 @@ convertWorkspaceDate(dateString) {
 
   handleSearchChange(query) {
     // Additional search handling if needed
-    this.apiPayload.data[0].filterTxt = query;
-    this.loadData()
   }
 
   handleSearchClear() {

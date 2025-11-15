@@ -1,4 +1,4 @@
 # Kanban Workspaces
 ###########################
 # cat=config/enable/100; type=boolean; label=Disable Default Stages
-disableDefaultStage = true
+disableDefaultStage = 1

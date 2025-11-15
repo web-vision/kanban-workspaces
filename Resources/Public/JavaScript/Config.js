@@ -13,54 +13,6 @@ window.WorkspaceConfig = {
     stages: "/api/stages", // New endpoint for stage CRUD
   },
 
-
-  // Mock filter options
-  filters: {
-    contentType: {
-      label: "Content Type",
-      options: [
-        { id: "content", label: "Content Page", icon: "fas fa-file-alt" },
-        { id: "news", label: "News Article", icon: "fas fa-newspaper" },
-        { id: "product", label: "Product Page", icon: "fas fa-box" },
-        { id: "form", label: "Form", icon: "fas fa-wpforms" },
-      ],
-    },
-    page: {
-      label: "Page",
-      options: [
-        { id: "home", label: "Home Page", icon: "fas fa-home" },
-        { id: "products", label: "Products", icon: "fas fa-th-large" },
-        { id: "contact", label: "Contact Us", icon: "fas fa-envelope" },
-        { id: "about", label: "About Us", icon: "fas fa-info-circle" },
-      ],
-    },
-    editor: {
-      label: "Editor",
-      options: [
-        { id: "john", label: "John Doe", avatar: "https://avatar.iran.liara.run/public/31" },
-        { id: "jane", label: "Jane Smith", avatar: "https://avatar.iran.liara.run/public/30" },
-        { id: "mike", label: "Mike Johnson", avatar: "https://avatar.iran.liara.run/public/38" },
-        { id: "sarah", label: "Sarah Wilson", avatar: "https://avatar.iran.liara.run/public/1" },
-      ],
-    },
-    language: {
-      label: "Language",
-      options: [
-        { id: "en", label: "English", flag: "🇺🇸" },
-        { id: "de", label: "German", flag: "🇩🇪" },
-        { id: "fr", label: "French", flag: "🇫🇷" },
-      ],
-    },
-    priority: {
-      label: "Priority",
-      options: [
-        { id: "high", label: "High", icon: "fas fa-exclamation-triangle" },
-        { id: "medium", label: "Medium", icon: "fas fa-minus-circle" },
-        { id: "low", label: "Low", icon: "fas fa-arrow-down" },
-      ],
-    },
-  },
-
   // Mock user data
   users: [
     { id: "john", name: "John Doe", role: "Editor", avatar: "https://avatar.iran.liara.run/public/31" },

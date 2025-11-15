@@ -19,6 +19,7 @@ use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Devzspace\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
+use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -35,7 +36,8 @@ class KanbanWorkspacesController extends ActionController
         protected readonly PageRenderer $pageRenderer,
         protected readonly WorkspaceStageRepository $workspaceStageRepository,
         protected readonly WorkspaceRepository $workspaceRepository,
-        protected readonly EmConfiguration $emSettings
+        protected readonly EmConfiguration $emSettings,
+        protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
 
     ) {
     }
@@ -87,10 +89,37 @@ class KanbanWorkspacesController extends ActionController
             'moduleTitle' => 'Kanban Workspaces',
             'workspaceIsAccessible' => !$workspaceIsAccessible,
         ]);
+
+        $depth = [];
+        for ($i = 0; $i <= 4; $i++) {
+            $depth[] = [
+                'id' => $i,
+                'label' => $i === 0 ? 'This Page' : "$i Level" . ($i > 1 ? 's' : '')
+            ];
+        }
+        $depth[] = [
+            'id' => 999,
+            'label' => 'Infinite'
+        ];
+        
         // Add CSS and JS
         $this->addAssets();
         $this->configureKanban([
             'stages' => $stageConfig,
+            'filters' => [
+                'depth' => [
+                    'label' => 'Depth',
+                    'options' => $depth,
+                ],
+                'language' => [
+                    'label' => 'Language',
+                    'options' => $this->getSystemLanguages($pageUid)
+                ],
+                'stage' => [
+                    'label' => 'Stage',
+                    'options' => $stageConfig
+                ],
+            ]
         ]);
         return $this->moduleTemplate->renderResponse('KanbanWorkspaces/Index');
     }
@@ -141,5 +170,29 @@ class KanbanWorkspacesController extends ActionController
     protected function getBackendUser(): BackendUserAuthentication
     {
         return $GLOBALS['BE_USER'];
+    }
+
+    /**
+     * Gets all available system languages.
+     */
+    protected function getSystemLanguages(int $pageId, string $selectedLanguage = ''): array
+    {
+        $languages = $this->translationConfigurationProvider->getSystemLanguages($pageId);
+        if (isset($languages[-1])) {
+            $languages[-1]['uid'] = 'all';
+        }
+        $languagesNew = [];
+        foreach ($languages as &$language) {
+            // needs to be strict type checking as this is not possible in fluid
+            if ((string)$language['uid'] === $selectedLanguage) {
+                $language['active'] = true;
+            }
+            $languagesNew[] = [
+                'id' => (string)$language['uid'],
+                'label' => $language['title'],
+                'flag' => $language['flag'] ?? '',
+            ];
+        }
+        return $languagesNew;
     }
 }

@@ -558,7 +558,6 @@ export class WorkspaceBoard {
   // Fetch data from API
   fetchData() {
     const url = `${this.options.getDataApiUrl}`;
-    
 
     return fetch(url, {
       method: "POST",
@@ -573,75 +572,121 @@ export class WorkspaceBoard {
       }
       return response.json()
     }).then((apiResponse) => {
-    // Convert the TYPO3 workspace data to kanban cards
-    const cards = this.convertWorkspaceDataToCards(apiResponse);
-    
-    return {
-      cards: cards,
-      total: apiResponse[0]?.result?.total || cards.length
-    };
-  });
+      // Convert the TYPO3 workspace data to kanban cards
+      const cards = this.convertWorkspaceDataToCards(apiResponse);
+      return {
+        cards: cards,
+        total: apiResponse[0]?.result?.total || cards.length
+      };
+    });
+  }
+
+  fetchCardDetails(card) {
+    const url = `${this.options.getDataApiUrl}`;
+
+    const apiPayload = {
+      action: "RemoteServer",
+      method: "getRowDetails",
+      data: [{
+        stage: card.stage,
+        t3ver_oid: card.t3ver_oid,
+        table: card.table,
+        uid: card.uid,
+        filterFields: true
+      }]
+    }
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(apiPayload)
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      return response.json()
+    }).then((apiResponse) => {
+      // Convert the TYPO3 workspace row data to kanban cards history and comments
+      const details = this.convertCardDetailsToFormat(apiResponse, card.id);
+      
+      if (!this.data.comments) {
+        this.data.comments = {};
+      }
+      if (!this.data.history) {
+        this.data.history = {};
+      }
+      
+      this.data.comments[card.id] = details.comments;
+      this.data.history[card.id] = details.history;
+      
+      return details;
+    });
   }
 
   convertWorkspaceDataToCards(apiResponse) {
-  if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
-    console.warn('Invalid API response format');
-    return [];
-  }
-
-  const result = apiResponse[0];
-  if (!result || !result.result || !result.result.data) {
-    console.warn('No data found in API response');
-    return [];
-  }
-
-  const workspaceData = result.result.data;
-  
-  return workspaceData.map((item, index) => {
-
-    // Map table type to content type
-    const typeMapping = {
-      'pages': 'page',
-      'tt_content': 'content',
-    };
-
-    // Extract editor name from various possible sources
-    let editor = 'Unknown Editor';
-    if (item.cruser_id || item.tstamp_user) {
-      // In real implementation, you'd fetch user data
-      editor = `User ${item.cruser_id || item.tstamp_user}`;
+    if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
+      console.warn('Invalid API response format');
+      return [];
     }
 
-    // Determine priority based on state or other factors
-    let priority = 'medium';
-    if (item.state_Workspace === 'new') {
-      priority = 'high';
-    } else if (item.state_Workspace === 'modified') {
-      priority = 'medium';
-    } else {
-      priority = 'low';
+    const result = apiResponse[0];
+    if (!result || !result.result || !result.result.data) {
+      console.warn('No data found in API response');
+      return [];
     }
 
-    // Create the card object
-    return {
-      id: item.id || `${item.table}_${item.uid}`,
-      title: item.label_Workspace || `${item.table} record ${item.uid}`,
-      type: typeMapping[item.table] || 'content',
-      uid: item.uid,
-      pageName: this.extractPageNameFromPath(item.path_Workspace) || 'Home',
-      editor: editor,
-      editorId: `user_${item.cruser_id || item.uid}`,
-      modifiedDate: this.convertWorkspaceDate(item.lastChangedFormatted),
-      stage: item.stage || 0,
-      language: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',
-      priority: priority,
-      hasSchedule: false, // TYPO3 workspace doesn't have built-in scheduling
-      scheduleText: item.stage === -10 ? 'Published' : null,
-      comments: 0, // Would need separate API call to get comments
-      assignedUsers: [], // Would need separate API call to get assigned users
-    };
-  });
-}
+    const workspaceData = result.result.data;
+    
+    return workspaceData.map((item, index) => {
+
+      // Map table type to content type
+      const typeMapping = {
+        'pages': 'page',
+        'tt_content': 'content',
+      };
+
+      // Extract editor name from various possible sources
+      let editor = 'Unknown Editor';
+      if (item.cruser_id || item.tstamp_user) {
+        // In real implementation, you'd fetch user data
+        editor = `User ${item.cruser_id || item.tstamp_user}`;
+      }
+
+      // Determine priority based on state or other factors
+      let priority = 'medium';
+      if (item.state_Workspace === 'new') {
+        priority = 'high';
+      } else if (item.state_Workspace === 'modified') {
+        priority = 'medium';
+      } else {
+        priority = 'low';
+      }
+
+      // Create the card object
+      return {
+        id: item.id || `${item.table}_${item.uid}`,
+        title: item.label_Workspace || `${item.table} record ${item.uid}`,
+        type: typeMapping[item.table] || 'content',
+        uid: item.uid,
+        pageName: this.extractPageNameFromPath(item.path_Workspace) || 'Home',
+        editor: editor,
+        editorId: `user_${item.cruser_id || item.uid}`,
+        modifiedDate: this.convertWorkspaceDate(item.lastChangedFormatted),
+        stage: item.stage || 0,
+        language: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',
+        priority: priority,
+        hasSchedule: false, // TYPO3 workspace doesn't have built-in scheduling
+        scheduleText: item.stage === -10 ? 'Published' : null,
+        comments: 0, // Would need separate API call to get comments
+        assignedUsers: [], // Would need separate API call to get assigned users
+        t3ver_oid: item.t3ver_oid || null,
+        table: item.table,
+      };
+    });
+  }
 
 extractPageNameFromPath(path) {
   if (!path) return 'Home';
@@ -667,6 +712,80 @@ convertWorkspaceDate(dateString) {
     return new Date().toISOString();
   }
 }
+
+  // Convert TYPO3 API response to Config.js format
+  convertCardDetailsToFormat(apiResponse, cardId) {
+    if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
+      return { comments: [], history: [] };
+    }
+
+    const result = apiResponse[0];
+    if (!result || !result.result || !result.result.data || !result.result.data[0]) {
+      return { comments: [], history: [] };
+    }
+
+    const data = result.result.data[0];
+    
+    // Transform comments
+    const comments = this.transformCommentsFromAPI(data.comments || []);
+    
+    // Transform history
+    const history = this.transformHistoryFromAPI(data.history || {});
+    
+    return { comments, history };
+  }
+
+  // Transform comments from TYPO3 API format to Config.js format
+  transformCommentsFromAPI(apiComments) {
+    if (!Array.isArray(apiComments) || apiComments.length === 0) {
+      return [];
+    }
+
+    return apiComments.map((comment, index) => {
+      // Extract avatar from HTML or use username
+      const avatarMatch = comment.user_avatar?.match(/src="([^"]+)"/);
+      const avatarUrl = avatarMatch ? avatarMatch[1] : null;
+
+      return {
+        id: `c${index + 1}`,
+        author: comment.user_username || 'Unknown User',
+        timestamp: this.convertWorkspaceDate(comment.tstamp),
+        content: comment.user_comment || `Moved from "${comment.previous_stage_title}" to "${comment.stage_title}"`,
+        avatar: avatarUrl,
+        stageTitle: comment.stage_title,
+        previousStageTitle: comment.previous_stage_title
+      };
+    });
+  }
+
+  // Transform history from TYPO3 API format to Config.js format
+  transformHistoryFromAPI(apiHistory) {
+    if (!apiHistory || !apiHistory.data || !Array.isArray(apiHistory.data)) {
+      return [];
+    }
+
+    return apiHistory.data.map((item, index) => {
+      let action = '';
+      
+      // Determine action based on differences
+      if (item.differences === 'insert') {
+        action = 'Created card';
+      } else if (Array.isArray(item.differences) && item.differences.length > 0) {
+        const fields = item.differences.map(d => d.label).join(', ');
+        action = `Modified: ${fields}`;
+      } else {
+        action = 'Updated card';
+      }
+
+      return {
+        id: `h${index + 1}`,
+        action: action,
+        author: item.user || 'Unknown User',
+        timestamp: this.convertWorkspaceDate(item.datetime),
+        differences: item.differences
+      };
+    });
+  }
 
   // Render the entire board
   render() {
@@ -2562,11 +2681,13 @@ convertWorkspaceDate(dateString) {
     if (!modal || !title || !meta) return
 
     title.textContent = card.title
+    const stage = this.getStageById(card.stage)
+    const stageLabel = stage ? stage.label : card.stage
     meta.innerHTML = `
        <span>UID: ${card.uid}</span>
        <span>Page: ${this.escapeHtml(card.pageName)}</span>
        <span>Editor: ${this.escapeHtml(card.editor)}</span>
-       <span class="card-badge">${card.stage}</span>
+       <span class="card-badge">${this.escapeHtml(stageLabel)}</span>
      `
 
     const commentsCount = document.getElementById("commentsCount")
@@ -2574,10 +2695,22 @@ convertWorkspaceDate(dateString) {
       commentsCount.textContent = card.comments || 0
     }
 
-    this.loadModalContent(card)
-
     modal.style.display = "flex"
     document.body.style.overflow = "hidden"
+    
+    // Fetch card details and then load modal content
+    this.showLoading();
+    this.fetchCardDetails(card)
+      .then(() => {
+        this.loadModalContent(card);
+      })
+      .catch((error) => {
+        console.error('Failed to load card details:', error);
+        this.loadModalContent(card); // Load anyway with whatever data we have
+      })
+      .finally(() => {
+        this.hideLoading();
+      });
 
     const firstFocusable = modal.querySelector(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
@@ -2660,7 +2793,9 @@ convertWorkspaceDate(dateString) {
       .map(
         (comment) => `
          <div class="comment">
-           <div class="comment-avatar">${this.getInitials(comment.author)}</div>
+           <div class="comment-avatar">
+             ${comment.avatar ? `<img src="${comment.avatar}" alt="${this.escapeHtml(comment.author)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : this.getInitials(comment.author)}
+           </div>
            <div class="comment-content">
              <div class="comment-header">
                <span class="comment-author">${this.escapeHtml(comment.author)}</span>
@@ -2675,7 +2810,9 @@ convertWorkspaceDate(dateString) {
                  .map(
                    (reply) => `
            <div class="comment reply">
-             <div class="comment-avatar">${this.getInitials(reply.author)}</div>
+             <div class="comment-avatar">
+               ${reply.avatar ? `<img src="${reply.avatar}" alt="${this.escapeHtml(reply.author)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : this.getInitials(reply.author)}
+             </div>
              <div class="comment-content">
                <div class="comment-header">
                  <span class="comment-author">${this.escapeHtml(reply.author)}</span>
@@ -2999,15 +3136,17 @@ convertWorkspaceDate(dateString) {
   }
 
   getCardComments(cardId) {
-    if (window.WorkspaceConfig && window.WorkspaceConfig.mockData && window.WorkspaceConfig.mockData.comments) {
-      return window.WorkspaceConfig.mockData.comments[cardId] || []
+    if (this.data && this.data.comments) {
+      const comments = this.data.comments[cardId];
+      if (comments) return comments;
     }
     return []
   }
 
   getCardHistory(cardId) {
-    if (window.WorkspaceConfig && window.WorkspaceConfig.mockData && window.WorkspaceConfig.mockData.history) {
-      return window.WorkspaceConfig.mockData.history[cardId] || []
+    if (this.data && this.data.history) {
+      const history = this.data.history[cardId];
+      if (history) return history;
     }
     return []
   }

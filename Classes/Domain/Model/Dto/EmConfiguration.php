@@ -47,4 +47,10 @@ class EmConfiguration
         return (bool)$this->disableDefaultStage;
     }
 
+    /** @var bool */
+    protected $defaultStageId = 0;
+    public function getDefaultStageId(): int
+    {
+        return (int)$this->defaultStageId;
+    }
 }

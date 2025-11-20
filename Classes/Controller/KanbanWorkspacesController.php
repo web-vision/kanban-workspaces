@@ -105,6 +105,8 @@ class KanbanWorkspacesController extends ActionController
         // Add CSS and JS
         $this->addAssets();
         $this->configureKanban([
+            'pageUid' => $pageUid,
+            'workspaceId' => $activeWorkspace,
             'stages' => $stageConfig,
             'filters' => [
                 'depth' => [

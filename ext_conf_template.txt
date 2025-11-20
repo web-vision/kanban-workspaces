@@ -2,3 +2,6 @@
 ###########################
 # cat=config/enable/100; type=boolean; label=Disable Default Stages
 disableDefaultStage = 1
+
+# cat=config/enable/101; type=int; label=Default Stages Id
+defaultStageId = 1

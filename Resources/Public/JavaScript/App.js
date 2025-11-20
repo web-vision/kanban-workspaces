@@ -6,7 +6,7 @@ function initWorkspaceApp() {
   // Initialize the workspace board
   const workspaceBoard = new WorkspaceBoard("#kanbanBoard", {
     apiUrl: "/typo3/ajax/workspace",
-    getDataApiUrl: TYPO3.settings.ajaxUrls.workspace_dispatch,
+    getDataApiUrl: (typeof TYPO3 !== 'undefined' && TYPO3.settings?.ajaxUrls?.workspace_dispatch) || "/typo3/ajax/workspace",
     enableDragDrop: true,
     enableFilters: true,
     enableSearch: true,
@@ -26,6 +26,47 @@ function initWorkspaceApp() {
 
   workspaceBoard.on("card:moved", (cardId, targetStage, sourceStage) => {
     console.log(`Card ${cardId} moved from ${sourceStage} to ${targetStage}`)
+    
+    // Handle saving card move to server
+    const url = workspaceBoard.options.getDataApiUrl || workspaceBoard.options.apiUrl
+    
+    if (!url) {
+      console.error('No API URL configured for card move');
+      workspaceBoard.showToast("API URL not configured", "error");
+      return;
+    }
+    
+    const payload = {
+      action: "RemoteServer",
+      method: "sendToStage",
+      data: [{
+        uid: cardId,
+        stage: targetStage
+      }]
+    }
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result && result.success !== false) {
+          workspaceBoard.showToast("Changes saved", "success", 2000)
+        } else {
+          throw new Error(result?.message || "Failed to move card")
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to save card move:", error)
+        workspaceBoard.showToast("Failed to save changes to server (moved locally only)", "warning")
+        // Optionally revert the move
+        // workspaceBoard.revertCardMove(cardId, sourceStage)
+      })
   })
 
   workspaceBoard.on("workspace:switch", (oldWorkspace, newWorkspace) => {
@@ -62,7 +103,8 @@ function initWorkspaceApp() {
     performanceMetrics.renderTime = renderEnd
   })
 
-  workspaceBoard.on("card:dragstart", () => {
+  workspaceBoard.on("card:dragstart", (cardData, element) => {
+    console.log("🎯 card:dragstart event fired!", { cardData, element })
     performanceMetrics.dragOperations++
   })
 
@@ -70,185 +112,195 @@ function initWorkspaceApp() {
   window.workspaceBoard = workspaceBoard
   window.performanceMetrics = performanceMetrics
 
-  // Debug functions for testing
-  window.testFilters = () => {
-    console.log("Current active global filters:", workspaceBoard.data.activeFilters)
-    console.log("All cards:", workspaceBoard.data.cards.length)
-    console.log("Globally filtered cards:", workspaceBoard.getFilteredCards().length)
 
-    Object.keys(workspaceBoard.data.filters).forEach((filterType) => {
-      console.log(`${filterType} options:`, workspaceBoard.data.filters[filterType].options)
-    })
-  }
-
-  window.testUserAssignment = (cardId, userId) => {
-    console.log("=== CARD USER ASSIGNMENT DEBUG ===")
-    cardId = cardId || "1"
-    userId = userId || "john"
-
-    const card = workspaceBoard.getCardById(cardId)
-    const user = workspaceBoard.getUserById(userId)
-
-    console.log("Card:", card)
-    console.log("User:", user)
-    console.log("Current card assignments:", card?.assignedUsers)
-
-    console.log("Testing assignment...")
-    // Simulate clicking the add user button on a card
-    const cardElement = document.querySelector(`.kanban-card[data-card-id="${cardId}"]`)
-    const addUserBtn = cardElement?.querySelector(".add-user")
-    if (addUserBtn) {
-      addUserBtn.click()
-      setTimeout(() => {
-        const userItem = document.querySelector(
-          `.user-assignment-dropdown .user-option[data-user-id="${userId}"]`, // Corrected selector
-        )
-        if (userItem) {
-          userItem.click()
-        } else {
-          console.log("User item not found in dropdown.")
-        }
-      }, 100)
-    } else {
-      console.log("Add user button not found on card.")
-    }
-  }
-
-  window.debugUserAssignment = () => {
-    console.log("=== USER ASSIGNMENT SYSTEM DEBUG ===")
-
-    console.log("WorkspaceConfig loaded:", !!window.WorkspaceConfig)
-    console.log("Users available:", window.WorkspaceConfig?.users?.length || 0)
-
-    const cardsWithUsers = workspaceBoard.data.cards.filter(
-      (card) => card.assignedUsers && card.assignedUsers.length > 0,
-    )
-    console.log("Cards with assignments:", cardsWithUsers.length)
-
-    const testCard = document.querySelector(".kanban-card")
-    if (testCard) {
-      console.log("Test card found:", testCard.dataset.cardId)
-      const addUserBtn = testCard.querySelector(".add-user")
-      console.log("Add user button found:", !!addUserBtn)
-    }
-  }
-
-  // Enhanced user assignment debugging
+  // Handle user assignment with server save
   workspaceBoard.on("user:assign", (cardId, userId) => {
     console.log(`🔄 User assignment event: Card ${cardId} -> User ${userId}`)
     const card = workspaceBoard.getCardById(cardId)
     const user = workspaceBoard.getUserById(userId)
     console.log("Card data:", card)
     console.log("User data:", user)
+    
+    // Save user assignment to server
+    const baseUrl = workspaceBoard.options.apiUrl;
+    if (!baseUrl) {
+      console.error('No API URL configured for user assignment');
+      return;
+    }
+    
+    const url = `${baseUrl}/assign-user`
+    const data = {
+      cardId: cardId,
+      userId: userId,
+      action: "assign",
+      workspace: workspaceBoard.data.currentWorkspace,
+    }
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result && result.success !== false) {
+          console.log("User assignment saved successfully")
+        } else {
+          throw new Error(result?.message || "Failed to save user assignment")
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to save user assignment:", error)
+        workspaceBoard.showToast("Failed to save user assignment to server (changed locally only)", "warning")
+      })
   })
 
   workspaceBoard.on("user:unassign", (cardId, userId) => {
     console.log(`❌ User unassignment event: Card ${cardId} -> User ${userId}`)
+    
+    // Save user unassignment to server
+    const baseUrl = workspaceBoard.options.apiUrl;
+    if (!baseUrl) {
+      console.error('No API URL configured for user unassignment');
+      return;
+    }
+    
+    const url = `${baseUrl}/assign-user`
+    const data = {
+      cardId: cardId,
+      userId: userId,
+      action: "unassign",
+      workspace: workspaceBoard.data.currentWorkspace,
+    }
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result && result.success !== false) {
+          console.log("User unassignment saved successfully")
+        } else {
+          throw new Error(result?.message || "Failed to save user unassignment")
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to save user unassignment:", error)
+        workspaceBoard.showToast("Failed to save user unassignment to server (changed locally only)", "warning")
+      })
   })
 
-  workspaceBoard.on("stage:user-assign", (stageId, userId) => {
+  workspaceBoard.on("stage:user:assign", (stageId, userId) => {
     console.log(`🔄 Stage user assignment event: Stage ${stageId} -> User ${userId}`)
     console.log("Current stage assignments:", window.WorkspaceConfig.stageAssignments[stageId])
+    
+    // Save stage user assignment to server
+    const baseUrl = workspaceBoard.options.apiUrl;
+    if (!baseUrl) {
+      console.error('No API URL configured for stage user assignment');
+      return;
+    }
+    
+    const url = `${baseUrl}/stages/${stageId}/assign`
+    const data = {
+      userId: userId,
+      action: "assign"
+    }
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(result => {
+        console.log("Stage user assignment saved:", result)
+      })
+      .catch(error => {
+        console.error("Failed to save stage user assignment:", error)
+      })
   })
 
-  workspaceBoard.on("stage:user-unassign", (stageId, userId) => {
+  workspaceBoard.on("stage:user:unassign", (stageId, userId) => {
     console.log(`❌ Stage user unassignment event: Stage ${stageId} -> User ${userId}`)
     console.log("Current stage assignments:", window.WorkspaceConfig.stageAssignments[stageId])
-  })
-
-  // Bulk operations debugging
-  window.testBulkOperations = () => {
-    console.log("=== BULK OPERATIONS DEBUG ===")
-    console.log("Selected cards:", workspaceBoard.ui.selectedCards)
-    console.log("Multi-select mode:", document.body.classList.contains("multi-select-mode"))
-    console.log("Body classes:", document.body.className)
-  }
-
-  // Keyboard shortcuts debugging
-  window.testKeyboardShortcuts = () => {
-    console.log("=== KEYBOARD SHORTCUTS DEBUG ===")
-    console.log("Testing Ctrl+F...")
-
-    // Simulate Ctrl+F
-    const event = new KeyboardEvent("keydown", {
-      key: "f",
-      ctrlKey: true,
-      bubbles: true,
-    })
-    document.dispatchEvent(event)
-
-    setTimeout(() => {
-      const searchInput = document.getElementById("globalSearch")
-      console.log("Search input focused:", document.activeElement === searchInput)
-    }, 100)
-  }
-
-  // Workspace management debugging
-  window.testWorkspaceModal = (workspaceId = null) => {
-    console.log("=== WORKSPACE MODAL DEBUG ===")
-    workspaceBoard.openWorkspaceModal(workspaceId)
-  }
-
-  // New debug functions for stage actions
-  window.testStageActions = (stageId = "draft") => {
-    console.log("=== STAGE ACTIONS DEBUG ===")
-    const stage = workspaceBoard.getStageById(stageId)
-    if (!stage) {
-      console.log(`Stage with ID "${stageId}" not found.`)
-      return
+    
+    // Save stage user unassignment to server
+    const baseUrl = workspaceBoard.options.apiUrl;
+    if (!baseUrl) {
+      console.error('No API URL configured for stage user unassignment');
+      return;
     }
-    console.log("Selected Stage:", stage)
-    console.log("Current column user filter for stage:", workspaceBoard.data.columnUserFilters[stageId])
-    console.log("Current column sort for stage:", workspaceBoard.data.columnSorts[stageId])
+    
+    const url = `${baseUrl}/stages/${stageId}/assign`
+    const data = {
+      userId: userId,
+      action: "unassign"
+    }
 
-    console.log("Testing 'Edit Stage' modal...")
-    workspaceBoard.openStageSettingsModal(stageId)
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(result => {
+        console.log("Stage user unassignment saved:", result)
+      })
+      .catch(error => {
+        console.error("Failed to save stage user unassignment:", error)
+      })
+  })
+  
+  // Handle bulk operations
+  workspaceBoard.on("bulk:assign", (cardIds, userIds) => {
+    console.log(`Bulk assign: ${userIds.length} users to ${cardIds.length} cards`)
+    
+    // Save bulk assignment to server
+    const baseUrl = workspaceBoard.options.apiUrl;
+    if (!baseUrl) {
+      console.error('No API URL configured for bulk assignment');
+      return;
+    }
+    
+    const url = `${baseUrl}/bulk-assign`
+    const data = {
+      cardIds: cardIds,
+      userIds: userIds,
+      workspace: workspaceBoard.data.currentWorkspace,
+    }
 
-    setTimeout(() => {
-      console.log("Testing 'Assign Users to Stage' dropdown...")
-      const assignUsersBtn = document.querySelector(
-        `.column-action[data-action="assign-users"][data-stage-id="${stageId}"]`,
-      )
-      if (assignUsersBtn) {
-        assignUsersBtn.click() // Simulate click
-      } else {
-        console.log("Assign Users button not found for stage:", stageId)
-      }
-    }, 1500)
-
-    setTimeout(() => {
-      console.log("Testing 'Sort Items' for stage...")
-      workspaceBoard.toggleColumnSort(stageId, "modifiedDate") // Toggle sort by modifiedDate
-    }, 3000)
-
-    setTimeout(() => {
-      console.log("Testing 'More Options' context menu for stage...")
-      const moreOptionsBtn = document.querySelector(`.column-action[data-action="more"][data-stage-id="${stageId}"]`)
-      if (moreOptionsBtn) {
-        moreOptionsBtn.click() // Simulate click
-      } else {
-        console.log("More Options button not found for stage:", stageId)
-      }
-    }, 4500)
-  }
-
-  window.addTestStage = () => {
-    console.log("Adding a new test stage via workspace modal stages tab...")
-    workspaceBoard.openWorkspaceModal()
-    workspaceBoard.switchModalTab("stages")
-    document.getElementById("addStageBtn").click()
-    console.log("New stage added to form. Remember to save the workspace to persist.")
-  }
-
-  console.log("Debug functions available:")
-  console.log("- testFilters()")
-  console.log("- testUserAssignment(cardId, userId)")
-  console.log("- debugUserAssignment()")
-  console.log("- testBulkOperations()")
-  console.log("- testKeyboardShortcuts()")
-  console.log("- testWorkspaceModal(workspaceId)")
-  console.log("- testStageActions(stageId)")
-  console.log("- addTestStage()")
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => response.json())
+      .then(result => {
+        console.log("Bulk assignment saved:", result)
+      })
+      .catch(error => {
+        console.error("Failed to save bulk assignment:", error)
+        workspaceBoard.showToast("Failed to save bulk assignment to server", "warning")
+      })
+  })
 }
 
 initWorkspaceApp();

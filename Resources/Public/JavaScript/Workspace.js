@@ -1,4 +1,3 @@
-// --- Drag-to-scroll for workspace-main (horizontal scroll of kanban-board) ---
 (function() {
   let isDragging = false;
   let startX = 0;
@@ -35,6 +34,7 @@
     const x = e.pageX;
     board.scrollLeft = scrollLeft - (x - startX);
   });
+
   // Touch support
   let touchStartX = 0;
   let touchScrollLeft = 0;
@@ -53,6 +53,7 @@
     board.scrollLeft = touchScrollLeft - (x - touchStartX);
   });
 })();
+
 /**
  * TYPO3 Workspace Board Plugin
  * A comprehensive JavaScript framework for managing workspace content
@@ -125,7 +126,10 @@ export class WorkspaceBoard {
     this.initializeTheme()
     this.loadData()
     this.render()
-    this.emit("board:initialized", this)
+    // Emit initialization event in next tick to ensure listeners are registered
+    setTimeout(() => {
+      this.emit("board:initialized", this)
+    }, 0)
   }
 
   // Load configuration from global config
@@ -519,6 +523,13 @@ export class WorkspaceBoard {
 
   // Load data from API or mock data
   loadData() {
+    // If workspace is live, skip AJAX call
+    if (document.querySelector('.module')?.getAttribute('data-islive') === 'true') {
+      this.data.cards = []
+      this.emit("data:loaded", this.data)
+      return
+    }
+
     if (this.options.mockData && window.WorkspaceConfig && window.WorkspaceConfig.mockData) {
       this.data.cards = [...window.WorkspaceConfig.mockData.cards]
       this.emit("data:loaded", this.data)
@@ -557,32 +568,38 @@ export class WorkspaceBoard {
 
   // Fetch data from API
   fetchData() {
-    const url = `${this.options.getDataApiUrl}`;
+    const url = this.options.getDataApiUrl || this.options.apiUrl;
+    
+    if (!url) {
+      console.error('No API URL configured');
+      return Promise.reject(new Error('No API URL configured'));
+    }
 
     return fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
       },
-      body: JSON.stringify(this.apiPayload)
-    }).then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      return response.json()
-    }).then((apiResponse) => {
-      // Convert the TYPO3 workspace data to kanban cards
-      const cards = this.convertWorkspaceDataToCards(apiResponse);
-      return {
-        cards: cards,
-        total: apiResponse[0]?.result?.total || cards.length
-      };
-    });
+      body: JSON.stringify(this.apiPayload),
+    })
+      .then((response) => response.json())
+      .then((apiResponse) => {
+        // Convert the TYPO3 workspace data to kanban cards
+        const cards = this.convertWorkspaceDataToCards(apiResponse);
+        return {
+          cards: cards,
+          total: apiResponse[0]?.result?.total || cards.length
+        };
+      });
   }
 
   fetchCardDetails(card) {
-    const url = `${this.options.getDataApiUrl}`;
+    const url = this.options.getDataApiUrl || this.options.apiUrl;
+    
+    if (!url) {
+      console.error('No API URL configured');
+      return Promise.reject(new Error('No API URL configured'));
+    }
 
     const apiPayload = {
       action: "RemoteServer",
@@ -600,30 +617,26 @@ export class WorkspaceBoard {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
       },
-      body: JSON.stringify(apiPayload)
-    }).then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      return response.json()
-    }).then((apiResponse) => {
-      // Convert the TYPO3 workspace row data to kanban cards history and comments
-      const details = this.convertCardDetailsToFormat(apiResponse, card.id);
-      
-      if (!this.data.comments) {
-        this.data.comments = {};
-      }
-      if (!this.data.history) {
-        this.data.history = {};
-      }
-      
-      this.data.comments[card.id] = details.comments;
-      this.data.history[card.id] = details.history;
-      
-      return details;
-    });
+      body: JSON.stringify(apiPayload),
+    })
+      .then((response) => response.json())
+      .then((apiResponse) => {
+        // Convert the TYPO3 workspace row data to kanban cards history and comments
+        const details = this.convertCardDetailsToFormat(apiResponse, card.id);
+        
+        if (!this.data.comments) {
+          this.data.comments = {};
+        }
+        if (!this.data.history) {
+          this.data.history = {};
+        }
+        
+        this.data.comments[card.id] = details.comments;
+        this.data.history[card.id] = details.history;
+        
+        return details;
+      });
   }
 
   convertWorkspaceDataToCards(apiResponse) {
@@ -745,12 +758,21 @@ convertWorkspaceDate(dateString) {
       // Extract avatar from HTML or use username
       const avatarMatch = comment.user_avatar?.match(/src="([^"]+)"/);
       const avatarUrl = avatarMatch ? avatarMatch[1] : null;
+      
+      // Build content: show user comment if exists, otherwise show stage movement
+      let content = '';
+      if (comment.user_comment && comment.user_comment.trim() !== '') {
+        content = comment.user_comment;
+      } else {
+        // Show stage movement without comment
+        content = `Moved from "${comment.previous_stage_title}" to "${comment.stage_title}"`;
+      }
 
       return {
         id: `c${index + 1}`,
         author: comment.user_username || 'Unknown User',
         timestamp: this.convertWorkspaceDate(comment.tstamp),
-        content: comment.user_comment || `Moved from "${comment.previous_stage_title}" to "${comment.stage_title}"`,
+        content: content,
         avatar: avatarUrl,
         stageTitle: comment.stage_title,
         previousStageTitle: comment.previous_stage_title
@@ -792,7 +814,6 @@ convertWorkspaceDate(dateString) {
     this.renderBoard()
     this.renderFilters()
     this.updateUI()
-    this.emit("board:rendered", this)
   }
 
   // Render the kanban board
@@ -814,6 +835,9 @@ convertWorkspaceDate(dateString) {
     if (this.options.enableDragDrop) {
       this.setupDragAndDrop()
     }
+
+    // Emit board:rendered after board is fully rendered
+    this.emit("board:rendered", this)
 
     // Setup user assignment for all cards
     this.setupAllUserAssignments()
@@ -1704,9 +1728,11 @@ convertWorkspaceDate(dateString) {
         // Store original assignments if exists
         assignmentsMade[cardId] = [...(card.assignedUsers || [])]
         card.assignedUsers = Array.from(new Set([...(card.assignedUsers || []), ...selectedUsers]))
-        this.saveUserAssignment(cardId, selectedUsers, "bulk_assign") // Mock API call
       }
     })
+    
+    // Emit bulk assign event - App.js will handle saving
+    this.emit("bulk:assign", Array.from(this.ui.selectedCards), selectedUsers)
 
     this.addToHistory({
       type: "bulk_assign",
@@ -2196,8 +2222,12 @@ convertWorkspaceDate(dateString) {
     cards.forEach((cardEl) => {
       const cardId = cardEl.dataset.cardId
       const cardData = this.getCardById(cardId)
-      this.setupCardDragAndClick(cardEl, cardData)
-      this.setupCardUserAssignment(cardEl)
+      if (cardData) {
+        this.setupCardDragAndClick(cardEl, cardData)
+        this.setupCardUserAssignment(cardEl)
+      } else {
+        console.warn(`Card data not found for cardId: ${cardId}`)
+      }
     })
 
     // Setup column drop events
@@ -2243,17 +2273,9 @@ convertWorkspaceDate(dateString) {
           const targetStage = this.getStageById(stageId)
           const sourceStage = this.getStageById(this.ui.draggedCard.stage)
 
-          if (targetStage && sourceStage && targetStage.id !== sourceStage.id) {
-            // Add to history before moving
-            this.addToHistory({
-              type: "move",
-              cardId: cardId,
-              from: sourceStage.id,
-              to: targetStage.id,
-              timestamp: Date.now(),
-            })
-
-            this.moveCard(cardId, stageId)
+          if (targetStage && sourceStage && targetStage.id != sourceStage.id) {
+            // moveCard will add to history and emit card:moved
+            this.moveCard(cardId, stageId, true)
             this.emit("card:drop", this.ui.draggedCard, targetStage, sourceStage)
           }
         }
@@ -2272,6 +2294,11 @@ convertWorkspaceDate(dateString) {
 
     // Store handlers to remove them later
     cardEl._dragstartHandler = (e) => {
+      if (!cardData) {
+        console.error("Card data is missing in dragstart handler")
+        return
+      }
+      
       this.ui.draggedCard = cardData
       this.ui.draggedElement = e.target
 
@@ -2302,9 +2329,12 @@ convertWorkspaceDate(dateString) {
         return
       }
 
-      if (cardData) {
-        this.emit("card:click", cardData)
+      if (!cardData) {
+        console.error("Card data is missing in click handler")
+        return
       }
+      
+      this.emit("card:click", cardData)
     }
 
     cardEl.addEventListener("dragstart", cardEl._dragstartHandler)
@@ -2652,8 +2682,7 @@ convertWorkspaceDate(dateString) {
         card.assignedUsers.push(userId)
         this.renderBoard()
         this.showToast(`${user.name} assigned to "${card.title}"`, "success")
-
-        this.saveUserAssignment(cardId, userId, "assign")
+        // Note: Saving is handled by App.js listening to user:assign event
       }
     }
   }
@@ -2666,8 +2695,7 @@ convertWorkspaceDate(dateString) {
       card.assignedUsers = card.assignedUsers.filter((id) => id !== userId)
       this.renderBoard()
       this.showToast(`${user.name} unassigned from "${card.title}"`, "info")
-
-      this.saveUserAssignment(cardId, userId, "unassign")
+      // Note: Saving is handled by App.js listening to user:unassign event
     }
   }
 
@@ -2689,9 +2717,13 @@ convertWorkspaceDate(dateString) {
        <span class="card-badge">${this.escapeHtml(stageLabel)}</span>
      `
 
+    // Reset to first tab (Preview)
+    this.switchModalTab('preview');
+    
+    // Initialize comment count (will be updated after data loads)
     const commentsCount = document.getElementById("commentsCount")
     if (commentsCount) {
-      commentsCount.textContent = card.comments || 0
+      commentsCount.textContent = '0'
     }
 
     modal.style.display = "flex"
@@ -2782,6 +2814,12 @@ convertWorkspaceDate(dateString) {
     if (!commentsContainer) return
 
     const comments = this.getCardComments(cardId)
+    
+    // Update the comments count badge with actual number of comments
+    const commentsCount = document.getElementById("commentsCount")
+    if (commentsCount) {
+      commentsCount.textContent = comments.length.toString()
+    }
 
     if (comments.length === 0) {
       commentsContainer.innerHTML = '<div class="no-comments">No comments yet</div>'
@@ -2866,9 +2904,9 @@ convertWorkspaceDate(dateString) {
 
     this.renderBoard()
 
-    if (this.options.autoSave) {
-      this.saveCardMove(cardId, targetStageId, oldStage)
-    }
+    // Emit card:moved event immediately - let App.js handle saving
+    this.emit("card:moved", cardId, targetStageId, oldStage)
+
     if (addToHistory) {
       this.addToHistory({
         type: "move",
@@ -2880,83 +2918,17 @@ convertWorkspaceDate(dateString) {
     }
   }
 
-  saveCardMove(cardId, targetStageId, sourceStageId) {
-    const url = `${this.options.apiUrl}/move`
-    const data = {
-      cardId: cardId,
-      targetStage: targetStageId,
-      sourceStage: sourceStageId,
-      workspace: this.data.currentWorkspace,
+  // Revert card move - called by App.js if save fails
+  revertCardMove(cardId, sourceStageId) {
+    const card = this.getCardById(cardId)
+    if (card) {
+      card.stage = sourceStageId
+      this.renderBoard()
     }
-
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .then((result) => {
-        if (result.success) {
-          this.emit("card:moved", cardId, targetStageId, sourceStageId)
-        } else {
-          throw new Error(result.message || "Failed to move card")
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to save card move:", error)
-        this.showToast("Failed to save changes", "error")
-
-        const card = this.getCardById(cardId)
-        if (card) {
-          card.stage = sourceStageId
-          this.renderBoard()
-        }
-      })
   }
 
-  saveUserAssignment(cardId, userId, action) {
-    const url = `${this.options.apiUrl}/assign-user`
-    const data = {
-      cardId: cardId,
-      userId: userId,
-      action: action,
-      workspace: this.data.currentWorkspace,
-    }
-
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .then((result) => {
-        if (result.success) {
-          this.emit("user:assignment-saved", cardId, userId, action)
-        } else {
-          throw new Error(result.message || "Failed to save user assignment")
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to save user assignment:", error)
-        this.showToast("Failed to save user assignment", "error")
-      })
-  }
+  // User assignment is now handled purely through events
+  // App.js will listen to user:assign and user:unassign events
 
   // User assignment methods
   showCardUserAssignment(cardId, triggerElement) {
@@ -3113,11 +3085,13 @@ convertWorkspaceDate(dateString) {
 
   // Utility methods
   getCardById(cardId) {
-    return this.data.cards.find((card) => card.id === cardId)
+    // Handle both string and number cardId (dataset returns strings)
+    return this.data.cards.find((card) => card.id == cardId || card.id === cardId)
   }
 
   getStageById(stageId) {
-    return this.data.stages.find((stage) => stage.id === stageId)
+    // Handle both string and number stageId (dataset returns strings)
+    return this.data.stages.find((stage) => stage.id == stageId || stage.id === stageId)
   }
 
   getUserById(userId) {
@@ -3381,7 +3355,7 @@ class EventEmitter {
       try {
         callback.apply(this, args)
       } catch (error) {
-        console.error("Event callback error:", error)
+        console.error(`Event callback error for ${event}:`, error)
       }
     })
     return this

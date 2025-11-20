@@ -1,5 +1,7 @@
 <html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
-    <div class="module" data-avatar="{f:uri.image(src:'EXT:kanban_workspaces/Resources/Public/Icons/user.png')}">
+    <div class="module"
+        data-islive="{f:if(condition: workspaceIsAccessible, then: 'true', else: 'false')}"
+        data-avatar="{f:uri.image(src:'EXT:kanban_workspaces/Resources/Public/Icons/user.png')}">
         <f:render section="Header" />
         <f:render section="Content" />
     </div>

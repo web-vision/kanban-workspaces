@@ -3,6 +3,7 @@
  * This file defines mock data and configuration settings for the board.
  * In a real application, this data would typically come from a backend API.
  */
+let defaultAvatarUrl = document.getElementsByClassName("module")[0]?.getAttribute("data-avatar") || "";
 window.WorkspaceConfig = {
   // Mock API endpoints (for demonstration purposes)
   apiEndpoints: {
@@ -15,11 +16,11 @@ window.WorkspaceConfig = {
 
   // Mock user data
   users: [
-    { id: "john", name: "John Doe", role: "Editor", avatar: "https://avatar.iran.liara.run/public/31" },
-    { id: "jane", name: "Jane Smith", role: "Admin", avatar: "https://avatar.iran.liara.run/public/30" },
-    { id: "mike", name: "Mike Johnson", role: "Reviewer", avatar: "https://avatar.iran.liara.run/public/38" },
-    { id: "sarah", name: "Sarah Wilson", role: "Editor", avatar: "https://avatar.iran.liara.run/public/1" },
-    { id: "tom", name: "Tom Brown", role: "Guest", avatar: "https://avatar.iran.liara.run/public/2" },
+    { id: "john", name: "John Doe", role: "Editor", avatar: defaultAvatarUrl },
+    { id: "jane", name: "Jane Smith", role: "Admin", avatar: defaultAvatarUrl },
+    { id: "mike", name: "Mike Johnson", role: "Reviewer", avatar: defaultAvatarUrl },
+    { id: "sarah", name: "Sarah Wilson", role: "Editor", avatar: defaultAvatarUrl},
+    { id: "tom", name: "Tom Brown", role: "Guest", avatar: defaultAvatarUrl},
   ],
 
   // Mock stage assignments (users assigned to a stage, not cards)

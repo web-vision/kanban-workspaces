@@ -133,7 +133,7 @@ class KanbanWorkspacesController extends ActionController
         
         // Add CSS and JS
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
-        $this->pageRenderer->addCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css');
+        $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
         $this->pageRenderer->addJsFile('EXT:kanban_workspaces/Resources/Public/JavaScript/ConfigPrototype.js');
         $this->pageRenderer->loadJavaScriptModule('@devzspace/kanban-workspaces/Prototype.js');
 
@@ -150,7 +150,7 @@ class KanbanWorkspacesController extends ActionController
     protected function addAssets(): void
     {
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
-        $this->pageRenderer->addCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css');
+        $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
         $this->pageRenderer->addJsFile('EXT:kanban_workspaces/Resources/Public/JavaScript/Config.js');
         $this->pageRenderer->loadJavaScriptModule('@devzspace/kanban-workspaces/App.js');
     }

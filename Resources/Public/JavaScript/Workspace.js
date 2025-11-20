@@ -859,9 +859,10 @@ convertWorkspaceDate(dateString) {
                    <span class="column-count">${cardsForStage.length}</span>
                </div>
                <div class="column-actions">
-                   <button class="column-action" title="Assign users to stage" data-action="assign-users" data-stage-id="${stage.id}">
+                   <!-- ToDo: user assignment per stage 
+                    <button class="column-action" title="Assign users to stage" data-action="assign-users" data-stage-id="${stage.id}">
                        <i class="fas fa-user-plus"></i>
-                   </button>
+                   </button> -->
                    <button class="column-action" title="Sort items" data-action="sort" data-stage-id="${stage.id}">
                        <i class="fas fa-sort"></i>
                    </button>
@@ -979,6 +980,7 @@ convertWorkspaceDate(dateString) {
          </div>`
         : ""
 
+    /** ToDo: ${assignedUsersHTML} */
     return `
        <div class="kanban-card ${priorityClass} ${selectedClass}" 
             data-card-id="${card.id}" 
@@ -1023,10 +1025,7 @@ convertWorkspaceDate(dateString) {
                    : ""
                }
                ${dueDateHTML}
-           </div>
-           
-           ${assignedUsersHTML}
-           
+           </div>           
            <div class="card-footer">
                <div class="card-language">
                    ${this.getLanguageFlag(card.language)} ${card.language.toUpperCase()}

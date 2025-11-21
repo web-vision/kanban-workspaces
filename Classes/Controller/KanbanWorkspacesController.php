@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace Devzspace\KanbanWorkspaces\Controller;
 
+use Devzspace\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
 use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
-use TYPO3\CMS\Core\Imaging\IconFactory;
-use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Imaging\IconFactory;
+use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
-use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Devzspace\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
-use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -38,9 +36,7 @@ class KanbanWorkspacesController extends ActionController
         protected readonly WorkspaceRepository $workspaceRepository,
         protected readonly EmConfiguration $emSettings,
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
-
-    ) {
-    }
+    ) {}
 
     /**
      * Main index action for the Kanban Workspaces backend module
@@ -50,8 +46,8 @@ class KanbanWorkspacesController extends ActionController
         $backendUser = $this->getBackendUser();
         $queryParams = $this->request->getQueryParams();
         $activeWorkspace = $backendUser->workspace;
-        $pageUid = (int)($queryParams['id'] ?? 0); 
-        
+        $pageUid = (int)($queryParams['id'] ?? 0);
+
         $workspaceIsAccessible = $backendUser->workspace !== WorkspaceService::LIVE_WORKSPACE_ID && $pageUid > 0;
         // Prepare arrays to avoid undefined variables
         $stageConfig = [];
@@ -80,10 +76,10 @@ class KanbanWorkspacesController extends ActionController
                 'color' => '#FF5733',
                 'order' => $stage->sorting,
                 'allowEdit' => $stage->isEditStage,
-                'allowDelete' => $stage->isAllowed
+                'allowDelete' => $stage->isAllowed,
             ];
         }
-        
+
         // Assign variables to template
         $this->moduleTemplate->assignMultiple([
             'moduleTitle' => 'Kanban Workspaces',
@@ -94,14 +90,14 @@ class KanbanWorkspacesController extends ActionController
         for ($i = 0; $i <= 4; $i++) {
             $depth[] = [
                 'id' => $i,
-                'label' => $i === 0 ? 'This Page' : "$i Level" . ($i > 1 ? 's' : '')
+                'label' => $i === 0 ? 'This Page' : "$i Level" . ($i > 1 ? 's' : ''),
             ];
         }
         $depth[] = [
             'id' => 999,
-            'label' => 'Infinite'
+            'label' => 'Infinite',
         ];
-        
+
         // Add CSS and JS
         $this->addAssets();
         $this->configureKanban([
@@ -115,13 +111,13 @@ class KanbanWorkspacesController extends ActionController
                 ],
                 'language' => [
                     'label' => 'Language',
-                    'options' => $this->getSystemLanguages($pageUid)
+                    'options' => $this->getSystemLanguages($pageUid),
                 ],
                 'stage' => [
                     'label' => 'Stage',
-                    'options' => $stageConfig
+                    'options' => $stageConfig,
                 ],
-            ]
+            ],
         ]);
         return $this->moduleTemplate->renderResponse('KanbanWorkspaces/Index');
     }
@@ -131,8 +127,8 @@ class KanbanWorkspacesController extends ActionController
      */
     public function prototypeAction(): ResponseInterface
     {
-       $this->moduleTemplate = $this->moduleTemplateFactory->create($this->request);
-        
+        $this->moduleTemplate = $this->moduleTemplateFactory->create($this->request);
+
         // Add CSS and JS
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');

@@ -18,15 +18,15 @@ final class WorkspaceApiController
                 'columns' => [
                     ['id' => 'todo', 'title' => 'To Do', 'tasks' => []],
                     ['id' => 'in-progress', 'title' => 'In Progress', 'tasks' => []],
-                    ['id' => 'done', 'title' => 'Done', 'tasks' => []]
+                    ['id' => 'done', 'title' => 'Done', 'tasks' => []],
                 ],
                 'tasks' => [
-                    ['id' => 1, 'title' => 'Sample Task', 'description' => 'This is a sample task', 'column' => 'todo']
-                ]
+                    ['id' => 1, 'title' => 'Sample Task', 'description' => 'This is a sample task', 'column' => 'todo'],
+                ],
             ];
 
             return new JsonResponse(['success' => true, 'data' => $workspaceData]);
-            
+
         } catch (\Exception $e) {
             return new JsonResponse(['success' => false, 'error' => $e->getMessage()], 500);
         }

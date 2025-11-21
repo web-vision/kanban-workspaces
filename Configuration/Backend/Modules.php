@@ -20,9 +20,9 @@ return [
         'extensionName' => 'KanbanWorkspaces',
         'controllerActions' => [
             KanbanWorkspacesController::class => [
-                'index'
+                'index',
             ],
-        ]
+        ],
     ],
     'web_kanbanworkspaces_prototype' => [
         'parent' => 'web',
@@ -36,8 +36,8 @@ return [
         'extensionName' => 'KanbanWorkspaces',
         'controllerActions' => [
             KanbanWorkspacesController::class => [
-                'prototype'
+                'prototype',
             ],
-        ]
+        ],
     ],
 ];

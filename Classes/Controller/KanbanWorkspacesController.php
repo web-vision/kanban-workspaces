@@ -15,6 +15,7 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
@@ -69,12 +70,10 @@ class KanbanWorkspacesController extends ActionController
                     continue;
                 }
             }
-
             $stageConfig[] = [
                 'id' => $stage->uid,
                 'label' => $stage->title,
                 'color' => '#FF5733',
-                'order' => $stage->sorting,
                 'allowEdit' => $stage->isEditStage,
                 'allowDelete' => $stage->isAllowed,
             ];

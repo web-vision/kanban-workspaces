@@ -87,8 +87,8 @@ export class WorkspaceBoard {
       action: "RemoteServer",
       method: "getWorkspaceInfos",
       data: [{
-        id: 1,
-        depth: 1,
+        id: parseInt(new URL(window.location.href).searchParams.get("id"), 10),
+        depth: "0",
         language: 'all',
         limit: 30,
         query: '',

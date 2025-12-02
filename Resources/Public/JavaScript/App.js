@@ -6,7 +6,7 @@ function initWorkspaceApp() {
   // Initialize the workspace board
   const workspaceBoard = new WorkspaceBoard("#kanbanBoard", {
     apiUrl: "/typo3/ajax/workspace",
-    getDataApiUrl: (typeof TYPO3 !== 'undefined' && TYPO3.settings?.ajaxUrls?.workspace_dispatch) || "/typo3/ajax/workspace",
+    getDataApiUrl: (typeof TYPO3 !== 'undefined' && TYPO3.settings && TYPO3.settings.ajaxUrls && TYPO3.settings.ajaxUrls.workspace_dispatch) || "/typo3/ajax/workspace",
     enableDragDrop: true,
     enableFilters: true,
     enableSearch: true,
@@ -58,7 +58,7 @@ function initWorkspaceApp() {
         if (result && result.success !== false) {
           workspaceBoard.showToast("Changes saved", "success", 2000)
         } else {
-          throw new Error(result?.message || "Failed to move card")
+          throw new Error((result && result.message) || "Failed to move card")
         }
       })
       .catch((error) => {
@@ -149,7 +149,7 @@ function initWorkspaceApp() {
         if (result && result.success !== false) {
           console.log("User assignment saved successfully")
         } else {
-          throw new Error(result?.message || "Failed to save user assignment")
+          throw new Error((result && result.message) || "Failed to save user assignment")
         }
       })
       .catch((error) => {
@@ -189,7 +189,7 @@ function initWorkspaceApp() {
         if (result && result.success !== false) {
           console.log("User unassignment saved successfully")
         } else {
-          throw new Error(result?.message || "Failed to save user unassignment")
+          throw new Error((result && result.message) || "Failed to save user unassignment")
         }
       })
       .catch((error) => {

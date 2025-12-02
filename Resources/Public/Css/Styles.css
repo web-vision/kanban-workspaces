@@ -483,7 +483,9 @@ body {
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: visible;
   padding: var(--spacing-lg);
+  user-select: auto;
 }
 
 .filter-actions {
@@ -530,6 +532,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  user-select: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .filter-option {
@@ -540,10 +545,25 @@ body {
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: var(--transition);
+  position: relative;
 }
 
-.filter-option:hover {
+.filter-option:has(input[type="checkbox"]):hover {
   background-color: var(--bg-secondary);
+}
+
+.filter-option:has(select.filter-select) {
+  padding: 0;
+  cursor: default;
+  position: relative;
+  z-index: 10;
+  user-select: auto;
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+.filter-option:has(select.filter-select):hover {
+  background-color: transparent;
 }
 
 .filter-option input[type="checkbox"] {
@@ -556,6 +576,38 @@ body {
   font-size: 14px;
   color: var(--text-primary);
   flex: 1;
+}
+
+.filter-option select.filter-select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
+  position: relative;
+  z-index: 1001;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: auto;
+  user-select: auto;
+  pointer-events: auto;
+  touch-action: manipulation;
+  display: block;
+}
+
+.filter-option select.filter-select:hover {
+  border-color: var(--typo3-orange);
+  background-color: var(--bg-secondary);
+}
+
+.filter-option select.filter-select:focus {
+  border-color: var(--typo3-orange);
+  box-shadow: 0 0 0 3px rgba(255, 135, 0, 0.1);
 }
 
 /* Kanban Board */

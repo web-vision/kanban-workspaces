@@ -2454,34 +2454,85 @@ convertWorkspaceDate(dateString) {
       const group = document.createElement("div")
       group.className = "filter-group"
 
-      group.innerHTML = `
-     <h3 class="filter-group-title">${filterConfig.label}</h3>
-     <div class="filter-options">
-       ${filterConfig.options
-         .map(
-           (option) => `
-           <div class="filter-option">
-               <input type="checkbox" 
-                      id="filter-${filterType}-${option.id}"
-                      data-filter-type="${filterType}"
-                      data-filter-value="${option.id}"
-                      ${this.isFilterActive(filterType, option.id) ? "checked" : ""}>
-               <label for="filter-${filterType}-${option.id}">
-                   ${option.icon ? `<i class="${option.icon}"></i>` : ""}
-                   ${option.flag ? option.flag : ""}
-                   ${this.escapeHtml(option.label)}
-               </label>
+      // Special handling for depth, language, and stage filters - render as selectbox
+      if (filterType === 'depth' || filterType === 'language' || filterType === 'stage') {
+        // Get current selected value
+        let selectedValue;
+        if (filterType === 'depth') {
+          selectedValue = this.data.activeFilters.depth && this.data.activeFilters.depth.length > 0 
+            ? this.data.activeFilters.depth[0] 
+            : '0';
+        } else if (filterType === 'language') {
+          selectedValue = this.data.activeFilters.language && this.data.activeFilters.language.length > 0 
+            ? this.data.activeFilters.language[0] 
+            : 'all';
+        } else if (filterType === 'stage') {
+          selectedValue = this.data.activeFilters.stage && this.data.activeFilters.stage.length > 0 
+            ? this.data.activeFilters.stage[0] 
+            : '-99';
+        }
+
+        // Add "All" option for language and stage filters
+        let allOption = '';
+        if (filterType === 'language') {
+          allOption = '<option value="all">All Languages</option>';
+        } else if (filterType === 'stage') {
+          allOption = '<option value="-99">All Stages</option>';
+        }
+
+        group.innerHTML = `
+         <h3 class="filter-group-title">${filterConfig.label}</h3>
+         <div class="filter-options">
+           <div class="filter-option" style="pointer-events: auto;">
+             <select id="filter-${filterType}" 
+                     data-filter-type="${filterType}"
+                     class="filter-select"
+                     tabindex="0">
+               ${allOption}
+               ${filterConfig.options
+                 .map(
+                   (option) => `
+                 <option value="${option.id}" ${option.id == selectedValue ? 'selected' : ''}>
+                   ${option.flag ? option.flag + ' ' : ''}${this.escapeHtml(option.label)}
+                 </option>
+               `,
+                 )
+                 .join("")}
+             </select>
            </div>
-       `,
-         )
-         .join("")}
-     </div>
-   `
+         </div>
+       `
+      } else {
+        // Render other filters as checkboxes
+        group.innerHTML = `
+         <h3 class="filter-group-title">${filterConfig.label}</h3>
+         <div class="filter-options">
+           ${filterConfig.options
+             .map(
+               (option) => `
+               <div class="filter-option">
+                   <input type="checkbox" 
+                          id="filter-${filterType}-${option.id}"
+                          data-filter-type="${filterType}"
+                          data-filter-value="${option.id}"
+                          ${this.isFilterActive(filterType, option.id) ? "checked" : ""}>
+                   <label for="filter-${filterType}-${option.id}">
+                       ${option.icon ? `<i class="${option.icon}"></i>` : ""}
+                       ${option.flag ? option.flag : ""}
+                       ${this.escapeHtml(option.label)}
+                   </label>
+               </div>
+           `,
+             )
+             .join("")}
+         </div>
+       `
+      }
 
       filterGroups.appendChild(group)
     })
 
-    // Setup filter event listeners
+    // Setup filter event listeners for checkboxes
     const checkboxes = filterGroups.querySelectorAll('input[type="checkbox"]')
     checkboxes.forEach((checkbox) => {
       checkbox.addEventListener("change", (e) => {
@@ -2491,6 +2542,43 @@ convertWorkspaceDate(dateString) {
 
         this.emit("filter:change", filterType, filterValue, isActive)
       })
+    })
+
+    // Setup filter event listeners for selectboxes (depth, language, stage filters)
+    const selects = filterGroups.querySelectorAll('select.filter-select')
+    selects.forEach((select) => {
+      // Ensure the select is focusable and clickable
+      select.setAttribute('tabindex', '0');
+      
+      // Add both change and click listeners to ensure interaction
+      select.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent any parent handlers from interfering
+      });
+      
+      select.addEventListener("change", (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        const filterType = e.target.dataset.filterType
+        const filterValue = e.target.value
+        
+        // Clear previous filter first
+        if (this.data.activeFilters[filterType]) {
+          delete this.data.activeFilters[filterType]
+        }
+        
+        // For "All" options (all, -99), don't set the filter (clear it)
+        if (filterValue === 'all' || filterValue === '-99') {
+          // Filter is already cleared above, just emit the change
+          this.emit("filter:change", filterType, filterValue, false)
+        } else {
+          // For specific values, emit the change with the selected value
+          this.emit("filter:change", filterType, filterValue, true)
+        }
+      });
+      
+      // Add mousedown listener to ensure dropdown opens
+      select.addEventListener("mousedown", (e) => {
+        e.stopPropagation(); // Prevent any parent handlers from interfering
+      });
     })
 
     // Clear all filters button
@@ -2646,6 +2734,22 @@ convertWorkspaceDate(dateString) {
     checkboxes.forEach((checkbox) => {
       checkbox.checked = false
     })
+
+    // Reset all selectboxes to their default values
+    const depthSelect = document.querySelector('#filter-depth')
+    if (depthSelect) {
+      depthSelect.value = '0' // This Page
+    }
+
+    const languageSelect = document.querySelector('#filter-language')
+    if (languageSelect) {
+      languageSelect.value = 'all' // All Languages
+    }
+
+    const stageSelect = document.querySelector('#filter-stage')
+    if (stageSelect) {
+      stageSelect.value = '-99' // All Stages
+    }
 
     this.updateActiveFiltersCount()
     this.renderBoard()

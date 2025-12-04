@@ -24,9 +24,8 @@ function initWorkspaceApp() {
     board.showToast("Workspace board loaded successfully", "success")
   })
 
-  workspaceBoard.on("card:moved", (card, targetStage, sourceStage) => {
-    console.log(`Card ${card.table}:${card.uid} moved from ${sourceStage} to ${targetStage}`)
-    
+  workspaceBoard.on("card:moved", (cards, targetStage, sourceStage) => {
+    console.log(`Card moved event: ${cards.length} card(s) moved to stage ${targetStage}`)    
     // Handle saving card move to server
     const url = workspaceBoard.options.getDataApiUrl || workspaceBoard.options.apiUrl
     
@@ -35,19 +34,20 @@ function initWorkspaceApp() {
       workspaceBoard.showToast("API URL not configured", "error");
       return;
     }
+
+    // Create payload data with an entry for each card
+    const payloadData = cards.map(card => ({
+      "table": card.table,
+      "uid": card.uid,
+      "t3ver_oid": card.t3ver_oid
+    }));
     
     const payload = {
       action: "Actions",
       method: "sendToSpecificStageExecute",
       data: [{
         "affects": {
-          "elements": [
-            {
-              "table": card.table,
-              "uid": card.uid,
-              "t3ver_oid": card.t3ver_oid
-            }
-          ],
+          "elements": payloadData,
           "nextStage": targetStage
         }
       }]
@@ -65,6 +65,7 @@ function initWorkspaceApp() {
       .then(result => {
         if (result && result.success !== false) {
           workspaceBoard.refresh();
+          workspaceBoard.clearSelection();
           workspaceBoard.showToast("Changes saved", "success", 2000)
         } else {
           throw new Error((result && result.message) || "Failed to move card")

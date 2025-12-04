@@ -2275,7 +2275,12 @@ export class WorkspaceBoard {
 
           if (targetStage && sourceStage && targetStage.id != sourceStage.id) {
             // moveCard will add to history and emit card:moved
-            this.moveCard(cardId, stageId, true)
+            if (this.ui.selectedCards.size > 0) {
+              const selectedCards = Array.from(this.ui.selectedCards)
+              this.moveCard(selectedCards, stageId, true)
+            } else {
+              this.moveCard(cardId, stageId, true)
+            }
             this.emit("card:drop", this.ui.draggedCard, targetStage, sourceStage)
           }
         }
@@ -3000,26 +3005,40 @@ export class WorkspaceBoard {
 
   // Card operations
   moveCard(cardId, targetStageId, addToHistory = true) {
-    const card = this.getCardById(cardId)
-    if (!card) return
+    // Handle both single cardId (string) and array of cardIds
+    const cardIds = Array.isArray(cardId) ? cardId : [cardId];
+    
+    const cards = [];
+    const oldStages = {};
 
-    const oldStage = card.stage
-    card.stage = targetStageId
+    console.log("selected cards : ", cardIds);
+    
+    // Process each card
+    cardIds.forEach(id => {
+      const card = this.getCardById(id);
+      if (!card) return;
+      
+      oldStages[id] = card.stage;
+      card.stage = targetStageId;
+      cards.push(card);
+    });
+    
+    if (cards.length === 0) return;
 
-    this.renderBoard()
+    this.renderBoard();
 
-    // Emit card:moved event immediately - let App.js handle saving
-    this.emit("card:moved", card, targetStageId, oldStage)
+    // Emit card:moved event with array of cards - let App.js handle saving
+    this.emit("card:moved", cards, targetStageId, oldStages);
 
-    if (addToHistory) {
-      this.addToHistory({
-        type: "move",
-        cardId: cardId,
-        from: oldStage,
-        to: targetStageId,
-        timestamp: Date.now(),
-      })
-    }
+    // if (addToHistory) {
+    //   this.addToHistory({
+    //     type: "move",
+    //     cardId: cardId,
+    //     from: oldStage,
+    //     to: targetStageId,
+    //     timestamp: Date.now(),
+    //   })
+    // }
   }
 
   // Revert card move - called by App.js if save fails

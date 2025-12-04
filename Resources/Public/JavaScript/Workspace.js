@@ -701,30 +701,30 @@ export class WorkspaceBoard {
     });
   }
 
-extractPageNameFromPath(path) {
-  if (!path) return 'Home';
-  
-  const parts = path.split('/').filter(part => part.length > 0);
-  return parts.length > 0 ? parts[parts.length - 1] : 'Home';
-}
-
-// Helper function to convert TYPO3 date format to ISO string
-convertWorkspaceDate(dateString) {
-  if (!dateString) return new Date().toISOString();
-  
-  try {
-    // TYPO3 format is usually "YYYY-MM-DD HH:mm"
-    const [datePart, timePart] = dateString.split(' ');
-    const [year, month, day] = datePart.split('-');
-    const [hour, minute] = timePart ? timePart.split(':') : ['00', '00'];
+  extractPageNameFromPath(path) {
+    if (!path) return 'Home';
     
-    const date = new Date(year, month - 1, day, hour, minute);
-    return date.toISOString();
-  } catch (error) {
-    console.warn('Failed to parse date:', dateString, error);
-    return new Date().toISOString();
+    const parts = path.split('/').filter(part => part.length > 0);
+    return parts.length > 0 ? parts[parts.length - 1] : 'Home';
   }
-}
+
+  // Helper function to convert TYPO3 date format to ISO string
+  convertWorkspaceDate(dateString) {
+    if (!dateString) return new Date().toISOString();
+    
+    try {
+      // TYPO3 format is usually "YYYY-MM-DD HH:mm"
+      const [datePart, timePart] = dateString.split(' ');
+      const [year, month, day] = datePart.split('-');
+      const [hour, minute] = timePart ? timePart.split(':') : ['00', '00'];
+      
+      const date = new Date(year, month - 1, day, hour, minute);
+      return date.toISOString();
+    } catch (error) {
+      console.warn('Failed to parse date:', dateString, error);
+      return new Date().toISOString();
+    }
+  }
 
   // Convert TYPO3 API response to Config.js format
   convertCardDetailsToFormat(apiResponse, cardId) {
@@ -3009,7 +3009,7 @@ convertWorkspaceDate(dateString) {
     this.renderBoard()
 
     // Emit card:moved event immediately - let App.js handle saving
-    this.emit("card:moved", cardId, targetStageId, oldStage)
+    this.emit("card:moved", card, targetStageId, oldStage)
 
     if (addToHistory) {
       this.addToHistory({

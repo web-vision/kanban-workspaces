@@ -24,8 +24,8 @@ function initWorkspaceApp() {
     board.showToast("Workspace board loaded successfully", "success")
   })
 
-  workspaceBoard.on("card:moved", (cardId, targetStage, sourceStage) => {
-    console.log(`Card ${cardId} moved from ${sourceStage} to ${targetStage}`)
+  workspaceBoard.on("card:moved", (card, targetStage, sourceStage) => {
+    console.log(`Card ${card.table}:${card.uid} moved from ${sourceStage} to ${targetStage}`)
     
     // Handle saving card move to server
     const url = workspaceBoard.options.getDataApiUrl || workspaceBoard.options.apiUrl
@@ -37,11 +37,19 @@ function initWorkspaceApp() {
     }
     
     const payload = {
-      action: "RemoteServer",
-      method: "sendToStage",
+      action: "Actions",
+      method: "sendToSpecificStageExecute",
       data: [{
-        uid: cardId,
-        stage: targetStage
+        "affects": {
+          "elements": [
+            {
+              "table": card.table,
+              "uid": card.uid,
+              "t3ver_oid": card.t3ver_oid
+            }
+          ],
+          "nextStage": targetStage
+        }
       }]
     }
 
@@ -56,6 +64,7 @@ function initWorkspaceApp() {
       .then(response => response.json())
       .then(result => {
         if (result && result.success !== false) {
+          workspaceBoard.refresh();
           workspaceBoard.showToast("Changes saved", "success", 2000)
         } else {
           throw new Error((result && result.message) || "Failed to move card")

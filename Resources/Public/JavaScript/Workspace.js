@@ -194,6 +194,14 @@ export class WorkspaceBoard {
       })
     }
 
+    // Close sidebar
+    const closeSidebar = document.getElementById("closeSidebar")
+    if (closeSidebar) {
+      closeSidebar.addEventListener("click", () => {
+        this.toggleFilters()
+      })
+    }
+
     // Theme toggle
     const themeToggle = document.getElementById("themeToggle")
     if (themeToggle) {
@@ -539,13 +547,24 @@ export class WorkspaceBoard {
     if (this.data.activeFilters && Object.keys(this.data.activeFilters).length > 0) {
       if (this.data.activeFilters.depth) {
         this.apiPayload.data[0].depth = this.data.activeFilters.depth.join(",")
+      } else {
+        this.apiPayload.data[0].depth = "0"
       }
       if (this.data.activeFilters.language) {
         this.apiPayload.data[0].language = this.data.activeFilters.language.join(",")
+      } else {
+        this.apiPayload.data[0].language = "all"
       }
       if (this.data.activeFilters.stage) {
         this.apiPayload.data[0].stage = this.data.activeFilters.stage.join(",")
+      } else {
+        this.apiPayload.data[0].stage = "-99"
       }
+    } else {
+      // Reset to default values when no filters are active
+      this.apiPayload.data[0].depth = "0"
+      this.apiPayload.data[0].language = "all"
+      this.apiPayload.data[0].stage = "-99"
     }
 
     this.showLoading()
@@ -2570,14 +2589,7 @@ export class WorkspaceBoard {
           delete this.data.activeFilters[filterType]
         }
         
-        // For "All" options (all, -99), don't set the filter (clear it)
-        if (filterValue === 'all' || filterValue === '-99') {
-          // Filter is already cleared above, just emit the change
-          this.emit("filter:change", filterType, filterValue, false)
-        } else {
-          // For specific values, emit the change with the selected value
-          this.emit("filter:change", filterType, filterValue, true)
-        }
+        this.emit("filter:change", filterType, filterValue, true)
       });
       
       // Add mousedown listener to ensure dropdown opens
@@ -2757,7 +2769,8 @@ export class WorkspaceBoard {
     }
 
     this.updateActiveFiltersCount()
-    this.renderBoard()
+    this.loadData()
+    // this.renderBoard()
   }
 
   handleSearchChange(query) {

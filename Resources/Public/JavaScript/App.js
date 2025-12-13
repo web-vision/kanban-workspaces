@@ -1,5 +1,6 @@
 // Import the WorkspaceBoard class
 import { WorkspaceBoard } from "./Workspace.js" // Corrected import path
+import Notification from '@typo3/backend/notification.js';
 
 // Initialize the TYPO3 Workspace Board Application
 function initWorkspaceApp() {
@@ -13,7 +14,6 @@ function initWorkspaceApp() {
     enableComments: true,
     autoSave: true,
     autoSaveDelay: 2000,
-    theme: "auto",
     animations: true,
     mockData: false, // Set to false in production
   })
@@ -21,7 +21,8 @@ function initWorkspaceApp() {
   // Global event listeners for the application
   workspaceBoard.on("board:initialized", (board) => {
     console.log("Workspace board initialized successfully")
-    board.showToast("Workspace board loaded successfully", "success")
+    Notification.success('', 'Workspace board loaded successfully', 5)
+    document.documentElement.setAttribute("data-color-scheme", "auto")
   })
 
   workspaceBoard.on("card:moved", (cards, targetStage, sourceStage) => {
@@ -31,7 +32,7 @@ function initWorkspaceApp() {
     
     if (!url) {
       console.error('No API URL configured for card move');
-      workspaceBoard.showToast("API URL not configured", "error");
+      Notification.error('', 'API URL not configured', 5);
       return;
     }
 
@@ -66,14 +67,14 @@ function initWorkspaceApp() {
         if (result && result.success !== false) {
           workspaceBoard.refresh();
           workspaceBoard.clearSelection();
-          workspaceBoard.showToast("Changes saved", "success", 2000)
+          Notification.success('', 'Changes saved', 2)
         } else {
           throw new Error((result && result.message) || "Failed to move card")
         }
       })
       .catch((error) => {
         console.error("Failed to save card move:", error)
-        workspaceBoard.showToast("Failed to save changes to server (moved locally only)", "warning")
+        Notification.warning('', 'Failed to save changes to server (moved locally only)', 5)
         // Optionally revert the move
         // workspaceBoard.revertCardMove(cardId, sourceStage)
       })
@@ -91,14 +92,10 @@ function initWorkspaceApp() {
     console.log(`Search query changed: ${query}`)
   })
 
-  workspaceBoard.on("theme:change", (oldTheme, newTheme) => {
-    console.log(`Theme changed from ${oldTheme} to ${newTheme}`)
-  })
-
   // Error handling
   workspaceBoard.on("error", (error) => {
     console.error("Workspace board error:", error)
-    workspaceBoard.showToast("An error occurred. Please try again.", "error")
+    Notification.error('', 'An error occurred. Please try again.', 5)
   })
 
   // Performance monitoring
@@ -164,7 +161,7 @@ function initWorkspaceApp() {
       })
       .catch((error) => {
         console.error("Failed to save user assignment:", error)
-        workspaceBoard.showToast("Failed to save user assignment to server (changed locally only)", "warning")
+        Notification.warning('', 'Failed to save user assignment to server (changed locally only)', 5)
       })
   })
 
@@ -204,7 +201,7 @@ function initWorkspaceApp() {
       })
       .catch((error) => {
         console.error("Failed to save user unassignment:", error)
-        workspaceBoard.showToast("Failed to save user unassignment to server (changed locally only)", "warning")
+        Notification.warning('', 'Failed to save user unassignment to server (changed locally only)', 5)
       })
   })
 
@@ -308,7 +305,7 @@ function initWorkspaceApp() {
       })
       .catch(error => {
         console.error("Failed to save bulk assignment:", error)
-        workspaceBoard.showToast("Failed to save bulk assignment to server", "warning")
+        Notification.warning('', 'Failed to save bulk assignment to server', 5)
       })
   })
 }

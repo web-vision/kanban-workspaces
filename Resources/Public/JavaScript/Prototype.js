@@ -1,5 +1,6 @@
 // Import the WorkspaceBoard class
-import { WorkspaceBoard } from "./WorkspacePrototype.js" // Corrected import path
+import { WorkspaceBoard } from "./WorkspacePrototype.js"
+import Notification from '@typo3/backend/notification.js'; // Corrected import path
 
 // Initialize the TYPO3 Workspace Board Application
 function initWorkspaceApp() {

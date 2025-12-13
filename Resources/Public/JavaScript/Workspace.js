@@ -1,3 +1,5 @@
+import Notification from '@typo3/backend/notification.js';
+
 (function() {
   let isDragging = false;
   let startX = 0;
@@ -78,7 +80,6 @@ export class WorkspaceBoard {
       draggedCard: null,
       draggedElement: null,
       dropZone: null,
-      theme: "auto",
       selectedCards: new Set(),
       isMultiSelectMode: false,
     }
@@ -114,7 +115,6 @@ export class WorkspaceBoard {
     enableComments: true,
     autoSave: true,
     autoSaveDelay: 2000,
-    theme: "auto",
     animations: true,
     mockData: false,
   }
@@ -123,7 +123,6 @@ export class WorkspaceBoard {
   init() {
     this.loadConfiguration()
     this.setupEventListeners()
-    this.initializeTheme()
     this.loadData()
     this.render()
     // Emit initialization event in next tick to ensure listeners are registered
@@ -202,14 +201,6 @@ export class WorkspaceBoard {
       })
     }
 
-    // Theme toggle
-    const themeToggle = document.getElementById("themeToggle")
-    if (themeToggle) {
-      themeToggle.addEventListener("click", () => {
-        this.toggleTheme()
-      })
-    }
-
     // Modal events
     this.setupModalEvents()
 
@@ -226,6 +217,13 @@ export class WorkspaceBoard {
         this.handleResize()
       }, 250),
     )
+
+    // Listen to TYPO3 color scheme changes
+    document.addEventListener("typo3:color-scheme:update", (e) => {
+      console.log("TYPO3 color scheme changed:", e.detail.colorScheme)
+      // The theme is automatically applied to document element by TYPO3
+      // No additional action needed - CSS variables will update automatically
+    })
 
     // Custom events
     this.setupCustomEvents()
@@ -521,12 +519,6 @@ export class WorkspaceBoard {
     this.on("stage:user:unassign", (stageId, userId) => {
       this.handleStageUserAssignment(stageId, userId, "unassign")
     })
-  }
-
-  // Initialize theme system
-  initializeTheme() {
-    const savedTheme = localStorage.getItem("workspace-theme") || this.options.theme
-    this.setTheme(savedTheme)
   }
 
   // Load data from API or mock data
@@ -2660,36 +2652,6 @@ export class WorkspaceBoard {
     }
   }
 
-  toggleTheme() {
-    const themes = ["light", "dark", "auto"]
-    const currentTheme = this.ui.theme
-    const currentIndex = themes.indexOf(currentTheme)
-    const nextTheme = themes[(currentIndex + 1) % themes.length]
-
-    this.setTheme(nextTheme)
-  }
-
-  setTheme(theme) {
-    const oldTheme = this.ui.theme
-    this.ui.theme = theme
-
-    document.documentElement.setAttribute("data-theme", theme)
-    localStorage.setItem("workspace-theme", theme)
-
-    // Update theme icon
-    const themeIcon = document.querySelector(".theme-icon")
-    if (themeIcon) {
-      const icons = {
-        light: "fas fa-sun",
-        dark: "fas fa-moon",
-        auto: "fas fa-adjust",
-      }
-      themeIcon.className = `theme-icon ${icons[theme]}`
-    }
-
-    this.emit("theme:change", oldTheme, theme)
-  }
-
   handleCardDragStart(card, element) {
     document.body.classList.add("dragging")
   }
@@ -3379,53 +3341,36 @@ export class WorkspaceBoard {
   }
 
   showToast(message, type = "info", duration = 5000) {
-    const container = document.getElementById("toastContainer")
-    if (!container) return
-
-    const toast = document.createElement("div")
-    toast.className = `toast ${type}`
-
-    const icon = this.getToastIcon(type)
-
-    toast.innerHTML = `
-       <i class="${icon}"></i>
-       <div class="toast-content">
-           <div class="toast-message">${this.escapeHtml(message)}</div>
-       </div>
-       <button class="toast-close">
-           <i class="fas fa-times"></i>
-       </button>
-     `
-
-    const closeBtn = toast.querySelector(".toast-close")
-    closeBtn.addEventListener("click", () => {
-      this.removeToast(toast)
-    })
-
-    container.appendChild(toast)
-
-    setTimeout(() => {
-      this.removeToast(toast)
-    }, duration)
-  }
-
-  removeToast(toast) {
-    if (toast && toast.parentNode) {
-      toast.style.animation = "slideOut 0.3s ease forwards"
-      setTimeout(() => {
-        toast.remove()
-      }, 300)
+    // Map custom types to TYPO3 Notification severities
+    const severityMap = {
+      'success': 1, // OK
+      'info': 0,    // INFO  
+      'warning': 2, // WARNING
+      'error': 3    // ERROR
+    };
+    
+    const severity = severityMap[type] || 0;
+    const durationInSeconds = Math.floor(duration / 1000);
+    
+    if (typeof Notification !== 'undefined') {
+      // Use TYPO3 Notification API
+      switch(severity) {
+        case 1: // success
+          Notification.success('', message, durationInSeconds);
+          break;
+        case 2: // warning
+          Notification.warning('', message, durationInSeconds);
+          break;
+        case 3: // error
+          Notification.error('', message, durationInSeconds);
+          break;
+        default: // info
+          Notification.info('', message, durationInSeconds);
+      }
+    } else {
+      // Fallback to console if Notification API is not available
+      console.log(`[${type.toUpperCase()}] ${message}`);
     }
-  }
-
-  getToastIcon(type) {
-    const icons = {
-      success: "fas fa-check-circle",
-      error: "fas fa-exclamation-circle",
-      warning: "fas fa-exclamation-triangle",
-      info: "fas fa-info-circle",
-    }
-    return icons[type] || icons.info
   }
 
   // Public API methods

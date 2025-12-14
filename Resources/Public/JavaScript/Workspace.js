@@ -1,4 +1,7 @@
 import Notification from '@typo3/backend/notification.js';
+import Modal from '@typo3/backend/modal.js';
+import { SeverityEnum } from '@typo3/backend/enum/severity.js';
+import DeferredAction from '@typo3/backend/action-button/deferred-action.js';
 
 (function() {
   let isDragging = false;
@@ -3528,13 +3531,6 @@ export class WorkspaceBoard {
   }
 
   deleteCard(card) {
-    const confirmed = window.confirm(
-      `Do you really want to discard this version from workspace?`
-    );
-
-    if (!confirmed) {
-      return Promise.resolve(false);
-    }
     const url = this.options.getDataApiUrl || this.options.apiUrl;
     
     if (!url) {
@@ -3546,30 +3542,65 @@ export class WorkspaceBoard {
       action: "Actions",
       method: "deleteSingleRecord",
       data: [ card.table, card.uid]
-    }
+    };
 
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((response) => response.json())
-      .then((apiResponse) => {
-        if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
-          console.warn('Invalid API response format');
-          return [];
-        }
+    // Create deferred action for the delete operation
+    const deleteAction = new DeferredAction(() => {
+      return fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((apiResponse) => {
+          if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
+            console.warn('Invalid API response format');
+            throw new Error('Invalid API response format');
+          }
 
-        const result = apiResponse[0];
-        if (!result) {
-          console.warn('No data found in API response');
-          return [];
+          const result = apiResponse[0];
+          if (!result) {
+            console.warn('No data found in API response');
+            throw new Error('No data found in API response');
+          }
+          
+          // Reload data and show success message
+          this.loadData();
+          this.showToast(`Card "${card.title}" deleted successfully`, "success");
+          
+          return result;
+        })
+        .catch((error) => {
+          console.error('Failed to delete card:', error);
+          this.showToast(`Failed to delete card: ${error.message}`, "error");
+          throw error;
+        });
+    });
+
+    // Show TYPO3 Modal with error severity
+    Modal.advanced({
+      title: 'Discard version of record',
+      content: `Do you really want to discard this version from workspace?\n\nCard: ${card.title}\nTable: ${card.table}\nUID: ${card.uid}`,
+      severity: SeverityEnum.error,
+      buttons: [
+        {
+          text: 'Cancel',
+          btnClass: 'btn-default',
+          trigger: () => {
+            Modal.dismiss();
+          }
+        },
+        {
+          text: 'Discard version',
+          btnClass: 'btn-danger',
+          action: deleteAction
         }
-        this.loadData();
-        this.showToast(`Card "${card.title}" deleted successfully`, "success");
-      });
+      ]
+    });
+
+    return Promise.resolve();
   }
 
   // Utility methods

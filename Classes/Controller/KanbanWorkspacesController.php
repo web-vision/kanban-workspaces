@@ -19,6 +19,7 @@ use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -96,6 +97,12 @@ class KanbanWorkspacesController extends ActionController
             'id' => 999,
             'label' => 'Infinite',
         ];
+
+        
+        $backendUriBuilder = GeneralUtility::makeInstance(\TYPO3\CMS\Backend\Routing\UriBuilder::class);
+        $this->pageRenderer->addInlineSetting('FormEngine', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('record_edit'));
+        $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
+        $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('web_layout'));
 
         // Add CSS and JS
         $this->addAssets();

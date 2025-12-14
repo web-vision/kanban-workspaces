@@ -98,6 +98,11 @@ function initWorkspaceApp() {
     Notification.error('', 'An error occurred. Please try again.', 5)
   })
 
+  // Comment added event
+  workspaceBoard.on("comment:added", (cardId, commentText) => {
+    console.log(`💬 Comment added to card ${cardId}: ${commentText}`)
+  })
+
   // Performance monitoring
   const performanceMetrics = {
     renderTime: 0,

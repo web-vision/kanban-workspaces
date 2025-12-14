@@ -310,6 +310,12 @@ export class WorkspaceBoard {
       })
     }
 
+    // Add comment button
+    const addCommentBtn = document.getElementById("addComment")
+    if (addCommentBtn) {
+      addCommentBtn.addEventListener("click", () => this.handleAddComment())
+    }
+
     // Setup workspace modal tabs
     this.setupWorkspaceModalTabs()
   }
@@ -715,6 +721,7 @@ export class WorkspaceBoard {
         assignedUsers: [], // Would need separate API call to get assigned users
         t3ver_oid: item.t3ver_oid || null,
         table: item.table,
+        pid: item.livepid || null,
       };
     });
   }
@@ -2804,6 +2811,7 @@ export class WorkspaceBoard {
     title.textContent = card.title
     const stage = this.getStageById(card.stage)
     const stageLabel = stage ? stage.label : card.stage
+    meta.setAttribute("data-id", card.id)
     meta.innerHTML = `
        <span>UID: ${card.uid}</span>
        <span>Page: ${this.escapeHtml(card.pageName)}</span>
@@ -2975,6 +2983,109 @@ export class WorkspaceBoard {
        `,
       )
       .join("")
+  }
+  
+  // Handle adding a new comment
+  handleAddComment() {
+    const commentTextarea = document.getElementById("newComment")
+    const addCommentBtn = document.getElementById("addComment")
+    
+    if (!commentTextarea || !addCommentBtn) return
+    
+    const commentText = commentTextarea.value.trim()
+    
+    if (!commentText) {
+      this.showToast("Please enter a comment", "warning")
+      return
+    }
+    
+    // Get the current card ID from the modal
+    const modalMeta = document.getElementById("modalMeta")
+    if (!modalMeta) return
+
+    const cardId = modalMeta.getAttribute('data-id')
+    
+    // Find the card by title (you may want to store cardId differently)
+    const currentCard = this.getCardById(cardId);
+    if (!currentCard) {
+      this.showToast("Unable to identify current card", "error")
+      return
+    }
+        
+    // Disable button and show loading state
+    addCommentBtn.disabled = true
+    addCommentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...'
+    
+    // Prepare API request
+    const url = this.options.getDataApiUrl || this.options.apiUrl
+    if (!url) {
+      console.error('No API URL configured for adding comments')
+      this.showToast("API URL not configured", "error")
+      addCommentBtn.disabled = false
+      addCommentBtn.innerHTML = '<i class="fas fa-comment"></i> Add Comment'
+      return
+    }
+    
+    const payload = {
+      action: "Actions",
+      method: "sendToSpecificStageExecute",
+      data: [{
+        "comments" : commentText,
+        "affects": {
+          "elements": [
+            {
+              "table": currentCard.table,
+              "uid": currentCard.uid,
+              "t3ver_oid": currentCard.t3ver_oid
+            }
+          ],
+          "nextStage": currentCard.stage
+        }
+      }]
+    }
+    
+    // Send AJAX POST request
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result && result.success !== false) {
+          // Clear the textarea
+          commentTextarea.value = ''
+          
+          // Show success message
+          this.showToast("Comment added successfully", "success")
+          
+          // Reload comments to show the new one
+          this.fetchCardDetails(currentCard)
+            .then(() => {
+              this.loadComments(currentCard.id)
+            })
+            .catch(error => {
+              console.error('Failed to reload comments:', error)
+            })
+          
+          // Emit event
+          this.emit("comment:added", currentCard.id, commentText)
+        } else {
+          throw new Error((result && result.message) || "Failed to add comment")
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to add comment:", error)
+        this.showToast("Failed to add comment: " + error.message, "error")
+      })
+      .finally(() => {
+        // Re-enable button
+        addCommentBtn.disabled = false
+        addCommentBtn.innerHTML = '<i class="fas fa-comment"></i> Add Comment'
+      })
   }
 
   loadHistory(cardId) {
@@ -3217,7 +3328,248 @@ export class WorkspaceBoard {
     const cards = document.querySelectorAll(".kanban-card")
     cards.forEach((cardEl) => {
       this.setupCardUserAssignment(cardEl)
+      this.setupCardMenuActions(cardEl)
     })
+  }
+
+  // Setup card menu button actions
+  setupCardMenuActions(cardElement) {
+    const menuButton = cardElement.querySelector('.card-menu')
+    if (menuButton) {
+      // Remove existing listener to prevent duplicates
+      if (menuButton._clickListener) {
+        menuButton.removeEventListener('click', menuButton._clickListener)
+      }
+
+      const handler = (e) => {
+        e.stopPropagation()
+        const cardId = cardElement.dataset.cardId
+        this.showCardContextMenu(cardId, menuButton)
+      }
+      
+      menuButton.addEventListener('click', handler)
+      menuButton._clickListener = handler
+    }
+  }
+
+  // Show card context menu with available actions
+  showCardContextMenu(cardId, triggerElement) {
+    const card = this.getCardById(cardId)
+    if (!card) return
+
+    // Remove any existing menu
+    const existingMenu = document.querySelector(".context-menu")
+    if (existingMenu) existingMenu.remove()
+
+    const menu = this.createCardContextMenu(card)
+    document.body.appendChild(menu)
+
+    // Position menu (similar to stage context menu)
+    const rect = triggerElement.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    menu.style.position = "fixed"
+    menu.style.zIndex = "9999"
+
+    // Position horizontally
+    if (rect.left + menu.offsetWidth > viewportWidth) {
+      menu.style.right = viewportWidth - rect.right + "px"
+    } else {
+      menu.style.left = rect.left + "px"
+    }
+
+    // Position vertically
+    if (rect.bottom + menu.offsetHeight + 10 > viewportHeight) {
+      menu.style.bottom = viewportHeight - rect.top + 5 + "px"
+    } else {
+      menu.style.top = rect.bottom + 5 + "px"
+    }
+
+    // Click handler for menu actions
+    const handleMenuClick = (e) => {
+      const menuItem = e.target.closest(".context-menu-item")
+      if (menuItem) {
+        const action = menuItem.dataset.action
+        this.handleCardContextMenuAction(action, card)
+        menu.remove()
+        document.removeEventListener("mousedown", handleOutsideClick, true)
+      }
+    }
+    menu.addEventListener("click", handleMenuClick)
+
+    // Close menu on outside click
+    const handleOutsideClick = (e) => {
+      if (!menu.contains(e.target) && e.target !== triggerElement) {
+        menu.remove()
+        document.removeEventListener("mousedown", handleOutsideClick, true)
+      }
+    }
+    setTimeout(() => {
+      document.addEventListener("mousedown", handleOutsideClick, true)
+    }, 0)
+  }
+
+  // Create card context menu HTML
+  createCardContextMenu(card) {
+    const menu = document.createElement("div")
+    menu.className = "context-menu card-context-menu"
+    
+    // Get available stages for move actions
+    const currentStage = this.getStageById(card.stage)
+    const otherStages = this.data.stages.filter(s => s.id !== card.stage)
+    
+    // Build move options HTML
+    const moveOptionsHTML = otherStages.length > 0 ? `
+      <div class="context-menu-item" data-action="move-card" data-card-id="${card.id}">
+        <i class="fas fa-arrows-alt"></i>
+        <span>Move to Stage</span>
+        <i class="fas fa-chevron-right submenu-arrow"></i>
+      </div>
+    ` : ''
+
+    menu.innerHTML = `
+      <div class="context-menu-header">
+        <i class="fas fa-id-card"></i>
+        <span>Card Actions</span>
+      </div>
+      <div class="context-menu-item" data-action="preview-element" data-card-id="${card.id}">
+        <i class="fas fa-eye"></i>
+        <span>Preview Element</span>
+      </div>
+      <div class="context-menu-item" data-action="edit-element" data-card-id="${card.id}">
+        <i class="fas fa-pen"></i>
+        <span>Edit Element</span>
+      </div>
+      <div class="context-menu-item" data-action="page-version" data-card-id="${card.id}">
+        <i class="fas fa-edit"></i>
+        <span>Open version of page</span>
+      </div>
+      <div class="context-menu-item danger" data-action="delete-card" data-card-id="${card.id}">
+        <i class="fas fa-trash"></i>
+        <span>Discard version of record</span>
+      </div>
+    `
+
+    return menu
+  }
+
+  // Handle card context menu actions
+  handleCardContextMenuAction(action, card) {
+    switch (action) {
+      case "preview-element":
+        this.previewElement(card)
+        break
+      case "edit-element":
+        this.editCard(card)
+        break
+      case "page-version":
+        this.pageVersion(card)
+        break
+      case "delete-card":
+        this.deleteCard(card)
+        break
+      default:
+        console.log(`Card action not implemented: ${action}`)
+    }
+  }
+
+  // Card action methods
+  previewElement(card) {
+    const url = this.options.getDataApiUrl || this.options.apiUrl;
+    
+    if (!url) {
+      console.error('No API URL configured');
+      return Promise.reject(new Error('No API URL configured'));
+    }
+
+    const payload = {
+      action: "Actions",
+      method: "viewSingleRecord",
+      data: [ card.table, card.uid]
+    }
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((apiResponse) => {
+        if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
+          console.warn('Invalid API response format');
+          return [];
+        }
+
+        const result = apiResponse[0];
+        if (!result || !result.result) {
+          console.warn('No data found in API response');
+          return [];
+        }
+        const newTab = window.open(result.result, 'newTYPO3frontendWindow');
+        newTab.focus();
+      });
+  }
+
+  editCard(card) {
+    const newUrl = TYPO3.settings.FormEngine.moduleUrl
+      + '&returnUrl=' + encodeURIComponent(document.location.href)
+      + '&id=' + TYPO3.settings.Workspaces.id + '&edit[' + card.table + '][' + card.uid + ']=edit';
+
+    window.location.href = newUrl;
+    this.showToast(`Edit functionality for card "${card.title}" - would open TYPO3 editor`, "info")
+  }
+
+  pageVersion(card) {
+    const recordUid = card.table === 'pages' ? card.t3ver_oid : card.pid;
+    window.location.href = TYPO3.settings.WebLayout.moduleUrl + '&id=' + recordUid;
+  }
+
+  deleteCard(card) {
+    const confirmed = window.confirm(
+      `Do you really want to discard this version from workspace?`
+    );
+
+    if (!confirmed) {
+      return Promise.resolve(false);
+    }
+    const url = this.options.getDataApiUrl || this.options.apiUrl;
+    
+    if (!url) {
+      console.error('No API URL configured');
+      return Promise.reject(new Error('No API URL configured'));
+    }
+
+    const payload = {
+      action: "Actions",
+      method: "deleteSingleRecord",
+      data: [ card.table, card.uid]
+    }
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((apiResponse) => {
+        if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
+          console.warn('Invalid API response format');
+          return [];
+        }
+
+        const result = apiResponse[0];
+        if (!result) {
+          console.warn('No data found in API response');
+          return [];
+        }
+        this.loadData();
+        this.showToast(`Card "${card.title}" deleted successfully`, "success");
+      });
   }
 
   // Utility methods

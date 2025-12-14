@@ -1642,7 +1642,6 @@ body {
 }
 
 .comments-container {
-  max-height: 400px;
   overflow-y: auto;
   margin-bottom: var(--spacing-lg);
 }

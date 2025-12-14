@@ -689,7 +689,7 @@ export class WorkspaceBoard {
       };
 
       // Extract editor name from various possible sources
-      let editor = 'Unknown Editor';
+      let editor = '';
       if (item.cruser_id || item.tstamp_user) {
         // In real implementation, you'd fetch user data
         editor = `User ${item.cruser_id || item.tstamp_user}`;
@@ -937,31 +937,9 @@ export class WorkspaceBoard {
                     <button class="column-action" title="Assign users to stage" data-action="assign-users" data-stage-id="${stage.id}">
                        <i class="fas fa-user-plus"></i>
                    </button> -->
-                   <button class="column-action" title="Sort items" data-action="sort" data-stage-id="${stage.id}">
-                       <i class="fas fa-sort"></i>
-                   </button>
-                   <button class="column-action" title="More options" data-action="more" data-stage-id="${stage.id}">
-                       <i class="fas fa-ellipsis-h"></i>
-                   </button>
                </div>
            </div>
            ${stageUsersHTML}
-           <div class="column-meta column-stats">
-               <div class="stat-item">
-                   <i class="fas fa-tasks"></i>
-                   <span>${totalCardsInStage} total</span>
-               </div>
-               <div class="stat-item">
-                   <i class="fas fa-clock"></i>
-                   <span>${cardsForStage.filter((c) => c.hasSchedule).length} scheduled</span>
-               </div>
-               <div class="completion-indicator">
-                   <span class="completion-text">${progressPercentage}% progress</span>
-                   <div class="completion-bar">
-                       <div class="completion-fill" style="width: ${progressPercentage}%"></div>
-                   </div>
-               </div>
-           </div>
        </div>
        <div class="column-content" data-stage-id="${stage.id}">
            ${
@@ -1072,7 +1050,6 @@ export class WorkspaceBoard {
                    <span>${card.type}</span>
                </div>
                <div class="card-indicators">
-                   ${priorityHTML}
                    ${integrityHTML}
                    ${attachmentsHTML}
                </div>
@@ -1089,7 +1066,6 @@ export class WorkspaceBoard {
                    <span class="card-page">${this.escapeHtml(card.pageName)}</span>
                </div>
                <div class="card-meta-row">
-                   <span class="card-editor">${this.escapeHtml(card.editor)}</span>
                    <span class="card-date">${formattedDate}</span>
                </div>
            </div>
@@ -2881,7 +2857,7 @@ export class WorkspaceBoard {
     meta.innerHTML = `
        <span>UID: ${card.uid}</span>
        <span>Page: ${this.escapeHtml(card.pageName)}</span>
-       <span>Editor: ${this.escapeHtml(card.editor)}</span>
+       ${card.editor ? `<span>Editor: ${this.escapeHtml(card.editor)}</span>` : ''}
        <span class="card-badge">${this.escapeHtml(stageLabel)}</span>
      `
 

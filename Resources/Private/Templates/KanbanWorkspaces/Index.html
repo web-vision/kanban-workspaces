@@ -115,26 +115,15 @@
            </div>
 
            <div class="modal-tabs">
-               <button class="tab-btn active" data-tab="preview">Preview & Diff</button>
-               <button class="tab-btn" data-tab="comments">Comments (<span id="commentsCount">0</span>)</button>
+               <button class="tab-btn active" data-tab="changes">Summary of changes</button>
+               <button class="tab-btn" data-tab="comments">Activity (<span id="commentsCount">0</span>)</button>
                <button class="tab-btn" data-tab="history">History</button>
            </div>
 
            <div class="modal-content">
-               <div class="tab-content active" id="previewTab">
-                   <div class="diff-container">
-                       <div class="diff-section">
-                           <h3><i class="fas fa-eye"></i> Live Version</h3>
-                           <div class="diff-preview live-preview" id="livePreview">
-                               <!-- Live version content -->
-                           </div>
-                       </div>
-                       <div class="diff-section">
-                           <h3><i class="fas fa-eye"></i> Workspace Version</h3>
-                           <div class="diff-preview workspace-preview" id="workspacePreview">
-                               <!-- Workspace version content -->
-                           </div>
-                       </div>
+               <div class="tab-content active" id="changesTab">
+                   <div class="changes-container" id="changesContainer">
+                       <!-- Summary of changes (diff data from TYPO3) will be inserted here -->
                    </div>
                </div>
 

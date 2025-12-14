@@ -75,6 +75,9 @@ export class WorkspaceBoard {
       searchQuery: "",
       columnUserFilters: {}, // NEW: Stores active user filter per column { stageId: userId | null }
       columnSorts: {}, // NEW: Stores active sort for each column { stageId: 'modifiedDate' | null }
+      diffs: {}, // Stores TYPO3 diff data per card
+      comments: {}, // Stores comments per card
+      history: {}, // Stores history per card
     }
     this.ui = {
       draggedCard: null,
@@ -642,9 +645,13 @@ export class WorkspaceBoard {
         if (!this.data.history) {
           this.data.history = {};
         }
+        if (!this.data.diffs) {
+          this.data.diffs = {};
+        }
         
         this.data.comments[card.id] = details.comments;
         this.data.history[card.id] = details.history;
+        this.data.diffs[card.id] = details.diff;
         
         return details;
       });
@@ -740,12 +747,12 @@ export class WorkspaceBoard {
   // Convert TYPO3 API response to Config.js format
   convertCardDetailsToFormat(apiResponse, cardId) {
     if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
-      return { comments: [], history: [] };
+      return { comments: [], history: [], diff: [] };
     }
 
     const result = apiResponse[0];
     if (!result || !result.result || !result.result.data || !result.result.data[0]) {
-      return { comments: [], history: [] };
+      return { comments: [], history: [], diff: [] };
     }
 
     const data = result.result.data[0];
@@ -756,7 +763,10 @@ export class WorkspaceBoard {
     // Transform history
     const history = this.transformHistoryFromAPI(data.history || {});
     
-    return { comments, history };
+    // Extract diff data (already in HTML format from TYPO3)
+    const diff = data.diff || [];
+    
+    return { comments, history, diff };
   }
 
   // Transform comments from TYPO3 API format to Config.js format
@@ -2801,8 +2811,8 @@ export class WorkspaceBoard {
        <span class="card-badge">${this.escapeHtml(stageLabel)}</span>
      `
 
-    // Reset to first tab (Preview)
-    this.switchModalTab('preview');
+    // Reset to first tab (Summary of changes)
+    this.switchModalTab('changes');
     
     // Initialize comment count (will be updated after data loads)
     const commentsCount = document.getElementById("commentsCount")
@@ -2878,19 +2888,34 @@ export class WorkspaceBoard {
   }
 
   loadModalContent(card) {
-    const livePreview = document.getElementById("livePreview")
-    const workspacePreview = document.getElementById("workspacePreview")
-
-    if (livePreview) {
-      livePreview.innerHTML = this.generateMockPreview("live")
-    }
-
-    if (workspacePreview) {
-      workspacePreview.innerHTML = this.generateMockPreview("workspace")
-    }
-
+    // Load Summary of changes (diff data from TYPO3 API)
+    this.loadSummaryOfChanges(card.id)
     this.loadComments(card.id)
     this.loadHistory(card.id)
+  }
+
+  loadSummaryOfChanges(cardId) {
+    const changesContainer = document.getElementById("changesContainer")
+    if (!changesContainer) return
+
+    const diffData = this.data.diffs?.[cardId] || []
+
+    if (!diffData || diffData.length === 0) {
+      changesContainer.innerHTML = '<div class="no-changes"><i class="fas fa-info-circle"></i> No changes detected</div>'
+      return
+    }
+
+    // Render diff data from TYPO3 API (already in HTML format)
+    changesContainer.innerHTML = diffData
+      .map(
+        (diff) => `
+        <div class="change-item">
+          <div class="change-label">${this.escapeHtml(diff.label)}:</div>
+          <div class="change-content">${diff.content}</div>
+        </div>
+      `,
+      )
+      .join("")
   }
 
   loadComments(cardId) {
@@ -2959,7 +2984,7 @@ export class WorkspaceBoard {
     const history = this.getCardHistory(cardId)
 
     if (history.length === 0) {
-      historyContainer.innerHTML = '<div class="no-history">No history available</div>'
+      historyContainer.innerHTML = '<div class="no-history"><i class="fas fa-info-circle"></i> No history available</div>'
       return
     }
 
@@ -2967,11 +2992,25 @@ export class WorkspaceBoard {
       .map(
         (item) => `
          <div class="history-item">
-           <div class="history-indicator"></div>
-           <div class="history-content">
-             <div class="history-action">${this.escapeHtml(item.action)}</div>
-             <div class="history-meta">by ${this.escapeHtml(item.author)} • ${this.formatDate(item.timestamp)}</div>
+           <div class="history-header">
+             <div class="history-avatar">${item.user_avatar || this.getInitials(item.author)}</div>
+             <div class="history-meta">
+               <div class="history-user">${this.escapeHtml(item.author)}</div>
+               <div class="history-date">${item.datetime || this.formatDate(item.timestamp)}</div>
+             </div>
            </div>
+           ${item.differences && Array.isArray(item.differences) && item.differences.length > 0 ? `
+           <div class="history-differences">
+             ${item.differences.map(diff => `
+               <div class="history-diff-item">
+                 <div class="history-diff-label">${this.escapeHtml(diff.label)}:</div>
+                 <div class="history-diff-content">${diff.html}</div>
+               </div>
+             `).join('')}
+           </div>
+           ` : `
+           <div class="history-action">${this.escapeHtml(item.action || 'Updated record')}</div>
+           `}
          </div>
        `,
       )

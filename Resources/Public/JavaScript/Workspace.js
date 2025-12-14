@@ -820,6 +820,10 @@ export class WorkspaceBoard {
     return apiHistory.data.map((item, index) => {
       let action = '';
       
+      // Extract avatar from HTML or use null
+      const avatarMatch = item.user_avatar?.match(/src="([^"]+)"/);
+      const avatarUrl = avatarMatch ? avatarMatch[1] : null;
+      
       // Determine action based on differences
       if (item.differences === 'insert') {
         action = 'Created card';
@@ -835,6 +839,7 @@ export class WorkspaceBoard {
         action: action,
         author: item.user || 'Unknown User',
         timestamp: this.convertWorkspaceDate(item.datetime),
+        avatar: avatarUrl,
         differences: item.differences
       };
     });
@@ -3107,7 +3112,9 @@ export class WorkspaceBoard {
         (item) => `
          <div class="history-item">
            <div class="history-header">
-             <div class="history-avatar">${item.user_avatar || this.getInitials(item.author)}</div>
+             <div class="history-avatar">
+               ${item.avatar ? `<img src="${item.avatar}" alt="${this.escapeHtml(item.author)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : this.getInitials(item.author)}
+             </div>
              <div class="history-meta">
                <div class="history-user">${this.escapeHtml(item.author)}</div>
                <div class="history-date">${item.datetime || this.formatDate(item.timestamp)}</div>

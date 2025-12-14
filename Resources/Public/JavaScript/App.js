@@ -20,8 +20,6 @@ function initWorkspaceApp() {
 
   // Global event listeners for the application
   workspaceBoard.on("board:initialized", (board) => {
-    console.log("Workspace board initialized successfully")
-    Notification.success('', 'Workspace board loaded successfully', 5)
     document.documentElement.setAttribute("data-color-scheme", "auto")
   })
 

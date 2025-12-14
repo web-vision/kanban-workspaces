@@ -2,6 +2,7 @@ import Notification from '@typo3/backend/notification.js';
 import Modal from '@typo3/backend/modal.js';
 import { SeverityEnum } from '@typo3/backend/enum/severity.js';
 import DeferredAction from '@typo3/backend/action-button/deferred-action.js';
+import Icons from '@typo3/backend/icons.js';
 
 (function() {
   let isDragging = false;
@@ -727,7 +728,8 @@ export class WorkspaceBoard {
         editorId: `user_${item.cruser_id || item.uid}`,
         modifiedDate: this.convertWorkspaceDate(item.lastChangedFormatted),
         stage: item.stage || 0,
-        language: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',
+        language: item.language || { icon: '', title: 'Default', title_crop: 'Default' },
+        languageCode: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',
         priority: adjustedPriority,
         originalPriority: priority, // Preserve original priority for reference
         integrityStatus: integrity.status,
@@ -1090,7 +1092,7 @@ export class WorkspaceBoard {
            </div>           
            <div class="card-footer">
                <div class="card-language">
-                   ${this.getLanguageFlag(card.language)} ${card.language.toUpperCase()}
+                   ${this.renderT3Icon(card.language.icon)} ${card.languageCode.toUpperCase()}
                </div>
                <div class="card-stats">
                    ${
@@ -3714,14 +3716,28 @@ export class WorkspaceBoard {
     return icons[type] || "fas fa-file"
   }
 
-  getLanguageFlag(language) {
-    const flags = {
-      en: "🇺🇸",
-      de: "🇩🇪",
-      fr: "🇫🇷",
-      es: "🇪🇸",
+  renderT3Icon(iconIdentifier) {
+    if (!iconIdentifier) {
+      return '<span class="t3js-icon icon icon-size-small icon-state-default"><span class="icon-markup">🌐</span></span>';
     }
-    return flags[language] || "🌐"
+    // Use a placeholder that will be replaced by the actual icon
+    const placeholderId = `icon-${iconIdentifier.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Fetch and inject the icon asynchronously
+    setTimeout(() => {
+      Icons.getIcon(iconIdentifier, Icons.sizes.small).then((iconMarkup) => {
+        const placeholder = document.getElementById(placeholderId);
+        if (placeholder) {
+          placeholder.outerHTML = iconMarkup;
+        }
+      }).catch(() => {
+        // Fallback on error
+        const placeholder = document.getElementById(placeholderId);
+        if (placeholder) {
+          placeholder.outerHTML = '<span class="t3js-icon icon icon-size-small icon-state-default"><span class="icon-markup">🌐</span></span>';
+        }
+      });
+    }, 0);
+    return `<span id="${placeholderId}" class="t3js-icon icon icon-size-small icon-state-default"><span class="icon-markup">🌐</span></span>`;
   }
 
   formatDate(dateString) {

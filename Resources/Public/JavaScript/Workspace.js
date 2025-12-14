@@ -705,6 +705,17 @@ export class WorkspaceBoard {
         priority = 'low';
       }
 
+      // Process integrity data from TYPO3 Workspaces IntegrityService
+      const integrity = item.integrity || { status: 'success', messages: '' };
+      
+      // Adjust priority based on integrity status
+      let adjustedPriority = priority;
+      if (integrity.status === 'error') {
+        adjustedPriority = 'critical'; // New priority level for blocking issues
+      } else if (integrity.status === 'warning' && priority !== 'high') {
+        adjustedPriority = 'high'; // Elevate to high if not already
+      }
+
       // Create the card object
       return {
         id: item.id || `${item.table}_${item.uid}`,
@@ -717,7 +728,10 @@ export class WorkspaceBoard {
         modifiedDate: this.convertWorkspaceDate(item.lastChangedFormatted),
         stage: item.stage || 0,
         language: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',
-        priority: priority,
+        priority: adjustedPriority,
+        originalPriority: priority, // Preserve original priority for reference
+        integrityStatus: integrity.status,
+        integrityMessages: integrity.messages,
         hasSchedule: false, // TYPO3 workspace doesn't have built-in scheduling
         scheduleText: item.stage === -10 ? 'Published' : null,
         comments: 0, // Would need separate API call to get comments
@@ -1023,6 +1037,9 @@ export class WorkspaceBoard {
          </div>`
       : ""
 
+    // Generate integrity indicator
+    const integrityHTML = this.generateIntegrityHTML(card)
+
     // Generate due date if exists
     const dueDateHTML = card.dueDate
       ? `<div class="card-due-date ${this.isDueDateOverdue(card.dueDate) ? "overdue" : ""}">
@@ -1043,7 +1060,8 @@ export class WorkspaceBoard {
     /** ToDo: ${assignedUsersHTML} */
     return `
        <div class="kanban-card ${priorityClass} ${selectedClass}" 
-            data-card-id="${card.id}" 
+            data-card-id="${card.id}"
+            data-integrity-status="${card.integrityStatus || 'success'}"
             draggable="true"
             role="button"
             tabindex="0"
@@ -1055,6 +1073,7 @@ export class WorkspaceBoard {
                </div>
                <div class="card-indicators">
                    ${priorityHTML}
+                   ${integrityHTML}
                    ${attachmentsHTML}
                </div>
                <button class="card-menu" title="Card actions" aria-label="Card menu">
@@ -1074,6 +1093,13 @@ export class WorkspaceBoard {
                    <span class="card-date">${formattedDate}</span>
                </div>
            </div>
+           
+           ${card.integrityMessages && card.integrityStatus !== 'success' ? `
+           <div class="card-integrity-messages">
+               <i class="fas fa-info-circle"></i>
+               <span>${card.integrityMessages}</span>
+           </div>
+           ` : ''}
            
            <div class="card-badges">
                ${
@@ -1146,13 +1172,45 @@ export class WorkspaceBoard {
     }
 
     html += `
-       <div class="user-avatar add-user" title="Assign user" data-card-id="${card.id}">
+       <div class="user-avatar add-user" title="Assign more users" data-card-id="${card.id}">
          <i class="fas fa-plus"></i>
        </div>
      `
 
     html += "</div>"
     return html
+  }
+
+  // Generate integrity status indicator for cards
+  // Only show badge for warning/error (not info/success)
+  generateIntegrityHTML(card) {
+    if (!card.integrityStatus || card.integrityStatus === 'success' || card.integrityStatus === 'info') {
+      return '';
+    }
+    
+    const iconMap = {
+      info: 'fa-info-circle',
+      warning: 'fa-exclamation-triangle',
+      error: 'fa-exclamation-circle'
+    };
+    
+    const labelMap = {
+      info: 'Info',
+      warning: 'Warning',
+      error: 'Error'
+    };
+    
+    const icon = iconMap[card.integrityStatus] || 'fa-info-circle';
+    const label = labelMap[card.integrityStatus] || 'Info';
+    const messages = card.integrityMessages || 'Integrity check';
+    
+    return `
+      <div class="card-integrity integrity-${card.integrityStatus}" 
+           title="${this.escapeHtml(messages)}">
+        <i class="fas ${icon}"></i>
+        <span class="integrity-label">${label}</span>
+      </div>
+    `;
   }
 
   // Generate assigned users HTML for stage header

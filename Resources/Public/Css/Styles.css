@@ -113,6 +113,11 @@
   background-color: rgba(40, 167, 69, 0.2);
   color: var(--success);
 }
+.card-priority.priority-critical {
+  background-color: rgba(192, 57, 43, 0.2);
+  color: #c0392b;
+  font-weight: 700;
+}
 .card-attachments {
   display: flex;
   align-items: center;
@@ -137,6 +142,135 @@
   background-color: rgba(220, 53, 69, 0.2);
   color: var(--danger);
 }
+
+/* Integrity Indicator - styled to match priority badges */
+.card-integrity {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+.card-integrity:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+.card-integrity i {
+  font-size: 13px;
+}
+
+.card-integrity .integrity-label {
+  display: inline;
+}
+
+.card-integrity.integrity-info {
+  background-color: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.card-integrity.integrity-warning {
+  background-color: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.card-integrity.integrity-error {
+  background-color: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+/* Integrity Messages Section in Card */
+.card-integrity-messages {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  margin-top: 8px;
+  background-color: rgba(52, 152, 219, 0.08);
+  border-left: 3px solid #3498db;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.card-integrity-messages i {
+  color: #3498db;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+/* Adjust card borders based on integrity status */
+.kanban-card[data-integrity-status="error"] {
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.15);
+}
+
+.kanban-card[data-integrity-status="warning"] {
+  border: 1px solid rgba(243, 156, 18, 0.3);
+  box-shadow: 0 2px 4px rgba(243, 156, 18, 0.1);
+}
+
+.kanban-card[data-integrity-status="info"] {
+  border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+/* Priority border for critical items */
+.priority-critical {
+  border-left: 4px solid #c0392b !important;
+}
+
+/* Dark theme adjustments for integrity */
+[data-color-scheme="dark"] .card-integrity.integrity-info {
+  background-color: rgba(52, 152, 219, 0.2);
+  color: #5dade2;
+  border-color: rgba(52, 152, 219, 0.4);
+}
+
+[data-color-scheme="dark"] .card-integrity.integrity-warning {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: #f8b739;
+  border-color: rgba(243, 156, 18, 0.4);
+}
+
+[data-color-scheme="dark"] .card-integrity.integrity-error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #ec7063;
+  border-color: rgba(231, 76, 60, 0.4);
+}
+
+[data-color-scheme="dark"] .card-integrity-messages {
+  background-color: rgba(52, 152, 219, 0.15);
+  border-left-color: #5dade2;
+}
+
+[data-color-scheme="dark"] .card-integrity-messages i {
+  color: #5dade2;
+}
+
+[data-color-scheme="dark"] .kanban-card[data-integrity-status="error"] {
+  border-color: rgba(231, 76, 60, 0.5);
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+}
+
+[data-color-scheme="dark"] .kanban-card[data-integrity-status="warning"] {
+  border-color: rgba(243, 156, 18, 0.4);
+  box-shadow: 0 2px 4px rgba(243, 156, 18, 0.15);
+}
+
+[data-color-scheme="dark"] .card-priority.priority-critical {
+  background-color: rgba(192, 57, 43, 0.3);
+  color: #ec7063;
+}
+
 /* CSS Custom Properties for Theming */
 :root {
   /* Light Theme */

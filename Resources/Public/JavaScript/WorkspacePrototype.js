@@ -610,6 +610,17 @@ export class WorkspaceBoard {
       priority = 'low';
     }
 
+    // Process integrity data from TYPO3 Workspaces IntegrityService
+    const integrity = item.integrity || { status: 'success', messages: '' };
+    
+    // Adjust priority based on integrity status
+    let adjustedPriority = priority;
+    if (integrity.status === 'error') {
+      adjustedPriority = 'critical'; // New priority level for blocking issues
+    } else if (integrity.status === 'warning' && priority !== 'high') {
+      adjustedPriority = 'high'; // Elevate to high if not already
+    }
+
     // Create the card object
     return {
       id: item.id || `${item.table}_${item.uid}`,
@@ -622,11 +633,17 @@ export class WorkspaceBoard {
       modifiedDate: this.convertWorkspaceDate(item.lastChangedFormatted),
       stage: item.stage || 0,
       language: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',
-      priority: priority,
+      priority: adjustedPriority,
+      originalPriority: priority, // Preserve original priority for reference
+      integrityStatus: integrity.status,
+      integrityMessages: integrity.messages,
       hasSchedule: false, // TYPO3 workspace doesn't have built-in scheduling
       scheduleText: item.stage === -10 ? 'Published' : null,
       comments: 0, // Would need separate API call to get comments
       assignedUsers: [], // Would need separate API call to get assigned users
+      t3ver_oid: item.t3ver_oid || null,
+      table: item.table,
+      pid: item.livepid || null,
     };
   });
 }

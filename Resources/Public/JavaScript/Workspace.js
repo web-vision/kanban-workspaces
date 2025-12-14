@@ -320,6 +320,18 @@ export class WorkspaceBoard {
       addCommentBtn.addEventListener("click", () => this.handleAddComment())
     }
 
+    // Revert stage button
+    const revertStageBtn = document.getElementById("revertBtn")
+    if (revertStageBtn) {
+      revertStageBtn.addEventListener("click", () => this.handleRevertStage())
+    }
+
+    // Next stage button
+    const nextStageBtn = document.getElementById("approveBtn")
+    if (nextStageBtn) {
+      nextStageBtn.addEventListener("click", () => this.handleNextStage())
+    }    
+
     // Setup workspace modal tabs
     this.setupWorkspaceModalTabs()
   }
@@ -741,6 +753,8 @@ export class WorkspaceBoard {
         t3ver_oid: item.t3ver_oid || null,
         table: item.table,
         pid: item.livepid || null,
+        nextStage : item.value_nextStage,
+        prevStage : item.value_prevStage
       };
     });
   }
@@ -3129,6 +3143,137 @@ export class WorkspaceBoard {
         // Re-enable button
         addCommentBtn.disabled = false
         addCommentBtn.innerHTML = '<i class="fas fa-comment"></i> Add Comment'
+      })
+  }
+
+    handleRevertStage() {
+    const revertBtn = document.getElementById("revertBtn")
+    
+    if (!revertBtn) return
+    
+    // Get the current card ID from the modal
+    const modalMeta = document.getElementById("modalMeta")
+    if (!modalMeta) return
+
+    const cardId = modalMeta.getAttribute('data-id')
+    
+    // Find the card by title (you may want to store cardId differently)
+    const currentCard = this.getCardById(cardId);
+    if (!currentCard) {
+      this.showToast("Unable to identify current card", "error")
+      return
+    }
+
+    // Prepare API request
+    const url = this.options.getDataApiUrl || this.options.apiUrl
+    if (!url) {
+      console.error('No API URL configured for adding comments')
+      this.showToast("API URL not configured", "error")
+      return
+    }
+    
+    const payload = {
+      action: "Actions",
+      method: "sendToPrevStageExecute",
+      data: [{
+        "affects": {
+            "table": currentCard.table,
+            "nextStage": currentCard.prevStage,
+            "t3ver_oid": currentCard.t3ver_oid,
+            "uid": currentCard.uid,
+            "elements": []
+        }
+      }]
+    }
+    
+    // Send AJAX POST request
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result && result.success !== false) {          
+          this.loadData();
+        } else {
+          throw new Error((result && result.message) || "Failed to move")
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to move:", error)
+        this.showToast("Failed to move: " + error.message, "error")
+      })
+      .finally(() => {
+        this.closePreviewModal()
+      })
+  }
+
+  handleNextStage() {
+    const approveBtn = document.getElementById("approveBtn")
+    if (!approveBtn) return
+
+    // Get the current card ID from the modal
+    const modalMeta = document.getElementById("modalMeta")
+    if (!modalMeta) return
+
+    const cardId = modalMeta.getAttribute('data-id')
+    
+    // Find the card by title (you may want to store cardId differently)
+    const currentCard = this.getCardById(cardId);
+    if (!currentCard) {
+      this.showToast("Unable to identify current card", "error")
+      return
+    }
+
+    // Prepare API request
+    const url = this.options.getDataApiUrl || this.options.apiUrl
+    if (!url) {
+      console.error('No API URL configured for adding comments')
+      this.showToast("API URL not configured", "error")
+      return
+    }
+    
+    const payload = {
+      action: "Actions",
+      method: "sendToNextStageExecute",
+      data: [{
+        "affects": {
+            "table": currentCard.table,
+            "nextStage": currentCard.nextStage,
+            "t3ver_oid": currentCard.t3ver_oid,
+            "uid": currentCard.uid,
+            "elements": []
+        }
+      }]
+    }
+    
+    // Send AJAX POST request
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(response => response.json())
+      .then(result => {
+        if (result && result.success !== false) {          
+          this.loadData();
+        } else {
+          throw new Error((result && result.message) || "Failed to move")
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to move:", error)
+        this.showToast("Failed to move: " + error.message, "error")
+      })
+      .finally(() => {
+        this.closePreviewModal()
       })
   }
 

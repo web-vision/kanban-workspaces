@@ -45,6 +45,7 @@ class KanbanWorkspacesController extends ActionController
      */
     public function indexAction(): ResponseInterface
     {
+        $moduleData = $this->request->getAttribute('moduleData');
         $backendUser = $this->getBackendUser();
         $queryParams = $this->request->getQueryParams();
         $activeWorkspace = $backendUser->workspace;
@@ -80,6 +81,10 @@ class KanbanWorkspacesController extends ActionController
             ];
         }
 
+        $selectedLanguage = (string)$moduleData->get('language','all');
+        $selectedDepth = (int)$moduleData->get('depth', '0');
+        $selectedStage = (int)$moduleData->get('stage', '-99');        
+
         // Assign variables to template
         $this->moduleTemplate->assignMultiple([
             'moduleTitle' => 'Kanban Workspaces',
@@ -110,6 +115,9 @@ class KanbanWorkspacesController extends ActionController
             'pageUid' => $pageUid,
             'workspaceId' => $activeWorkspace,
             'stages' => $stageConfig,
+            'selectedLanguage' => $selectedLanguage,
+            'selectedDepth' => $selectedDepth,
+            'selectedStage' => $selectedStage,
             'filters' => [
                 'depth' => [
                     'label' => 'Depth',

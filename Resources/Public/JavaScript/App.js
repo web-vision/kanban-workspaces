@@ -8,6 +8,7 @@ function initWorkspaceApp() {
   const workspaceBoard = new WorkspaceBoard("#kanbanBoard", {
     apiUrl: "/typo3/ajax/workspace",
     getDataApiUrl: (typeof TYPO3 !== 'undefined' && TYPO3.settings && TYPO3.settings.ajaxUrls && TYPO3.settings.ajaxUrls.workspace_dispatch) || "/typo3/ajax/workspace",
+    getProcessApiUrl: (typeof TYPO3 !== 'undefined' && TYPO3.settings && TYPO3.settings.ajaxUrls && TYPO3.settings.ajaxUrls.usersettings_process) || "/typo3/ajax/process",
     enableDragDrop: true,
     enableFilters: true,
     enableSearch: true,

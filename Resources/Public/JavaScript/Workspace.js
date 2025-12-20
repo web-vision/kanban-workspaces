@@ -149,6 +149,10 @@ export class WorkspaceBoard {
         this.data.columnSorts[stage.id] = null
       })
 
+      this.data.activeFilters.depth = window.WorkspaceConfig.selectedDepth ? [String(window.WorkspaceConfig.selectedDepth)] : [];
+      this.data.activeFilters.language = window.WorkspaceConfig.selectedLanguage? [String(window.WorkspaceConfig.selectedLanguage)] : [];
+      this.data.activeFilters.stage = window.WorkspaceConfig.selectedStage? [String(window.WorkspaceConfig.selectedStage)] : [];
+
       if (this.options.mockData && window.WorkspaceConfig.mockData) {
         this.data.cards = [...window.WorkspaceConfig.mockData.cards]
       }
@@ -677,6 +681,32 @@ export class WorkspaceBoard {
         
         return details;
       });
+  }
+
+  processData(action, filterType, filterValue) {
+    const url = this.options.getProcessApiUrl || this.options.apiUrl;
+    
+    if (!url) {
+      console.error('No API URL configured');
+      return Promise.reject(new Error('No API URL configured'));
+    }
+
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append(
+      'key',
+      `moduleData.web_kanbanworkspaces.${filterType}`
+    );
+    formData.append('value', filterValue);
+
+    return fetch(url, {
+      method: "POST",
+      body: formData,
+    })
+    .then((response) => response.json())
+    .then((apiResponse) => {
+      console.log(apiResponse);
+    });
   }
 
   convertWorkspaceDataToCards(apiResponse) {
@@ -2777,6 +2807,7 @@ export class WorkspaceBoard {
     }
 
     this.updateActiveFiltersCount()
+    this.processData('set',filterType, filterValue)
     this.loadData()
     // this.renderBoard()
   }
@@ -2793,16 +2824,19 @@ export class WorkspaceBoard {
     const depthSelect = document.querySelector('#filter-depth')
     if (depthSelect) {
       depthSelect.value = '0' // This Page
+      this.processData('clear', 'depth', '0')
     }
 
     const languageSelect = document.querySelector('#filter-language')
     if (languageSelect) {
       languageSelect.value = 'all' // All Languages
+      this.processData('clear', 'language', 'all')
     }
 
     const stageSelect = document.querySelector('#filter-stage')
     if (stageSelect) {
       stageSelect.value = '-99' // All Stages
+      this.processData('clear', 'stage', '-99')
     }
 
     this.updateActiveFiltersCount()
@@ -3887,23 +3921,14 @@ export class WorkspaceBoard {
 
   formatDate(dateString) {
     const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now - date)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const pad = (n) => String(n).padStart(2, '0');
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1);
+    const year = date.getFullYear();
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
 
-    if (diffDays === 0) {
-      return "Today"
-    } else if (diffDays === 1) {
-      return "Yesterday"
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`
-    } else {
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
-      })
-    }
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 
   getInitials(name) {

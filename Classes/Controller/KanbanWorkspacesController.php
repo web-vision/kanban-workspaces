@@ -108,6 +108,16 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addInlineSetting('FormEngine', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('record_edit'));
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('web_layout'));
+        
+        // Add TYPO3.lang labels for workspace stage transitions
+        $this->pageRenderer->addInlineLanguageLabelArray([
+            'button.ok' => 'OK',
+            'button.cancel' => 'Cancel',
+            'workspace.sendToNextStageWindow' => 'Send to next stage',
+            'workspace.sendToPrevStageWindow' => 'Send to previous stage',
+            'label_doaction_send' => 'Send',
+            'tooltip.sendToStage' => 'Send to stage',
+        ]);
 
         // Add CSS and JS
         $this->addAssets();

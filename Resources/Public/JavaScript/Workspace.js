@@ -3,6 +3,7 @@ import Modal from '@typo3/backend/modal.js';
 import { SeverityEnum } from '@typo3/backend/enum/severity.js';
 import DeferredAction from '@typo3/backend/action-button/deferred-action.js';
 import Icons from '@typo3/backend/icons.js';
+import '@typo3/workspaces/renderable/send-to-stage-form.js';
 
 (function() {
   let isDragging = false;
@@ -3180,7 +3181,7 @@ export class WorkspaceBoard {
       })
   }
 
-    handleRevertStage() {
+    async handleRevertStage() {
     const revertBtn = document.getElementById("revertBtn")
     
     if (!revertBtn) return
@@ -3201,52 +3202,126 @@ export class WorkspaceBoard {
     // Prepare API request
     const url = this.options.getDataApiUrl || this.options.apiUrl
     if (!url) {
-      console.error('No API URL configured for adding comments')
+      console.error('No API URL configured for stage transition')
       this.showToast("API URL not configured", "error")
       return
     }
     
-    const payload = {
+    // Step 1: Fetch stage form data by calling sendToPrevStageWindow
+    const windowPayload = {
       action: "Actions",
-      method: "sendToPrevStageExecute",
-      data: [{
-        "affects": {
-            "table": currentCard.table,
-            "nextStage": currentCard.prevStage,
-            "t3ver_oid": currentCard.t3ver_oid,
-            "uid": currentCard.uid,
-            "elements": []
-        }
-      }]
+      method: "sendToPrevStageWindow",
+      data: [currentCard.uid, currentCard.table]
     }
     
-    // Send AJAX POST request
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then(response => response.json())
-      .then(result => {
-        if (result && result.success !== false) {          
-          this.loadData();
-        } else {
-          throw new Error((result && result.message) || "Failed to move")
+    try {
+      const windowResponse = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify(windowPayload),
+      })
+      
+      const windowResult = await windowResponse.json()
+      
+      if (!windowResult || windowResult.length === 0 || !windowResult[0].result) {
+        throw new Error("Invalid response from sendToPrevStageWindow")
+      }
+      
+      const formData = windowResult[0].result
+      
+      // Step 2: Show modal with send-to-stage-form Web Component
+      const modal = Modal.advanced({
+        title: TYPO3.lang['workspace.sendToPrevStageWindow'] || 'Send to previous stage',
+        content: '<div class="modal-loading"></div>',
+        severity: SeverityEnum.info,
+        buttons: [
+          {
+            text: TYPO3.lang['button.cancel'] || 'Cancel',
+            active: true,
+            btnClass: "btn-default",
+            name: "cancel",
+            trigger: (e, modal) => {
+              modal.hideModal()
+            }
+          },
+          {
+            text: TYPO3.lang['button.ok'] || 'OK',
+            btnClass: "btn-primary",
+            name: "ok"
+          }
+        ],
+        callback: (modalElement) => {
+          const form = modalElement.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
+          form.data = formData
+          form.TYPO3lang = TYPO3.lang
+          modalElement.querySelector('.t3js-modal-body').replaceChildren(form)
         }
       })
-      .catch((error) => {
-        console.error("Failed to move:", error)
-        this.showToast("Failed to move: " + error.message, "error")
+      
+      // Step 3: Handle OK button click to execute stage transition
+      modal.addEventListener('button.clicked', async (e) => {
+        if (e.detail.target.name === 'ok') {
+          const form = modal.querySelector('typo3-workspaces-send-to-stage-form')
+          
+          // Extract form values
+          const commentsField = form.querySelector('[name="comments"]')
+          const comments = commentsField ? commentsField.value : ''
+          
+          const recipientCheckboxes = form.querySelectorAll('input[name^="recipients"]:checked')
+          const recipients = Array.from(recipientCheckboxes).map(cb => parseInt(cb.value))
+          
+          const additionalField = form.querySelector('[name="additional"]')
+          const additional = additionalField ? additionalField.value : ''
+          
+          // Step 4: Execute stage transition
+          const executePayload = {
+            action: "Actions",
+            method: "sendToPrevStageExecute",
+            data: [{
+              affects: formData.affects,
+              comments: comments,
+              recipients: recipients,
+              additional: additional
+            }]
+          }
+          
+          try {
+            const executeResponse = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+              },
+              body: JSON.stringify(executePayload),
+            })
+            
+            const executeResult = await executeResponse.json()
+            
+            if (executeResult && executeResult[0]?.result?.success !== false) {
+              this.loadData()
+              modal.hideModal()
+              this.closePreviewModal()
+              this.showToast("Moved to previous stage successfully", "success")
+            } else {
+              throw new Error(executeResult[0]?.result?.message || "Failed to move")
+            }
+          } catch (error) {
+            console.error("Failed to move:", error)
+            this.showToast("Failed to move: " + error.message, "error")
+          }
+        }
       })
-      .finally(() => {
-        this.closePreviewModal()
-      })
+      
+    } catch (error) {
+      console.error("Failed to load stage form:", error)
+      this.showToast("Failed to load stage form: " + error.message, "error")
+    }
   }
 
-  handleNextStage() {
+  async handleNextStage() {
     const approveBtn = document.getElementById("approveBtn")
     if (!approveBtn) return
 
@@ -3266,48 +3341,123 @@ export class WorkspaceBoard {
     // Prepare API request
     const url = this.options.getDataApiUrl || this.options.apiUrl
     if (!url) {
-      console.error('No API URL configured for adding comments')
+      console.error('No API URL configured for stage transition')
       this.showToast("API URL not configured", "error")
       return
     }
     
-    const payload = {
+    // Step 1: Fetch stage form data by calling sendToNextStageWindow
+    const windowPayload = {
       action: "Actions",
-      method: "sendToNextStageExecute",
-      data: [{
-        "affects": {
-            "table": currentCard.table,
-            "nextStage": currentCard.nextStage,
-            "t3ver_oid": currentCard.t3ver_oid,
-            "uid": currentCard.uid,
-            "elements": []
-        }
-      }]
+      method: "sendToNextStageWindow",
+      data: [currentCard.uid, currentCard.table, currentCard.t3ver_oid]
     }
     
-    // Send AJAX POST request
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(payload),
-    })
-      .then(response => response.json())
-      .then(result => {
-        if (result && result.success !== false) {          
-          this.loadData();
-        } else {
-          throw new Error((result && result.message) || "Failed to move")
+    try {
+      const windowResponse = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify(windowPayload),
+      })
+      
+      const windowResult = await windowResponse.json()
+      
+      if (!windowResult || windowResult.length === 0 || !windowResult[0].result) {
+        throw new Error("Invalid response from sendToNextStageWindow")
+      }
+      
+      const formData = windowResult[0].result
+      
+      // Step 2: Show modal with send-to-stage-form Web Component
+      const modal = Modal.advanced({
+        title: TYPO3.lang['workspace.sendToNextStageWindow'] || 'Send to next stage',
+        content: '<div class="modal-loading"></div>',
+        severity: SeverityEnum.info,
+        buttons: [
+          {
+            text: TYPO3.lang['button.cancel'] || 'Cancel',
+            active: true,
+            btnClass: "btn-default",
+            name: "cancel",
+            trigger: (e, modal) => {
+              modal.hideModal()
+            }
+          },
+          {
+            text: TYPO3.lang['button.ok'] || 'OK',
+            btnClass: "btn-primary",
+            name: "ok"
+          }
+        ],
+        callback: (modalElement) => {
+          const form = modalElement.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
+          form.data = formData
+          form.TYPO3lang = TYPO3.lang
+          modalElement.querySelector('.t3js-modal-body').replaceChildren(form)
         }
       })
-      .catch((error) => {
-        console.error("Failed to move:", error)
-        this.showToast("Failed to move: " + error.message, "error")
+      
+      // Step 3: Handle OK button click to execute stage transition
+      modal.addEventListener('button.clicked', async (e) => {
+        if (e.detail.target.name === 'ok') {
+          const form = modal.querySelector('typo3-workspaces-send-to-stage-form')
+          
+          // Extract form values
+          const commentsField = form.querySelector('[name="comments"]')
+          const comments = commentsField ? commentsField.value : ''
+          
+          const recipientCheckboxes = form.querySelectorAll('input[name^="recipients"]:checked')
+          const recipients = Array.from(recipientCheckboxes).map(cb => parseInt(cb.value))
+          
+          const additionalField = form.querySelector('[name="additional"]')
+          const additional = additionalField ? additionalField.value : ''
+          
+          // Step 4: Execute stage transition
+          const executePayload = {
+            action: "Actions",
+            method: "sendToNextStageExecute",
+            data: [{
+              affects: formData.affects,
+              comments: comments,
+              recipients: recipients,
+              additional: additional
+            }]
+          }
+          
+          try {
+            const executeResponse = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+              },
+              body: JSON.stringify(executePayload),
+            })
+            
+            const executeResult = await executeResponse.json()
+            
+            if (executeResult && executeResult[0]?.result?.success !== false) {
+              this.loadData()
+              modal.hideModal()
+              this.closePreviewModal()
+              this.showToast("Moved to next stage successfully", "success")
+            } else {
+              throw new Error(executeResult[0]?.result?.message || "Failed to move")
+            }
+          } catch (error) {
+            console.error("Failed to move:", error)
+            this.showToast("Failed to move: " + error.message, "error")
+          }
+        }
       })
-      .finally(() => {
-        this.closePreviewModal()
+      
+    } catch (error) {
+      console.error("Failed to load stage form:", error)
+      this.showToast("Failed to load stage form: " + error.message, "error")
+    }
       })
   }
 

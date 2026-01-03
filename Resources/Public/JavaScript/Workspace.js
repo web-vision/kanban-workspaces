@@ -255,7 +255,7 @@ export class WorkspaceBoard {
     }
 
     // Modal tabs
-    const tabBtns = document.querySelectorAll(".modal-container:not(#stageSettingsModal) .tab-btn")
+    const tabBtns = document.querySelectorAll("#previewModal .nav-link")
     tabBtns.forEach((btn) => {
       btn.addEventListener("click", (e) => {
         this.switchModalTab(e.target.dataset.tab)
@@ -2974,13 +2974,13 @@ export class WorkspaceBoard {
 
   switchModalTab(tabName) {
     document
-      .querySelectorAll(".modal-container:not(#stageSettingsModal) .tab-btn")
+      .querySelectorAll("#previewModal .nav-link")
       .forEach((btn) => btn.classList.remove("active"))
     document
-      .querySelectorAll(".modal-container:not(#stageSettingsModal) .tab-content")
+      .querySelectorAll("#previewModal .tab-pane")
       .forEach((content) => content.classList.remove("active"))
 
-    const selectedTab = document.querySelector(`.modal-container:not(#stageSettingsModal) [data-tab="${tabName}"]`)
+    const selectedTab = document.querySelector(`#previewModal [data-tab="${tabName}"]`)
     const selectedContent = document.getElementById(`${tabName}Tab`)
 
     if (selectedTab) selectedTab.classList.add("active")

@@ -102,62 +102,72 @@
 
    <!-- Preview Modal -->
    <div class="modal-overlay" id="previewModal" style="display: none;">
-       <div class="modal-container">
-           <div class="modal-header">
-               <div class="modal-title-section">
-                   <h4 class="modal-title" id="modalTitle">Card Title</h4>
-                   <div class="modal-meta" id="modalMeta">
-                       <!-- Card metadata will be inserted here -->
-                   </div>
-               </div>
-               <button class="modal-close" id="closeModal">
-                   <i class="fas fa-times"></i>
-               </button>
-           </div>
-
-           <div class="modal-tabs">
-               <button class="tab-btn active" data-tab="changes">Summary of changes</button>
-               <button class="tab-btn" data-tab="comments">Activity (<span id="commentsCount">0</span>)</button>
-               <button class="tab-btn" data-tab="history">History</button>
-           </div>
-
+       <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
            <div class="modal-content">
-               <div class="tab-content active" id="changesTab">
-                   <div class="changes-container" id="changesContainer">
-                       <!-- Summary of changes (diff data from TYPO3) will be inserted here -->
+               <div class="modal-header">
+                   <div class="modal-title-section">
+                       <h4 class="modal-title" id="modalTitle">Card Title</h4>
+                       <div class="modal-meta" id="modalMeta">
+                           <!-- Card metadata will be inserted here -->
+                       </div>
+                   </div>
+                   <button class="modal-close btn-close" id="closeModal" aria-label="Close">
+                       <i class="fas fa-times"></i>
+                   </button>
+               </div>
+
+               <ul class="nav nav-tabs" role="tablist">
+                   <li class="nav-item" role="presentation">
+                       <button class="nav-link active" data-tab="changes" role="tab" aria-selected="true">Summary of changes</button>
+                   </li>
+                   <li class="nav-item" role="presentation">
+                       <button class="nav-link" data-tab="comments" role="tab" aria-selected="false">Activity (<span id="commentsCount">0</span>)</button>
+                   </li>
+                   <li class="nav-item" role="presentation">
+                       <button class="nav-link" data-tab="history" role="tab" aria-selected="false">History</button>
+                   </li>
+               </ul>
+
+               <div class="modal-body">
+                   <div class="tab-content">
+                       <div class="tab-pane active" id="changesTab" role="tabpanel">
+                           <div class="changes-container" id="changesContainer">
+                               <!-- Summary of changes (diff data from TYPO3) will be inserted here -->
+                           </div>
+                       </div>
+
+                       <div class="tab-pane" id="commentsTab" role="tabpanel">
+                           <div class="comments-container" id="commentsContainer">
+                               <!-- Comments will be inserted here -->
+                           </div>
+                           <div class="comment-form">
+                               <textarea id="newComment" class="form-control" placeholder="Add a comment..." rows="3"></textarea>
+                               <button class="btn btn-primary" id="addComment">
+                                   <i class="fas fa-comment"></i> Add Comment
+                               </button>
+                           </div>
+                       </div>
+
+                       <div class="tab-pane" id="historyTab" role="tabpanel">
+                           <div class="history-container" id="historyContainer">
+                               <!-- History will be inserted here -->
+                           </div>
+                       </div>
                    </div>
                </div>
 
-               <div class="tab-content" id="commentsTab">
-                   <div class="comments-container" id="commentsContainer">
-                       <!-- Comments will be inserted here -->
-                   </div>
-                   <div class="comment-form">
-                       <textarea id="newComment" placeholder="Add a comment..." rows="3"></textarea>
-                       <button class="btn btn-primary" id="addComment">
-                           <i class="fas fa-comment"></i> Add Comment
+               <div class="modal-footer">
+                   <div class="modal-actions-left">
+                       <button class="btn btn-outline" id="revertBtn">
+                           <i class="fas fa-undo"></i> Revert
                        </button>
                    </div>
-               </div>
-
-               <div class="tab-content" id="historyTab">
-                   <div class="history-container" id="historyContainer">
-                       <!-- History will be inserted here -->
+                   <div class="modal-actions-right">
+                       <button class="btn btn-outline" id="closeModalBtn">Close</button>
+                       <button class="btn btn-primary" id="approveBtn">
+                           <i class="fas fa-thumbs-up"></i> Approve
+                       </button>
                    </div>
-               </div>
-           </div>
-
-           <div class="modal-footer">
-               <div class="modal-actions-left">
-                   <button class="btn btn-outline" id="revertBtn">
-                       <i class="fas fa-undo"></i> Revert
-                   </button>
-               </div>
-               <div class="modal-actions-right">
-                   <button class="btn btn-outline" id="closeModalBtn">Close</button>
-                   <button class="btn btn-primary" id="approveBtn">
-                       <i class="fas fa-thumbs-up"></i> Approve
-                   </button>
                </div>
            </div>
        </div>

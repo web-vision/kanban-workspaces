@@ -2391,13 +2391,21 @@ export class WorkspaceBoard {
           const sourceStage = this.getStageById(this.ui.draggedCard.stage)
 
           if (targetStage && sourceStage && targetStage.id != sourceStage.id) {
-            // moveCard will add to history and emit card:moved
-            if (this.ui.selectedCards.size > 0) {
-              const selectedCards = Array.from(this.ui.selectedCards)
-              this.moveCard(selectedCards, stageId, true)
+            // Determine if moving to next or previous stage
+            const sourceStageIndex = this.data.stages.findIndex(s => s.id === sourceStage.id)
+            const targetStageIndex = this.data.stages.findIndex(s => s.id === targetStage.id)
+            
+            // Show notification modal before stage transition (reusing existing logic)
+            const cardIds = this.ui.selectedCards.size > 0 ? Array.from(this.ui.selectedCards) : [cardId]
+            
+            if (targetStageIndex > sourceStageIndex) {
+              // Moving forward - use next stage workflow
+              this.handleStageTransitionWithModal(cardIds, 'next', targetStage, sourceStage)
             } else {
-              this.moveCard(cardId, stageId, true)
+              // Moving backward - use prev stage workflow
+              this.handleStageTransitionWithModal(cardIds, 'prev', targetStage, sourceStage)
             }
+            
             this.emit("card:drop", this.ui.draggedCard, targetStage, sourceStage)
           }
         }
@@ -3179,6 +3187,184 @@ export class WorkspaceBoard {
         addCommentBtn.disabled = false
         addCommentBtn.innerHTML = '<i class="fas fa-comment"></i> Add Comment'
       })
+  }
+
+  /**
+   * Handle stage transition with modal for drag and drop
+   * Reuses existing sendToStageWindow/Execute logic
+   */
+  async handleStageTransitionWithModal(cardIds, direction, targetStage, sourceStage) {
+    try {
+      const url = TYPO3.settings.ajaxUrls["workspace_dispatch"]
+      if (!url) {
+        console.error("workspace_dispatch URL not available")
+        return
+      }
+
+      // Use the first card for the API call (TYPO3 workspaces handles one card at a time)
+      const cardId = Array.isArray(cardIds) ? cardIds[0] : cardIds
+      
+      // Get the card object to extract workspace version info
+      const card = this.getCardById(cardId)
+      if (!card) {
+        console.error("Card not found:", cardId)
+        this.showToast("Card not found", "error")
+        return
+      }
+      
+      // Step 1: Get window data using sendToNextStageWindow or sendToPrevStageWindow
+      const method = direction === 'next' ? 'sendToNextStageWindow' : 'sendToPrevStageWindow'
+      const executeMethod = direction === 'next' ? 'sendToNextStageExecute' : 'sendToPrevStageExecute'
+      
+      // Build payload with correct parameter structure
+      // sendToNextStageWindow expects: ($uid, $table, $t3ver_oid)
+      // sendToPrevStageWindow expects: ($uid, $table)
+      const payload = {
+        action: "Actions",
+        method: method,
+        data: direction === 'next' 
+          ? [card.uid, card.table, card.t3ver_oid]
+          : [card.uid, card.table]
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log(`${method} API response:`, data)
+      
+      if (!data || !data[0] || !data[0].result) {
+        throw new Error(`Invalid response from ${method}`)
+      }
+
+      const formData = data[0].result
+      
+      // Step 2: Create modal with Web Component form
+      await customElements.whenDefined('typo3-workspaces-send-to-stage-form')
+      
+      const modal = Modal.advanced({
+        title: TYPO3.lang['actionSendToStage'] || 'Send to stage',
+        content: '',
+        severity: SeverityEnum.info,
+        buttons: [
+          {
+            text: TYPO3.lang['cancel'] || 'Cancel',
+            active: true,
+            btnClass: "btn-default",
+            name: "cancel",
+            trigger: () => {
+              modal.hideModal()
+              // Revert the visual move since user cancelled
+              this.renderBoard()
+            }
+          },
+          {
+            text: TYPO3.lang['ok'] || 'OK',
+            btnClass: "btn-primary",
+            name: "ok"
+          }
+        ],
+        callback: (currentModal) => {
+          const form = currentModal.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
+          form.data = formData
+          form.TYPO3lang = TYPO3.lang
+          
+          currentModal.querySelector('.t3js-modal-body').replaceChildren(form)
+          
+          if (form.updateComplete) {
+            form.updateComplete.then(() => {
+              const formElement = form.querySelector('form')
+              if (!formElement) {
+                console.warn('Using fallback form renderer')
+                this.renderStageFallbackForm(currentModal, formData)
+              }
+            })
+          } else {
+            this.renderStageFallbackForm(currentModal, formData)
+          }
+        }
+      })
+      
+      // Step 3: Handle OK button click to execute stage transition
+      modal.addEventListener('button.clicked', async (evt) => {
+        if (evt.target.name === 'ok') {
+          let formElement = modal.querySelector('typo3-workspaces-send-to-stage-form form')
+          if (!formElement) {
+            formElement = modal.querySelector('.t3js-modal-body form')
+          }
+          
+          if (!formElement) {
+            console.error('Form not found in modal')
+            this.showToast("Form not found", "error")
+            return
+          }
+          
+          const formValues = Utility.convertFormToObject(formElement)
+          formValues.affects = formData.affects
+          
+          const executePayload = {
+            action: "Actions",
+            method: executeMethod,
+            data: [formValues]
+          }
+          
+          try {
+            const executeResponse = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+              },
+              body: JSON.stringify(executePayload),
+            })
+            
+            if (!executeResponse.ok) {
+              throw new Error(`HTTP error! status: ${executeResponse.status}`)
+            }
+            
+            const executeResult = await executeResponse.json()
+            console.log(`${executeMethod} response:`, executeResult)
+            
+            if (executeResult && executeResult[0]?.result?.success !== false) {
+              // Now actually move the card(s) since notification was sent
+              this.moveCard(cardIds, targetStage.id, true)
+              
+              Notification.success(
+                TYPO3.lang['actionSendToStage'] || 'Send to stage',
+                `Content moved to ${targetStage.label} and notifications sent`
+              )
+              modal.hideModal()
+            } else {
+              throw new Error(executeResult[0]?.result?.message || "Stage transition failed")
+            }
+          } catch (error) {
+            console.error("Failed to execute stage transition:", error)
+            Notification.error(
+              'Error',
+              "Failed to execute stage transition: " + error.message
+            )
+            // Revert the visual state on error
+            this.renderBoard()
+          }
+        }
+      })
+      
+    } catch (error) {
+      console.error("Failed to load stage form:", error)
+      this.showToast("Failed to load stage form: " + error.message, "error")
+      // Revert the visual state on error
+      this.renderBoard()
+    }
   }
 
     async handleRevertStage() {

@@ -109,14 +109,18 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('web_layout'));
         
-        // Add TYPO3.lang labels for workspace stage transitions
+        // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([
-            'button.ok' => 'OK',
-            'button.cancel' => 'Cancel',
-            'workspace.sendToNextStageWindow' => 'Send to next stage',
-            'workspace.sendToPrevStageWindow' => 'Send to previous stage',
-            'label_doaction_send' => 'Send',
-            'tooltip.sendToStage' => 'Send to stage',
+            'ok' => 'OK',
+            'cancel' => 'Cancel',
+            'actionSendToStage' => 'Send to stage',
+            'window.sendToNextStageWindow.itemsWillBeSentTo' => 'The selected element(s) will be sent to',
+            'window.sendToNextStageWindow.selectAll' => 'Select all',
+            'window.sendToNextStageWindow.deselectAll' => 'Uncheck all',
+            'window.sendToNextStageWindow.sendMailTo' => 'Send mail to',
+            'window.sendToNextStageWindow.additionalRecipients' => 'Additional recipients',
+            'window.sendToNextStageWindow.additionalRecipients.hint' => 'One recipient per line',
+            'window.sendToNextStageWindow.comments' => 'Comments',
         ]);
 
         // Add CSS and JS
@@ -175,6 +179,9 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
         $this->pageRenderer->addJsFile('EXT:kanban_workspaces/Resources/Public/JavaScript/Config.js');
         $this->pageRenderer->loadJavaScriptModule('@devzspace/kanban-workspaces/App.js');
+        
+        // Load workspaces send-to-stage-form Web Component
+        $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');
     }
 
     /**

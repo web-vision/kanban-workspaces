@@ -3,7 +3,7 @@ import Modal from '@typo3/backend/modal.js';
 import { SeverityEnum } from '@typo3/backend/enum/severity.js';
 import DeferredAction from '@typo3/backend/action-button/deferred-action.js';
 import Icons from '@typo3/backend/icons.js';
-import '@typo3/workspaces/renderable/send-to-stage-form.js';
+import Utility from '@typo3/backend/utility.js';
 
 (function() {
   let isDragging = false;
@@ -3192,7 +3192,7 @@ export class WorkspaceBoard {
 
     const cardId = modalMeta.getAttribute('data-id')
     
-    // Find the card by title (you may want to store cardId differently)
+    // Find the card by ID
     const currentCard = this.getCardById(cardId);
     if (!currentCard) {
       this.showToast("Unable to identify current card", "error")
@@ -3232,87 +3232,128 @@ export class WorkspaceBoard {
       
       const formData = windowResult[0].result
       
-      // Step 2: Show modal with send-to-stage-form Web Component
-      const modal = Modal.advanced({
-        title: TYPO3.lang['workspace.sendToPrevStageWindow'] || 'Send to previous stage',
-        content: '<div class="modal-loading"></div>',
-        severity: SeverityEnum.info,
-        buttons: [
-          {
-            text: TYPO3.lang['button.cancel'] || 'Cancel',
-            active: true,
-            btnClass: "btn-default",
-            name: "cancel",
-            trigger: (e, modal) => {
-              modal.hideModal()
-            }
-          },
-          {
-            text: TYPO3.lang['button.ok'] || 'OK',
-            btnClass: "btn-primary",
-            name: "ok"
-          }
-        ],
-        callback: (modalElement) => {
-          const form = modalElement.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
-          form.data = formData
-          form.TYPO3lang = TYPO3.lang
-          modalElement.querySelector('.t3js-modal-body').replaceChildren(form)
-        }
-      })
+      // Debug: Log form data structure
+      console.log('sendToPrevStageWindow API response:', windowResult)
+      console.log('Form data:', formData)
+      console.log('Has comments?', formData.comments)
+      console.log('Has additional?', formData.additional)
+      console.log('Has sendMailTo?', formData.sendMailTo)
       
-      // Step 3: Handle OK button click to execute stage transition
-      modal.addEventListener('button.clicked', async (e) => {
-        if (e.detail.target.name === 'ok') {
-          const form = modal.querySelector('typo3-workspaces-send-to-stage-form')
-          
-          // Extract form values
-          const commentsField = form.querySelector('[name="comments"]')
-          const comments = commentsField ? commentsField.value : ''
-          
-          const recipientCheckboxes = form.querySelectorAll('input[name^="recipients"]:checked')
-          const recipients = Array.from(recipientCheckboxes).map(cb => parseInt(cb.value))
-          
-          const additionalField = form.querySelector('[name="additional"]')
-          const additional = additionalField ? additionalField.value : ''
-          
-          // Step 4: Execute stage transition
-          const executePayload = {
-            action: "Actions",
-            method: "sendToPrevStageExecute",
-            data: [{
-              affects: formData.affects,
-              comments: comments,
-              recipients: recipients,
-              additional: additional
-            }]
-          }
-          
-          try {
-            const executeResponse = await fetch(url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              body: JSON.stringify(executePayload),
-            })
-            
-            const executeResult = await executeResponse.json()
-            
-            if (executeResult && executeResult[0]?.result?.success !== false) {
-              this.loadData()
-              modal.hideModal()
-              this.closePreviewModal()
-              this.showToast("Moved to previous stage successfully", "success")
-            } else {
-              throw new Error(executeResult[0]?.result?.message || "Failed to move")
+      // Step 2: Wait for Web Component to be defined, then show modal
+      customElements.whenDefined('typo3-workspaces-send-to-stage-form').then(() => {
+        console.log('Web Component is now defined')
+        
+        // Show modal with send-to-stage-form Web Component (exact copy of workspaces implementation)
+        const modal = Modal.advanced({
+          title: TYPO3.lang['actionSendToStage'] || 'Send to stage',
+          content: '<div class="modal-loading"></div>',
+          severity: SeverityEnum.info,
+          buttons: [
+            {
+              text: TYPO3.lang['cancel'] || 'Cancel',
+              active: true,
+              btnClass: "btn-default",
+              name: "cancel",
+              trigger: () => {
+                modal.hideModal()
+              }
+            },
+            {
+              text: TYPO3.lang['ok'] || 'OK',
+              btnClass: "btn-primary",
+              name: "ok"
             }
-          } catch (error) {
-            console.error("Failed to move:", error)
-            this.showToast("Failed to move: " + error.message, "error")
+          ],
+          callback: (currentModal) => {
+            // Create Web Component exactly like workspaces does
+            const form = currentModal.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
+            form.data = formData
+            form.TYPO3lang = TYPO3.lang
+            
+            console.log('Created form element:', form)
+            console.log('Form.data:', form.data)
+            console.log('Form.TYPO3lang:', form.TYPO3lang)
+            
+            // Replace modal body content with form (exactly like workspaces)
+            currentModal.querySelector('.t3js-modal-body').replaceChildren(form)
+            
+            // Wait for Lit component to complete rendering (Lit components render asynchronously)
+            if (form.updateComplete) {
+              form.updateComplete.then(() => {
+                console.log('Lit component rendered successfully')
+                console.log('Form HTML after updateComplete:', form.innerHTML)
+                const formElement = form.querySelector('form')
+                console.log('Inner form element:', formElement)
+                
+                if (!formElement) {
+                  console.error('Form still not rendered after updateComplete!')
+                  console.error('Form outerHTML:', form.outerHTML)
+                  console.warn('Using fallback form renderer')
+                  this.renderStageFallbackForm(currentModal, formData)
+                }
+              })
+            } else {
+              console.warn('updateComplete not available, component might not be Lit element')
+              this.renderStageFallbackForm(currentModal, formData)
+            }
           }
-        }
+        })
+        
+        // Step 3: Handle OK button click to execute stage transition (using Utility.convertFormToObject like workspaces)
+        modal.addEventListener('button.clicked', async (evt) => {
+          if (evt.target.name === 'ok') {
+            // Try Web Component form first, fallback to direct form selector
+            let formElement = modal.querySelector('typo3-workspaces-send-to-stage-form form')
+            if (!formElement) {
+              formElement = modal.querySelector('.t3js-modal-body form')
+            }
+            
+            if (!formElement) {
+              console.error('Form not found in modal')
+              this.showToast("Form not found", "error")
+              return
+            }
+            
+            // Extract form values using Utility.convertFormToObject (exactly like workspaces)
+            const formValues = Utility.convertFormToObject(formElement)
+            formValues.affects = formData.affects
+            
+            // Step 4: Execute stage transition
+            const executePayload = {
+              action: "Actions",
+              method: "sendToPrevStageExecute",
+              data: [formValues]
+            }
+            
+            try {
+              const executeResponse = await fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify(executePayload),
+              })
+              
+              const executeResult = await executeResponse.json()
+              
+              if (executeResult && executeResult[0]?.result?.success !== false) {
+                this.loadData()
+                modal.hideModal()
+                this.closePreviewModal()
+                this.showToast("Moved to previous stage successfully", "success")
+              } else {
+                throw new Error(executeResult[0]?.result?.message || "Failed to move")
+              }
+            } catch (error) {
+              console.error("Failed to move:", error)
+              this.showToast("Failed to move: " + error.message, "error")
+            }
+          }
+        })
+      }).catch(error => {
+        console.error('Web Component not available:', error)
+        this.showToast('Form component not available. Please refresh the page.', 'error')
       })
       
     } catch (error) {
@@ -3331,7 +3372,7 @@ export class WorkspaceBoard {
 
     const cardId = modalMeta.getAttribute('data-id')
     
-    // Find the card by title (you may want to store cardId differently)
+    // Find the card by ID
     const currentCard = this.getCardById(cardId);
     if (!currentCard) {
       this.showToast("Unable to identify current card", "error")
@@ -3371,94 +3412,197 @@ export class WorkspaceBoard {
       
       const formData = windowResult[0].result
       
-      // Step 2: Show modal with send-to-stage-form Web Component
-      const modal = Modal.advanced({
-        title: TYPO3.lang['workspace.sendToNextStageWindow'] || 'Send to next stage',
-        content: '<div class="modal-loading"></div>',
-        severity: SeverityEnum.info,
-        buttons: [
-          {
-            text: TYPO3.lang['button.cancel'] || 'Cancel',
-            active: true,
-            btnClass: "btn-default",
-            name: "cancel",
-            trigger: (e, modal) => {
-              modal.hideModal()
-            }
-          },
-          {
-            text: TYPO3.lang['button.ok'] || 'OK',
-            btnClass: "btn-primary",
-            name: "ok"
-          }
-        ],
-        callback: (modalElement) => {
-          const form = modalElement.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
-          form.data = formData
-          form.TYPO3lang = TYPO3.lang
-          modalElement.querySelector('.t3js-modal-body').replaceChildren(form)
-        }
-      })
+      // Debug: Log form data structure
+      console.log('sendToNextStageWindow API response:', windowResult)
+      console.log('Form data:', formData)
+      console.log('Has comments?', formData.comments)
+      console.log('Has additional?', formData.additional)
+      console.log('Has sendMailTo?', formData.sendMailTo)
       
-      // Step 3: Handle OK button click to execute stage transition
-      modal.addEventListener('button.clicked', async (e) => {
-        if (e.detail.target.name === 'ok') {
-          const form = modal.querySelector('typo3-workspaces-send-to-stage-form')
-          
-          // Extract form values
-          const commentsField = form.querySelector('[name="comments"]')
-          const comments = commentsField ? commentsField.value : ''
-          
-          const recipientCheckboxes = form.querySelectorAll('input[name^="recipients"]:checked')
-          const recipients = Array.from(recipientCheckboxes).map(cb => parseInt(cb.value))
-          
-          const additionalField = form.querySelector('[name="additional"]')
-          const additional = additionalField ? additionalField.value : ''
-          
-          // Step 4: Execute stage transition
-          const executePayload = {
-            action: "Actions",
-            method: "sendToNextStageExecute",
-            data: [{
-              affects: formData.affects,
-              comments: comments,
-              recipients: recipients,
-              additional: additional
-            }]
-          }
-          
-          try {
-            const executeResponse = await fetch(url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              body: JSON.stringify(executePayload),
-            })
-            
-            const executeResult = await executeResponse.json()
-            
-            if (executeResult && executeResult[0]?.result?.success !== false) {
-              this.loadData()
-              modal.hideModal()
-              this.closePreviewModal()
-              this.showToast("Moved to next stage successfully", "success")
-            } else {
-              throw new Error(executeResult[0]?.result?.message || "Failed to move")
+      // Step 2: Wait for Web Component to be defined, then show modal
+      customElements.whenDefined('typo3-workspaces-send-to-stage-form').then(() => {
+        console.log('Web Component is now defined')
+        
+        // Show modal with send-to-stage-form Web Component (exact copy of workspaces implementation)
+        const modal = Modal.advanced({
+          title: TYPO3.lang['actionSendToStage'] || 'Send to stage',
+          content: '<div class="modal-loading"></div>',
+          severity: SeverityEnum.info,
+          buttons: [
+            {
+              text: TYPO3.lang['cancel'] || 'Cancel',
+              active: true,
+              btnClass: "btn-default",
+              name: "cancel",
+              trigger: () => {
+                modal.hideModal()
+              }
+            },
+            {
+              text: TYPO3.lang['ok'] || 'OK',
+              btnClass: "btn-primary",
+              name: "ok"
             }
-          } catch (error) {
-            console.error("Failed to move:", error)
-            this.showToast("Failed to move: " + error.message, "error")
+          ],
+          callback: (currentModal) => {
+            // Create Web Component exactly like workspaces does
+            const form = currentModal.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
+            form.data = formData
+            form.TYPO3lang = TYPO3.lang
+            
+            console.log('Created form element:', form)
+            console.log('Form.data:', form.data)
+            console.log('Form.TYPO3lang:', form.TYPO3lang)
+            
+            // Replace modal body content with form (exactly like workspaces)
+            currentModal.querySelector('.t3js-modal-body').replaceChildren(form)
+            
+            // Wait for Lit component to complete rendering (Lit components render asynchronously)
+            if (form.updateComplete) {
+              form.updateComplete.then(() => {
+                console.log('Lit component rendered successfully')
+                console.log('Form HTML after updateComplete:', form.innerHTML)
+                const formElement = form.querySelector('form')
+                console.log('Inner form element:', formElement)
+                
+                if (!formElement) {
+                  console.error('Form still not rendered after updateComplete!')
+                  console.error('Form outerHTML:', form.outerHTML)
+                  console.warn('Using fallback form renderer')
+                  this.renderStageFallbackForm(currentModal, formData)
+                }
+              })
+            } else {
+              console.warn('updateComplete not available, component might not be Lit element')
+              this.renderStageFallbackForm(currentModal, formData)
+            }
           }
-        }
+        })
+        
+        // Step 3: Handle OK button click to execute stage transition (using Utility.convertFormToObject like workspaces)
+        modal.addEventListener('button.clicked', async (evt) => {
+          if (evt.target.name === 'ok') {
+            // Try Web Component form first, fallback to direct form selector
+            let formElement = modal.querySelector('typo3-workspaces-send-to-stage-form form')
+            if (!formElement) {
+              formElement = modal.querySelector('.t3js-modal-body form')
+            }
+            
+            if (!formElement) {
+              console.error('Form not found in modal')
+              this.showToast("Form not found", "error")
+              return
+            }
+            
+            // Extract form values using Utility.convertFormToObject (exactly like workspaces)
+            const formValues = Utility.convertFormToObject(formElement)
+            formValues.affects = formData.affects
+            
+            // Step 4: Execute stage transition
+            const executePayload = {
+              action: "Actions",
+              method: "sendToNextStageExecute",
+              data: [formValues]
+            }
+            
+            try {
+              const executeResponse = await fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify(executePayload),
+              })
+              
+              const executeResult = await executeResponse.json()
+              
+              if (executeResult && executeResult[0]?.result?.success !== false) {
+                this.loadData()
+                modal.hideModal()
+                this.closePreviewModal()
+                this.showToast("Moved to next stage successfully", "success")
+              } else {
+                throw new Error(executeResult[0]?.result?.message || "Failed to move")
+              }
+            } catch (error) {
+              console.error("Failed to move:", error)
+              this.showToast("Failed to move: " + error.message, "error")
+            }
+          }
+        })
+      }).catch(error => {
+        console.error('Web Component not available:', error)
+        this.showToast('Form component not available. Please refresh the page.', 'error')
       })
       
     } catch (error) {
       console.error("Failed to load stage form:", error)
       this.showToast("Failed to load stage form: " + error.message, "error")
     }
+  }
+
+  /**
+   * Fallback method to render stage form manually if Web Component fails
+   */
+  renderStageFallbackForm(modalElement, formData) {
+    console.log('Rendering fallback form manually')
+    const modalBody = modalElement.querySelector('.t3js-modal-body')
+    
+    let formHtml = '<form>'
+    
+    // Render recipients if available
+    if (formData.sendMailTo && formData.sendMailTo.length > 0) {
+      formHtml += `<label class="form-label">${TYPO3.lang['window.sendToNextStageWindow.itemsWillBeSentTo'] || 'Recipients'}</label>`
+      formData.sendMailTo.forEach(recipient => {
+        formHtml += `
+          <div class="form-check">
+            <input 
+              type="checkbox" 
+              name="recipients" 
+              class="form-check-input t3js-workspace-recipient" 
+              id="${recipient.name}" 
+              value="${recipient.value}"
+              ${recipient.checked ? 'checked' : ''}
+              ${recipient.disabled ? 'disabled' : ''}
+            />
+            <label class="form-check-label" for="${recipient.name}">
+              ${recipient.label}
+            </label>
+          </div>
+        `
       })
+    }
+    
+    // Render additional recipients textarea if available
+    if (formData.additional) {
+      formHtml += `
+        <div class="form-group">
+          <label for="additional" class="form-label">
+            ${TYPO3.lang['window.sendToNextStageWindow.additionalRecipients'] || 'Additional recipients'}
+          </label>
+          <textarea class="form-control" name="additional" id="additional">${formData.additional.value || ''}</textarea>
+          <div class="form-text">
+            ${TYPO3.lang['window.sendToNextStageWindow.additionalRecipients.hint'] || 'One recipient per line'}
+          </div>
+        </div>
+      `
+    }
+    
+    // Render comments textarea (always present)
+    formHtml += `
+      <div class="form-group">
+        <label for="comments" class="form-label">
+          ${TYPO3.lang['window.sendToNextStageWindow.comments'] || 'Comments'}
+        </label>
+        <textarea class="form-control" name="comments" id="comments">${formData.comments && formData.comments.value || ''}</textarea>
+      </div>
+    `
+    
+    formHtml += '</form>'
+    
+    modalBody.innerHTML = formHtml
+    console.log('Fallback form rendered successfully')
   }
 
   loadHistory(cardId) {

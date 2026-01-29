@@ -181,22 +181,6 @@ export class WorkspaceBoard {
       })
     }
 
-    // Workspace selector
-    const workspaceSelector = document.getElementById("workspaceSelector")
-    if (workspaceSelector) {
-      workspaceSelector.addEventListener("change", (e) => {
-        this.switchWorkspace(e.target.value)
-      })
-    }
-
-    // Create workspace button
-    const createWorkspaceBtn = document.getElementById("createWorkspaceBtn")
-    if (createWorkspaceBtn) {
-      createWorkspaceBtn.addEventListener("click", () => {
-        this.openWorkspaceModal()
-      })
-    }
-
     // Filter toggle
     const filterToggle = document.getElementById("filterToggle")
     if (filterToggle) {
@@ -218,9 +202,6 @@ export class WorkspaceBoard {
 
     // Keyboard shortcuts - FIXED
     this.setupKeyboardShortcuts()
-
-    // Bulk operations
-    this.setupBulkOperations()
 
     // Window events
     window.addEventListener(
@@ -263,58 +244,11 @@ export class WorkspaceBoard {
       })
     })
 
-    // Workspace modal
-    const workspaceModal = document.getElementById("workspaceModal")
-    const closeWorkspaceModal = document.getElementById("closeWorkspaceModal")
-    const cancelWorkspaceBtn = document.getElementById("cancelWorkspaceBtn")
-    const saveWorkspaceBtn = document.getElementById("saveWorkspaceBtn")
-
-    if (closeWorkspaceModal) {
-      closeWorkspaceModal.addEventListener("click", () => this.closeWorkspaceModal())
-    }
-    if (cancelWorkspaceBtn) {
-      cancelWorkspaceBtn.addEventListener("click", () => this.closeWorkspaceModal())
-    }
-    if (saveWorkspaceBtn) {
-      saveWorkspaceBtn.addEventListener("click", () => this.saveWorkspace())
-    }
-
-    // Stage Settings Modal (NEW)
-    const stageSettingsModal = document.getElementById("stageSettingsModal")
-    const closeStageSettingsModal = document.getElementById("closeStageSettingsModal")
-    const cancelStageSettingsBtn = document.getElementById("cancelStageSettingsBtn")
-    const saveStageSettingsBtn = document.getElementById("saveStageSettingsBtn")
-
-    if (closeStageSettingsModal) {
-      closeStageSettingsModal.addEventListener("click", () => this.closeStageSettingsModal())
-    }
-    if (cancelStageSettingsBtn) {
-      cancelStageSettingsBtn.addEventListener("click", () => this.closeStageSettingsModal())
-    }
-    if (saveStageSettingsBtn) {
-      saveStageSettingsBtn.addEventListener("click", () => this.saveStageSettings())
-    }
-
     // Close modals on overlay click
     if (previewModal) {
       previewModal.addEventListener("click", (e) => {
         if (e.target === previewModal) {
           this.closePreviewModal()
-        }
-      })
-    }
-
-    if (workspaceModal) {
-      workspaceModal.addEventListener("click", (e) => {
-        if (e.target === workspaceModal) {
-          this.closeWorkspaceModal()
-        }
-      })
-    }
-    if (stageSettingsModal) {
-      stageSettingsModal.addEventListener("click", (e) => {
-        if (e.target === stageSettingsModal) {
-          this.closeStageSettingsModal()
         }
       })
     }
@@ -335,10 +269,7 @@ export class WorkspaceBoard {
     const nextStageBtn = document.getElementById("approveBtn")
     if (nextStageBtn) {
       nextStageBtn.addEventListener("click", () => this.handleNextStage())
-    }    
-
-    // Setup workspace modal tabs
-    this.setupWorkspaceModalTabs()
+    }
   }
 
   // FIXED: Setup keyboard shortcuts
@@ -415,60 +346,6 @@ export class WorkspaceBoard {
     })
   }
 
-  // Setup bulk operations - FIXED
-  setupBulkOperations() {
-    const bulkActionsBar = document.getElementById("bulkActionsBar")
-    const selectedCount = document.getElementById("selectedCount")
-    const clearSelectionBtn = document.getElementById("clearSelectionBtn")
-    const bulkMoveBtn = document.getElementById("bulkMoveBtn")
-    const bulkAssignBtn = document.getElementById("bulkAssignBtn")
-    const bulkDeleteBtn = document.getElementById("bulkDeleteBtn")
-
-    if (clearSelectionBtn) {
-      clearSelectionBtn.addEventListener("click", () => {
-        this.clearSelection()
-      })
-    }
-
-    if (bulkMoveBtn) {
-      bulkMoveBtn.addEventListener("click", () => {
-        this.showBulkMoveDialog()
-      })
-    }
-
-    if (bulkAssignBtn) {
-      bulkAssignBtn.addEventListener("click", () => {
-        this.showBulkAssignDialog()
-      })
-    }
-
-    if (bulkDeleteBtn) {
-      bulkDeleteBtn.addEventListener("click", () => {
-        this.bulkDeleteCards()
-      })
-    }
-  }
-
-  // Setup workspace modal tabs
-  setupWorkspaceModalTabs() {
-    // Add user buttons
-    const addUserBtns = document.querySelectorAll(".add-user-btn")
-    addUserBtns.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const target = e.target.dataset.target
-        this.showUserSelectionDropdown(btn, target)
-      })
-    })
-
-    // Add stage button
-    const addStageBtn = document.getElementById("addStageBtn")
-    if (addStageBtn) {
-      addStageBtn.addEventListener("click", () => {
-        this.addStageToModal()
-      })
-    }
-  }
-
   // Setup custom event handlers
   setupCustomEvents() {
     // Card events
@@ -505,11 +382,6 @@ export class WorkspaceBoard {
       this.handleStageDrop(stage, element)
     })
 
-    // Workspace events
-    this.on("workspace:switch", (oldWorkspace, newWorkspace) => {
-      this.handleWorkspaceSwitch(oldWorkspace, newWorkspace)
-    })
-
     // Filter events
     this.on("filter:change", (filterType, filterValue, isActive) => {
       this.handleFilterChange(filterType, filterValue, isActive)
@@ -531,23 +403,6 @@ export class WorkspaceBoard {
     // Theme events
     this.on("theme:change", (oldTheme, newTheme) => {
       this.handleThemeChange(oldTheme, newTheme)
-    })
-
-    // User assignment events
-    this.on("user:assign", (cardId, userId, stageId) => {
-      this.handleUserAssignment(cardId, userId, stageId)
-    })
-
-    this.on("user:unassign", (cardId, userId) => {
-      this.handleUserUnassignment(cardId, userId)
-    })
-
-    // Stage user assignment events (NEW)
-    this.on("stage:user:assign", (stageId, userId) => {
-      this.handleStageUserAssignment(stageId, userId, "assign")
-    })
-    this.on("stage:user:unassign", (stageId, userId) => {
-      this.handleStageUserAssignment(stageId, userId, "unassign")
     })
   }
 
@@ -935,12 +790,6 @@ export class WorkspaceBoard {
 
     // Emit board:rendered after board is fully rendered
     this.emit("board:rendered", this)
-
-    // Setup user assignment for all cards
-    this.setupAllUserAssignments()
-
-    // Update bulk actions visibility
-    this.updateBulkActionsVisibility()
   }
 
   // Create a column element with enhanced UI
@@ -964,13 +813,6 @@ export class WorkspaceBoard {
       cardsForStage.sort((a, b) => new Date(b.modifiedDate).getTime() - new Date(a.modifiedDate).getTime())
     }
 
-    const totalCardsInStage = this.data.cards.filter((card) => card.stage === stage.id).length
-    const progressPercentage = totalCardsInStage > 0 ? Math.round((cardsForStage.length / totalCardsInStage) * 100) : 0
-
-    // Get assigned users for this stage
-    const stageUsers = this.getStageAssignedUsers(stage.id)
-    const stageUsersHTML = this.generateStageUsersHTML(stage.id, stageUsers)
-
     column.innerHTML = `
        <div class="column-header">
            <div class="column-title-row">
@@ -986,7 +828,6 @@ export class WorkspaceBoard {
                    </button> -->
                </div>
            </div>
-           ${stageUsersHTML}
        </div>
        <div class="column-content" data-stage-id="${stage.id}">
            ${
@@ -997,51 +838,7 @@ export class WorkspaceBoard {
        </div>
      `
 
-    // Add event listeners for enhanced column actions
-    this.setupColumnActions(column, stage)
-
     return column
-  }
-
-  // Setup enhanced column actions
-  setupColumnActions(column, stage) {
-    const actionButtons = column.querySelectorAll(".column-action")
-    actionButtons.forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.stopPropagation()
-        const action = button.dataset.action
-
-        switch (action) {
-          case "add-item":
-            this.showAddItemDialog(stage.id)
-            break
-          case "assign-users":
-            this.showStageUserAssignment(stage.id, button)
-            break
-          case "sort":
-            this.toggleColumnSort(stage.id, "modifiedDate") // Toggle sort by modifiedDate
-            break
-          case "more":
-            this.showColumnContextMenu(button, stage)
-            break
-        }
-      })
-    })
-
-    // Setup user assignment for cards in this column
-    this.setupColumnUserAssignment(column, stage)
-
-    // Add event listener for user avatars in column header
-    const stageUserAvatars = column.querySelectorAll(".column-header .user-avatar")
-    stageUserAvatars.forEach((avatar) => {
-      if (avatar.dataset.userId) {
-        avatar.addEventListener("click", (e) => {
-          e.stopPropagation()
-          const userId = avatar.dataset.userId
-          this.toggleColumnUserFilter(stage.id, userId, avatar) // Pass avatar for active class
-        })
-      }
-    })
   }
 
   // Create card HTML
@@ -1050,17 +847,6 @@ export class WorkspaceBoard {
     const formattedDate = this.formatDate(card.modifiedDate)
     const priorityClass = card.priority ? `priority-${card.priority}` : ""
     const selectedClass = this.ui.selectedCards.has(card.id) ? "selected" : ""
-
-    // Generate assigned users HTML
-    const assignedUsersHTML = this.generateAssignedUsersHTML(card)
-
-    // Generate priority indicator
-    const priorityHTML = card.priority
-      ? `<div class="card-priority priority-${card.priority}">
-           <i class="fas fa-flag"></i>
-           <span>${card.priority}</span>
-         </div>`
-      : ""
 
     // Generate integrity indicator
     const integrityHTML = this.generateIntegrityHTML(card)
@@ -1154,56 +940,6 @@ export class WorkspaceBoard {
      `
   }
 
-  // Generate assigned users HTML for card footer
-  generateAssignedUsersHTML(card) {
-    if (!card.assignedUsers || card.assignedUsers.length === 0) {
-      return `
-         <div class="card-assignees">
-           <div class="user-avatar add-user" title="Assign user" data-card-id="${card.id}">
-             <i class="fas fa-plus"></i>
-           </div>
-         </div>
-       `
-    }
-
-    const maxVisible = 3
-    const visibleUsers = card.assignedUsers.slice(0, maxVisible)
-    const remainingCount = card.assignedUsers.length - maxVisible
-
-    let html = '<div class="card-assignees">'
-
-    visibleUsers.forEach((userId, index) => {
-      const user = this.getUserById(userId)
-      if (user) {
-        html += `
-           <div class="user-avatar ${index > 0 ? "multiple" : ""}" 
-                title="${user.name} (${user.role})"
-                data-user-id="${userId}"
-                data-card-id="${card.id}">
-             ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}">` : this.getInitials(user.name)}
-           </div>
-         `
-      }
-    })
-
-    if (remainingCount > 0) {
-      html += `
-         <div class="user-avatar multiple" title="${remainingCount} more users">
-           +${remainingCount}
-         </div>
-       `
-    }
-
-    html += `
-       <div class="user-avatar add-user" title="Assign more users" data-card-id="${card.id}">
-         <i class="fas fa-plus"></i>
-       </div>
-     `
-
-    html += "</div>"
-    return html
-  }
-
   // Generate integrity status indicator for cards
   // Only show badge for warning/error (not info/success)
   generateIntegrityHTML(card) {
@@ -1236,441 +972,6 @@ export class WorkspaceBoard {
     `;
   }
 
-  // Generate assigned users HTML for stage header
-  generateStageUsersHTML(stageId, userIds) {
-    if (!userIds || userIds.length === 0) return ""
-
-    const maxVisible = 4
-    const visibleUsers = userIds.slice(0, maxVisible)
-    const remainingCount = userIds.length - maxVisible
-    const activeUserId = this.data.columnUserFilters[stageId]
-
-    let html = '<div class="user-avatars">'
-
-    visibleUsers.forEach((userId) => {
-      const user = this.getUserById(userId)
-      if (user) {
-        const activeClass = activeUserId === userId ? "active" : ""
-        html += `
-           <div class="user-avatar ${activeClass}" title="${user.name} - ${user.role}" data-user-id="${user.id}" data-stage-id="${stageId}">
-             ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}">` : this.getInitials(user.name)}
-           </div>
-         `
-      }
-    })
-
-    if (remainingCount > 0) {
-      html += `
-         <div class="user-avatar" title="${remainingCount} more users">
-           +${remainingCount}
-         </div>
-       `
-    }
-
-    html += "</div>"
-    return html
-  }
-
-  // NEW: Toggle column-specific user filter
-  toggleColumnUserFilter(stageId, userId, avatarElement) {
-    const currentFilter = this.data.columnUserFilters[stageId]
-
-    if (currentFilter === userId) {
-      // If already filtered by this user, toggle off
-      this.data.columnUserFilters[stageId] = null
-      this.showToast(`Filter reset for ${this.getStageById(stageId).label}`, "info")
-    } else {
-      // Apply filter for this user
-      this.data.columnUserFilters[stageId] = userId
-      this.showToast(
-        `Showing cards for ${this.getUserById(userId).name} in ${this.getStageById(stageId).label}`,
-        "info",
-      )
-    }
-
-    this.renderBoard() // Re-render to apply the filter and update avatar active state
-  }
-
-  // Show user assignment dropdown for a stage
-  showStageUserAssignment(stageId, triggerElement) {
-    const stage = this.getStageById(stageId)
-    if (!stage) return
-
-    const existingDropdown = document.querySelector(".user-assignment-dropdown")
-    if (existingDropdown) {
-      existingDropdown.remove()
-    }
-
-    const dropdown = this.createStageUserAssignmentDropdown(stageId, this.getStageAssignedUsers(stageId))
-
-    const rect = triggerElement.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    dropdown.style.position = "fixed"
-    dropdown.style.zIndex = "9999"
-
-    if (rect.bottom + dropdown.offsetHeight + 10 > viewportHeight) {
-      dropdown.style.bottom = viewportHeight - rect.top + 5 + "px"
-    } else {
-      dropdown.style.top = rect.bottom + 5 + "px"
-    }
-
-    if (rect.left + dropdown.offsetWidth > viewportWidth) {
-      dropdown.style.right = viewportWidth - rect.right + "px"
-    } else {
-      dropdown.style.left = rect.left + "px"
-    }
-
-    document.body.appendChild(dropdown)
-
-    const closeHandler = (e) => {
-      if (!dropdown.contains(e.target) && !triggerElement.contains(e.target)) {
-        dropdown.remove()
-        document.removeEventListener("click", closeHandler)
-        document.removeEventListener("touchstart", closeHandler)
-      }
-    }
-
-    setTimeout(() => {
-      document.addEventListener("click", closeHandler)
-      document.addEventListener("touchstart", closeHandler)
-    }, 100)
-  }
-
-  createStageUserAssignmentDropdown(stageId, assignedUserIds) {
-    const dropdown = document.createElement("div")
-    dropdown.className = "user-assignment-dropdown"
-
-    const users = window.WorkspaceConfig?.users || []
-
-    dropdown.innerHTML = users
-      .map(
-        (user) => `
-      <div class="user-option ${assignedUserIds.includes(user.id) ? "assigned" : ""}" 
-           data-user-id="${user.id}" 
-           data-stage-id="${stageId}">
-        <div class="user-avatar">
-          ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}">` : this.getInitials(user.name)}
-        </div>
-        <div class="user-info">
-          <div class="user-name">${this.escapeHtml(user.name)}</div>
-          <div class="user-role">${this.escapeHtml(user.role)}</div>
-        </div>
-        <div class="assignment-status">
-          ${assignedUserIds.includes(user.id) ? '<i class="fas fa-check"></i>' : ""}
-        </div>
-      </div>
-    `,
-      )
-      .join("")
-
-    dropdown.addEventListener("click", (e) => {
-      e.stopPropagation()
-      const userOption = e.target.closest(".user-option")
-      if (userOption) {
-        const userId = userOption.dataset.userId
-        const stageId = userOption.dataset.stageId
-        const isAssigned = userOption.classList.contains("assigned")
-
-        if (isAssigned) {
-          this.emit("stage:user:unassign", stageId, userId)
-        } else {
-          this.emit("stage:user:assign", stageId, userId)
-        }
-
-        dropdown.remove()
-      }
-    })
-
-    return dropdown
-  }
-
-  handleStageUserAssignment(stageId, userId, action) {
-    const stageAssignments = window.WorkspaceConfig.stageAssignments
-    if (!stageAssignments[stageId]) {
-      stageAssignments[stageId] = []
-    }
-
-    const currentAssignments = stageAssignments[stageId]
-    const user = this.getUserById(userId)
-
-    if (action === "assign") {
-      if (!currentAssignments.includes(userId)) {
-        currentAssignments.push(userId)
-        this.showToast(`${user.name} assigned to ${this.getStageById(stageId).label} stage`, "success")
-      }
-    } else if (action === "unassign") {
-      const index = currentAssignments.indexOf(userId)
-      if (index > -1) {
-        currentAssignments.splice(index, 1)
-        this.showToast(`${user.name} unassigned from ${this.getStageById(stageId).label} stage`, "info")
-      }
-    }
-    this.renderBoard() // Re-render to update stage header
-    // In a real application, you would make an API call here to save changes
-    this.saveStageAssignmentToServer(stageId, userId, action)
-  }
-
-  saveStageAssignmentToServer(stageId, userId, action) {
-    console.log(`Mock API call: ${action} user ${userId} to stage ${stageId}`)
-    // Example: fetch(`${this.options.apiUrl}/stages/${stageId}/assign`, { method: 'POST', body: JSON.stringify({ userId, action }) });
-  }
-
-  // NEW: Toggle sort for a specific column
-  toggleColumnSort(stageId, sortBy) {
-    const currentSort = this.data.columnSorts[stageId]
-
-    if (currentSort === sortBy) {
-      // If already sorted by this, toggle off
-      this.data.columnSorts[stageId] = null
-      this.showToast(`Sort reset for ${this.getStageById(stageId).label}`, "info")
-    } else {
-      // Apply sort
-      this.data.columnSorts[stageId] = sortBy
-      this.showToast(`Cards in ${this.getStageById(stageId).label} sorted by ${sortBy}`, "info")
-    }
-    this.renderBoard() // Re-render to apply the sort
-  }
-
-  // Show context menu for column actions
-  showColumnContextMenu(triggerElement, stage) {
-    // Remove any existing menu
-    const existingMenu = document.querySelector(".context-menu")
-    if (existingMenu) existingMenu.remove()
-
-    // Build menu HTML (adapted from v2)
-    const menu = document.createElement("div")
-    menu.className = "context-menu stage-context-menu"
-    menu.innerHTML = `
-      <div class="context-menu-header">
-        <i class="fas fa-cog"></i>
-        <span>Stage Options</span>
-      </div>
-      <div class="context-menu-item" data-action="edit-stage" data-stage-id="${stage.id}">
-        <i class="fas fa-edit"></i>
-        <span>Edit Stage Settings</span>
-      </div>
-      <div class="context-menu-item" data-action="assign-users" data-stage-id="${stage.id}">
-        <i class="fas fa-user-plus"></i>
-        <span>Manage Users</span>
-      </div>
-      <div class="context-menu-item" data-action="export-stage" data-stage-id="${stage.id}">
-        <i class="fas fa-download"></i>
-        <span>Export Stage Data</span>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-item" data-action="clear-stage" data-stage-id="${stage.id}">
-        <i class="fas fa-trash-alt"></i>
-        <span>Clear All Items</span>
-      </div>
-      <div class="context-menu-item" data-action="archive-stage" data-stage-id="${stage.id}">
-        <i class="fas fa-archive"></i>
-        <span>Archive Stage</span>
-      </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-item danger" data-action="delete-stage" data-stage-id="${stage.id}">
-        <i class="fas fa-trash"></i>
-        <span>Delete Stage</span>
-      </div>
-    `
-
-    document.body.appendChild(menu)
-
-    // Position menu (fixed, below trigger)
-    const rect = triggerElement.getBoundingClientRect()
-    menu.style.position = "fixed"
-    menu.style.left = `${rect.left}px`
-    menu.style.top = `${rect.bottom + 5}px`
-
-    // Click handler for menu actions
-    const handleMenuClick = (e) => {
-      const menuItem = e.target.closest(".context-menu-item")
-      if (menuItem) {
-        const action = menuItem.dataset.action
-        this.handleColumnContextMenuAction(action, stage)
-        menu.remove()
-        document.removeEventListener("mousedown", handleOutsideClick, true)
-      }
-    }
-    menu.addEventListener("click", handleMenuClick)
-
-    // Close menu on outside click
-    const handleOutsideClick = (e) => {
-      if (!menu.contains(e.target) && e.target !== triggerElement) {
-        menu.remove()
-        document.removeEventListener("mousedown", handleOutsideClick, true)
-      }
-    }
-    setTimeout(() => {
-      document.addEventListener("mousedown", handleOutsideClick, true)
-    }, 0)
-  }
-
-  // Handle actions from column context menu
-  handleColumnContextMenuAction(action, stage) {
-    switch (action) {
-      case "edit-stage":
-        this.openStageSettingsModal(stage.id)
-        break
-      case "assign-users":
-        this.showStageUserAssignment(stage.id)
-        break
-      case "export-stage":
-        this.exportStageData(stage.id)
-        break
-      case "clear-stage":
-        this.clearStageItems(stage.id)
-        break
-      case "archive-stage":
-        this.archiveStage(stage.id)
-        break
-      case "delete-stage":
-        this.deleteStage(stage.id)
-        break
-      default:
-        console.log(`Unhandled column action: ${action} for stage ${stage.id}`)
-    }
-  }
-
-  // Open stage settings modal
-  openStageSettingsModal(stageId) {
-    const modal = document.getElementById("stageSettingsModal")
-    const stage = this.getStageById(stageId)
-
-    if (!modal || !stage) {
-      this.showToast("Stage not found.", "error")
-      return
-    }
-
-    modal.dataset.editingStageId = stageId // Store for saving
-
-    document.getElementById("stageSettingsModalTitle").textContent = `Edit Stage: ${stage.label}`
-    document.getElementById("editStageId").value = stage.id
-    document.getElementById("editStageLabel").value = stage.label
-    document.getElementById("editStageColor").value = stage.color
-    document.getElementById("editStageAllowEdit").checked = stage.allowEdit
-    document.getElementById("editStageAllowDelete").checked = stage.allowDelete
-
-    modal.style.display = "flex"
-    document.body.style.overflow = "hidden"
-    document.getElementById("editStageLabel").focus()
-  }
-
-  // Close stage settings modal
-  closeStageSettingsModal() {
-    const modal = document.getElementById("stageSettingsModal")
-    if (modal) {
-      modal.style.display = "none"
-      document.body.style.overflow = ""
-      delete modal.dataset.editingStageId
-    }
-  }
-
-  // Save stage settings
-  saveStageSettings() {
-    const stageId = document.getElementById("stageSettingsModal").dataset.editingStageId
-    const stage = this.getStageById(stageId)
-
-    if (!stage) {
-      this.showToast("Error: Stage not found for saving.", "error")
-      return
-    }
-
-    const updatedLabel = document.getElementById("editStageLabel").value.trim()
-    if (!updatedLabel) {
-      this.showToast("Stage name cannot be empty.", "error")
-      document.getElementById("editStageLabel").focus()
-      return
-    }
-
-    stage.label = updatedLabel
-    stage.color = document.getElementById("editStageColor").value
-    stage.allowEdit = document.getElementById("editStageAllowEdit").checked
-    stage.allowDelete = document.getElementById("editStageAllowDelete").checked
-
-    // In a real app, send to API
-    this.showLoading()
-    fetch(`${this.options.apiUrl}/stages/${stage.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(stage),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .then((result) => {
-        if (result.success) {
-          this.showToast(`Stage "${stage.label}" updated successfully`, "success")
-          this.renderBoard() // Re-render to show updated stage name/color
-          this.closeStageSettingsModal()
-        } else {
-          throw new Error(result.message || "Failed to update stage")
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to save stage settings:", error)
-        this.showToast("Failed to save stage settings", "error")
-      })
-      .finally(() => {
-        this.hideLoading()
-      })
-  }
-
-  // Delete a stage
-  deleteStage(stageId) {
-    const stage = this.getStageById(stageId)
-    if (!stage) return
-
-    if (
-      !confirm(`Are you sure you want to delete the stage "${stage.label}" and all its cards? This cannot be undone.`)
-    ) {
-      return
-    }
-
-    // Remove stage from data
-    this.data.stages = this.data.stages.filter((s) => s.id !== stageId)
-    // Remove cards belonging to this stage
-    this.data.cards = this.data.cards.filter((card) => card.stage !== stageId)
-
-    // In a real app, send to API
-    this.showLoading()
-    fetch(`${this.options.apiUrl}/stages/${stage.id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .then((result) => {
-        if (result.success) {
-          this.showToast(`Stage "${stage.label}" deleted successfully`, "success")
-          this.renderBoard() // Re-render the entire board
-        } else {
-          throw new Error(result.message || "Failed to delete stage")
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to delete stage:", error)
-        this.showToast("Failed to delete stage", "error")
-      })
-      .finally(() => {
-        this.hideLoading()
-      })
-  }
-
   // Bulk operations methods
   toggleCardSelection(cardId) {
     if (this.ui.selectedCards.has(cardId)) {
@@ -1680,7 +981,6 @@ export class WorkspaceBoard {
     }
 
     this.updateCardSelectionUI()
-    this.updateBulkActionsVisibility()
   }
 
   updateCardSelectionUI() {
@@ -1690,206 +990,11 @@ export class WorkspaceBoard {
     })
   }
 
-  updateBulkActionsVisibility() {
-    const bulkActionsBar = document.getElementById("bulkActionsBar")
-    const selectedCount = document.getElementById("selectedCount")
-
-    if (bulkActionsBar && selectedCount) {
-      const count = this.ui.selectedCards.size
-      selectedCount.textContent = count
-
-      if (count > 0) {
-        bulkActionsBar.style.display = "block"
-      } else {
-        bulkActionsBar.style.display = "none"
-      }
-    }
-  }
-
   clearSelection() {
     this.ui.selectedCards.clear()
     this.ui.isMultiSelectMode = false
     document.body.classList.remove("multi-select-mode")
     this.updateCardSelectionUI()
-    this.updateBulkActionsVisibility()
-  }
-
-  showBulkMoveDialog() {
-    const selectedCards = Array.from(this.ui.selectedCards)
-    if (selectedCards.length === 0) return
-
-    // Create a simple stage selection dialog
-    const stages = this.data.stages
-    const stageOptions = stages
-      .map((stage) => `<option value="${stage.id}">${this.escapeHtml(stage.label)}</option>`)
-      .join("")
-
-    const dialog = document.createElement("div")
-    dialog.className = "modal-overlay"
-    dialog.innerHTML = `
-       <div class="modal-container" style="width: 400px;">
-         <div class="modal-header">
-           <h2 class="modal-title">Move ${selectedCards.length} items</h2>
-           <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
-             <i class="fas fa-times"></i>
-           </button>
-         </div>
-         <div class="modal-content" style="padding: var(--spacing-lg);">
-           <div class="form-group">
-             <label for="targetStage">Select target stage:</label>
-             <select id="targetStage" class="form-input">
-               ${stageOptions}
-             </select>
-           </div>
-         </div>
-         <div class="modal-footer">
-           <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-           <button class="btn btn-primary" onclick="workspaceBoard.executeBulkMove()">Move Items</button>
-         </div>
-       </div>
-     `
-
-    document.body.appendChild(dialog)
-  }
-
-  executeBulkMove() {
-    const targetStageSelect = document.getElementById("targetStage")
-    const targetStageId = targetStageSelect.value
-    const selectedCards = Array.from(this.ui.selectedCards)
-
-    const originalStages = {}
-    selectedCards.forEach((cardId) => {
-      const card = this.getCardById(cardId)
-      if (card) originalStages[cardId] = card.stage
-      this.moveCard(cardId, targetStageId)
-    })
-
-    this.addToHistory({
-      type: "bulk_move",
-      cardIds: selectedCards,
-      targetStage: targetStageId,
-      originalStages: originalStages, // Store original stages for undo
-      timestamp: Date.now(),
-    })
-
-    this.clearSelection()
-    document.querySelector(".modal-overlay").remove()
-    this.showToast(`Moved ${selectedCards.length} items to ${this.getStageById(targetStageId).label}`, "success")
-  }
-
-  showBulkAssignDialog() {
-    const selectedCards = Array.from(this.ui.selectedCards)
-    if (selectedCards.length === 0) return
-
-    const users = window.WorkspaceConfig?.users || []
-    const userOptions = users
-      .map(
-        (user) => `
-          <div class="user-option" data-user-id="${user.id}">
-              <div class="user-avatar">
-                  ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}">` : this.getInitials(user.name)}
-              </div>
-              <div class="user-info">
-                  <div class="user-name">${user.name}</div>
-                  <div class="user-role">${user.role}</div>
-              </div>
-              <input type="checkbox" id="bulkAssignUser-${user.id}" data-user-id="${user.id}">
-          </div>
-      `,
-      )
-      .join("")
-
-    const dialog = document.createElement("div")
-    dialog.className = "modal-overlay"
-    dialog.innerHTML = `
-          <div class="modal-container" style="width: 500px;">
-              <div class="modal-header">
-                  <h2 class="modal-title">Assign Users to ${selectedCards.length} items</h2>
-                  <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">
-                      <i class="fas fa-times"></i>
-                  </button>
-              </div>
-              <div class="modal-content" style="padding: var(--spacing-lg);">
-                  <div class="form-group">
-                      <label>Select users to assign:</label>
-                      <div class="user-selection-list" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
-                          ${userOptions}
-                      </div>
-                  </div>
-              </div>
-              <div class="modal-footer">
-                  <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-                  <button class="btn btn-primary" onclick="workspaceBoard.executeBulkAssign()">Assign Users</button>
-              </div>
-          </div>
-      `
-
-    document.body.appendChild(dialog)
-  }
-
-  executeBulkAssign() {
-    const selectedUsers = Array.from(document.querySelectorAll('#bulkAssignUser input[type="checkbox"]:checked')).map(
-      (cb) => cb.dataset.userId,
-    )
-    const selectedCards = Array.from(this.ui.selectedCards)
-
-    if (selectedUsers.length === 0) {
-      this.showToast("Please select at least one user to assign.", "warning")
-      return
-    }
-
-    const assignmentsMade = {} // Track assignments for undo
-    selectedCards.forEach((cardId) => {
-      const card = this.getCardById(cardId)
-      if (card) {
-        // Store original assignments if exists
-        assignmentsMade[cardId] = [...(card.assignedUsers || [])]
-        card.assignedUsers = Array.from(new Set([...(card.assignedUsers || []), ...selectedUsers]))
-      }
-    })
-    
-    // Emit bulk assign event - App.js will handle saving
-    this.emit("bulk:assign", Array.from(this.ui.selectedCards), selectedUsers)
-
-    this.addToHistory({
-      type: "bulk_assign",
-      cardIds: selectedCards,
-      users: selectedUsers,
-      originalAssignments: assignmentsMade,
-      timestamp: Date.now(),
-    })
-
-    this.clearSelection()
-    document.querySelector(".modal-overlay").remove()
-    this.renderBoard() // Re-render to show updated assignments
-    this.showToast(`Assigned ${selectedUsers.length} users to ${selectedCards.length} items`, "success")
-  }
-
-  bulkDeleteCards() {
-    const selectedCards = Array.from(this.ui.selectedCards)
-    if (selectedCards.length === 0) return
-
-    if (confirm(`Are you sure you want to delete ${selectedCards.length} items?`)) {
-      // Store original state for undo
-      const originalCards = selectedCards.map((cardId) => this.getCardById(cardId)).filter(Boolean)
-
-      selectedCards.forEach((cardId) => {
-        this.data.cards = this.data.cards.filter((card) => card.id !== cardId)
-        // Mock API call to delete
-        // fetch(`${this.options.apiUrl}/cards/${cardId}`, { method: 'DELETE' });
-      })
-
-      this.addToHistory({
-        type: "bulk_delete",
-        cardIds: selectedCards,
-        deletedCardsData: originalCards, // Store data to restore on undo
-        timestamp: Date.now(),
-      })
-
-      this.clearSelection()
-      this.renderBoard()
-      this.showToast(`Deleted ${selectedCards.length} items`, "success")
-    }
   }
 
   // Undo/Redo functionality
@@ -1985,342 +1090,6 @@ export class WorkspaceBoard {
     this.renderBoard()
   }
 
-  // Workspace management methods
-  openWorkspaceModal(workspaceId = null) {
-    const modal = document.getElementById("workspaceModal")
-    const title = document.getElementById("workspaceModalTitle")
-
-    if (workspaceId) {
-      title.textContent = "Edit Workspace"
-      this.loadWorkspaceData(workspaceId)
-    } else {
-      title.textContent = "Create New Workspace"
-      this.resetWorkspaceForm()
-    }
-
-    modal.style.display = "flex"
-    document.body.style.overflow = "hidden"
-
-    // Focus first input
-    const firstInput = modal.querySelector("input")
-    if (firstInput) {
-      setTimeout(() => firstInput.focus(), 100)
-    }
-  }
-
-  closeWorkspaceModal() {
-    const modal = document.getElementById("workspaceModal")
-    if (modal) {
-      modal.style.display = "none"
-      document.body.style.overflow = ""
-    }
-  }
-
-  resetWorkspaceForm() {
-    // Reset all form fields
-    document.getElementById("workspaceTitle").value = ""
-    document.getElementById("workspaceDescription").value = ""
-    document.getElementById("sendNotifications").checked = false
-    document.getElementById("freezeEditing").checked = false
-    document.getElementById("liveEditing").checked = false
-    document.getElementById("allowLiveEdit").checked = false
-    document.getElementById("allowPublishAll").checked = false
-    document.getElementById("allowSwapMode").checked = false
-    document.getElementById("dbMountPoints").value = ""
-    document.getElementById("fileMountPoints").value = ""
-    document.getElementById("emailNotifications").checked = false
-    document.getElementById("notifyOwners").checked = false
-    document.getElementById("notifyMembers").checked = false
-    document.getElementById("customNotificationText").value = ""
-
-    // Clear selected users
-    document.getElementById("selectedOwners").innerHTML = ""
-    document.getElementById("selectedMembers").innerHTML = ""
-
-    // Reset stages list (shows default stages for new workspace)
-    this.renderWorkspaceStages(window.WorkspaceConfig.stages)
-  }
-
-  loadWorkspaceData(workspaceId) {
-    // In a real implementation, this would fetch from API
-    // For now, we'll use mock data
-    const mockWorkspace = {
-      id: workspaceId,
-      title: "Sample Workspace",
-      description: "Sample workspace description",
-      sendNotifications: true,
-      owners: ["john", "jane"],
-      members: ["mike", "sarah"],
-      // For 'Internal Stages' tab, we're assuming it modifies the global stages for now
-      // A more complex app would have workspace-specific stages
-      stages: [...this.data.stages],
-      freezeEditing: false,
-      liveEditing: true,
-      allowLiveEdit: true,
-      allowPublishAll: false,
-      allowSwapMode: true,
-      dbMountPoints: "/var/www/site",
-      fileMountPoints: "/fileadmin",
-      emailNotifications: true,
-      notifyOwners: true,
-      notifyMembers: false,
-      customNotificationText: "Content update for review.",
-    }
-
-    // Populate form with data
-    document.getElementById("workspaceTitle").value = mockWorkspace.title
-    document.getElementById("workspaceDescription").value = mockWorkspace.description
-    document.getElementById("sendNotifications").checked = mockWorkspace.sendNotifications
-    document.getElementById("freezeEditing").checked = mockWorkspace.freezeEditing
-    document.getElementById("liveEditing").checked = mockWorkspace.liveEditing
-    document.getElementById("allowLiveEdit").checked = mockWorkspace.allowLiveEdit
-    document.getElementById("allowPublishAll").checked = mockWorkspace.allowPublishAll
-    document.getElementById("allowSwapMode").checked = mockWorkspace.allowSwapMode
-    document.getElementById("dbMountPoints").value = mockWorkspace.dbMountPoints
-    document.getElementById("fileMountPoints").value = mockWorkspace.fileMountPoints
-    document.getElementById("emailNotifications").checked = mockWorkspace.emailNotifications
-    document.getElementById("notifyOwners").checked = mockWorkspace.notifyOwners
-    document.getElementById("notifyMembers").checked = mockWorkspace.notifyMembers
-    document.getElementById("customNotificationText").value = mockWorkspace.customNotificationText
-
-    // Load users
-    this.loadSelectedUsers("owners", mockWorkspace.owners)
-    this.loadSelectedUsers("members", mockWorkspace.members)
-
-    // Load stages
-    this.renderWorkspaceStages(mockWorkspace.stages)
-
-    // Populate notification stages checkboxes
-    const notificationStagesContainer = document.getElementById("notificationStages")
-    notificationStagesContainer.innerHTML = "" // Clear previous
-    this.data.stages.forEach((stage) => {
-      const checkboxHtml = `
-              <label class="checkbox-label">
-                  <input type="checkbox" data-stage-id="${stage.id}" ${mockWorkspace.stages.some((s) => s.id === stage.id) ? "checked" : ""}>
-                  <span class="checkmark"></span>
-                  ${this.escapeHtml(stage.label)}
-              </label>
-          `
-      notificationStagesContainer.insertAdjacentHTML("beforeend", checkboxHtml)
-    })
-  }
-
-  loadSelectedUsers(type, userIds) {
-    const container = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`)
-    container.innerHTML = ""
-
-    userIds.forEach((userId) => {
-      const user = this.getUserById(userId)
-      if (user) {
-        const userElement = document.createElement("div")
-        userElement.className = "selected-user"
-        userElement.innerHTML = `
-            <span>${this.escapeHtml(user.name)}</span>
-            <button type="button" class="remove-user" data-user-id="${userId}" data-type="${type}">
-              <i class="fas fa-times"></i>
-            </button>
-          `
-        container.appendChild(userElement)
-
-        // Add remove functionality
-        userElement.querySelector(".remove-user").addEventListener("click", (e) => {
-          userElement.remove()
-        })
-      }
-    })
-  }
-
-  renderWorkspaceStages(stages) {
-    const stagesList = document.getElementById("stagesList")
-    stagesList.innerHTML = ""
-
-    stages.forEach((stage, index) => {
-      const stageElement = document.createElement("div")
-      stageElement.className = "stage-config-item"
-      stageElement.innerHTML = `
-          <input type="text" placeholder="Stage name" value="${stage.label}" data-field="label">
-          <input type="color" class="stage-color-picker" value="${stage.color}" data-field="color">
-          <label class="checkbox-label">
-            <input type="checkbox" ${stage.allowEdit ? "checked" : ""} data-field="allowEdit">
-            <span class="checkmark"></span>
-            Allow Edit
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" ${stage.allowDelete ? "checked" : ""} data-field="allowDelete">
-            <span class="checkmark"></span>
-            Allow Delete
-          </label>
-          <button type="button" class="stage-remove" data-index="${index}">
-            <i class="fas fa-trash"></i>
-          </button>
-        `
-      stagesList.appendChild(stageElement)
-
-      // Add remove functionality
-      stageElement.querySelector(".stage-remove").addEventListener("click", () => {
-        stageElement.remove()
-      })
-    })
-  }
-
-  addStageToModal() {
-    const newStage = {
-      id: `stage_${Date.now()}`,
-      label: "New Stage",
-      color: "#007bff",
-      order: this.data.stages.length + 1,
-      allowEdit: true,
-      allowDelete: true,
-    }
-
-    const stagesList = document.getElementById("stagesList")
-    const stageElement = document.createElement("div")
-    stageElement.className = "stage-config-item"
-    stageElement.innerHTML = `
-        <input type="text" placeholder="Stage name" value="${this.escapeHtml(newStage.label)}" data-field="label">
-        <input type="color" class="stage-color-picker" value="${newStage.color}" data-field="color">
-        <label class="checkbox-label">
-          <input type="checkbox" ${newStage.allowEdit ? "checked" : ""} data-field="allowEdit">
-          <span class="checkmark"></span>
-          Allow Edit
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" ${newStage.allowDelete ? "checked" : ""} data-field="allowDelete">
-          <span class="checkmark"></span>
-          Allow Delete
-        </label>
-        <button type="button" class="stage-remove">
-          <i class="fas fa-trash"></i>
-        </button>
-      `
-    stagesList.appendChild(stageElement)
-
-    // Add remove functionality
-    stageElement.querySelector(".stage-remove").addEventListener("click", () => {
-      stageElement.remove()
-    })
-
-    // Focus the new stage name input
-    stageElement.querySelector('input[data-field="label"]').focus()
-  }
-
-  saveWorkspace() {
-    const formData = this.collectWorkspaceFormData()
-
-    if (!this.validateWorkspaceForm(formData)) {
-      return
-    }
-
-    this.showLoading()
-
-    // Create API endpoint call
-    const url = `${this.options.apiUrl}/workspace`
-    const method = formData.id ? "PUT" : "POST"
-
-    fetch(url, {
-      method: method,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(formData),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.json()
-      })
-      .then((result) => {
-        if (result.success) {
-          this.showToast(formData.id ? "Workspace updated successfully" : "Workspace created successfully", "success")
-          this.closeWorkspaceModal()
-          this.refreshWorkspaceList()
-        } else {
-          throw new Error(result.message || "Failed to save workspace")
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to save workspace:", error)
-        this.showToast("Failed to save workspace", "error")
-      })
-      .finally(() => {
-        this.hideLoading()
-      })
-  }
-
-  collectWorkspaceFormData() {
-    const formData = {
-      title: document.getElementById("workspaceTitle").value,
-      description: document.getElementById("workspaceDescription").value,
-      sendNotifications: document.getElementById("sendNotifications").checked,
-      freezeEditing: document.getElementById("freezeEditing").checked,
-      liveEditing: document.getElementById("liveEditing").checked,
-      allowLiveEdit: document.getElementById("allowLiveEdit").checked,
-      allowPublishAll: document.getElementById("allowPublishAll").checked,
-      allowSwapMode: document.getElementById("allowSwapMode").checked,
-      dbMountPoints: document.getElementById("dbMountPoints").value,
-      fileMountPoints: document.getElementById("fileMountPoints").value,
-      emailNotifications: document.getElementById("emailNotifications").checked,
-      notifyOwners: document.getElementById("notifyOwners").checked,
-      notifyMembers: document.getElementById("notifyMembers").checked,
-      customNotificationText: document.getElementById("customNotificationText").value,
-      owners: this.getSelectedUsers("owners"),
-      members: this.getSelectedUsers("members"),
-      stages: this.getConfiguredStages(),
-      notificationStages: this.getNotificationStages(),
-    }
-
-    return formData
-  }
-
-  getSelectedUsers(type) {
-    const container = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`)
-    const userElements = container.querySelectorAll(".selected-user")
-    return Array.from(userElements).map((el) => el.querySelector(".remove-user").dataset.userId)
-  }
-
-  getConfiguredStages() {
-    const stageElements = document.querySelectorAll(".stage-config-item")
-    return Array.from(stageElements).map((el, index) => ({
-      id: `stage_${index}_${Date.now()}`, // Ensure unique ID for new stages
-      label: el.querySelector('[data-field="label"]').value,
-      color: el.querySelector('[data-field="color"]').value,
-      allowEdit: el.querySelector('[data-field="allowEdit"]').checked,
-      allowDelete: el.querySelector('[data-field="allowDelete"]').checked,
-      order: index + 1,
-    }))
-  }
-
-  getNotificationStages() {
-    const notificationStageCheckboxes = document.querySelectorAll('#notificationStages input[type="checkbox"]:checked')
-    return Array.from(notificationStageCheckboxes).map((cb) => cb.dataset.stageId)
-  }
-
-  validateWorkspaceForm(formData) {
-    if (!formData.title.trim()) {
-      this.showToast("Workspace title is required", "error")
-      document.getElementById("workspaceTitle").focus()
-      return false
-    }
-
-    if (formData.stages.length === 0) {
-      this.showToast("At least one stage is required", "error")
-      this.switchModalTab("stages")
-      return false
-    }
-
-    return true
-  }
-
-  refreshWorkspaceList() {
-    // Refresh the workspace selector
-    const workspaceSelector = document.getElementById("workspaceSelector")
-    // In a real implementation, this would fetch updated workspace list from API
-    // For now, we'll just show a success message
-    console.log("Workspace list refreshed")
-  }
-
   // Get filtered cards (global filters only)
   getFilteredCards() {
     let cards = [...this.data.cards]
@@ -2341,7 +1110,6 @@ export class WorkspaceBoard {
       const cardData = this.getCardById(cardId)
       if (cardData) {
         this.setupCardDragAndClick(cardEl, cardData)
-        this.setupCardUserAssignment(cardEl)
       } else {
         console.warn(`Card data not found for cardId: ${cardId}`)
       }
@@ -2470,55 +1238,6 @@ export class WorkspaceBoard {
     cardEl.addEventListener("dragstart", cardEl._dragstartHandler)
     cardEl.addEventListener("dragend", cardEl._dragendHandler)
     cardEl.addEventListener("click", cardEl._clickHandler)
-  }
-
-  // Setup card user assignment
-  setupCardUserAssignment(cardElement) {
-    const cardId = cardElement.dataset.cardId
-
-    // Remove previous listeners to prevent duplicates
-    const oldAddUserHandler = cardElement._addUserHandler
-    const oldRemoveUserHandler = cardElement._removeUserHandler
-    if (oldAddUserHandler) cardElement.removeEventListener("click", oldAddUserHandler)
-    if (oldRemoveUserHandler) cardElement.removeEventListener("click", oldRemoveUserHandler)
-
-    const addUserHandler = (e) => {
-      e.stopPropagation()
-      const addUserBtn = e.target.closest(".add-user")
-      if (addUserBtn) {
-        this.showCardUserAssignment(cardId, addUserBtn)
-        return
-      }
-
-      const userAvatar = e.target.closest(".user-avatar:not(.add-user)")
-      if (userAvatar && userAvatar.dataset.userId) {
-        const userId = userAvatar.dataset.userId
-        const user = this.getUserById(userId)
-
-        if (confirm(`Remove ${user?.name || "user"} from this card?`)) {
-          this.emit("user:unassign", cardId, userId)
-        }
-        return
-      }
-    }
-
-    cardElement.addEventListener("click", addUserHandler)
-    cardElement._addUserHandler = addUserHandler // Store for removal
-
-    // Listener for removing user (specific to avatar clicks, not + button)
-    const removeUserHandler = (e) => {
-      const userAvatar = e.target.closest(".user-avatar:not(.add-user)")
-      if (userAvatar && userAvatar.dataset.userId) {
-        e.stopPropagation() // Stop propagation to prevent card click
-        const userId = userAvatar.dataset.userId
-        const user = this.getUserById(userId)
-        if (user && confirm(`Remove ${user.name} from this card?`)) {
-          this.emit("user:unassign", cardId, userId)
-        }
-      }
-    }
-    cardElement.addEventListener("click", removeUserHandler)
-    cardElement._removeUserHandler = removeUserHandler
   }
 
   // Drag placeholder methods
@@ -2736,16 +1455,6 @@ export class WorkspaceBoard {
     this.emit("search:clear")
   }
 
-  switchWorkspace(workspaceId) {
-    const oldWorkspace = this.data.currentWorkspace
-    this.data.currentWorkspace = workspaceId
-
-    this.showLoading()
-    this.loadData()
-
-    this.emit("workspace:switch", oldWorkspace, workspaceId)
-  }
-
   toggleFilters() {
     const sidebar = document.getElementById("filterSidebar")
     const toggle = document.getElementById("filterToggle")
@@ -2788,10 +1497,6 @@ export class WorkspaceBoard {
 
   handleStageDrop(stage, element) {
     // Handle successful drop
-  }
-
-  handleWorkspaceSwitch(oldWorkspace, newWorkspace) {
-    this.showToast(`Switched to ${newWorkspace} workspace`, "info")
   }
 
   handleFilterChange(filterType, filterValue, isActive) {
@@ -2871,36 +1576,6 @@ export class WorkspaceBoard {
     this.updateUI()
   }
 
-  handleUserAssignment(cardId, userId, stageId) {
-    const card = this.getCardById(cardId)
-    const user = this.getUserById(userId)
-
-    if (card && user) {
-      if (!card.assignedUsers) {
-        card.assignedUsers = []
-      }
-
-      if (!card.assignedUsers.includes(userId)) {
-        card.assignedUsers.push(userId)
-        this.renderBoard()
-        this.showToast(`${user.name} assigned to "${card.title}"`, "success")
-        // Note: Saving is handled by App.js listening to user:assign event
-      }
-    }
-  }
-
-  handleUserUnassignment(cardId, userId) {
-    const card = this.getCardById(cardId)
-    const user = this.getUserById(userId)
-
-    if (card && user && card.assignedUsers) {
-      card.assignedUsers = card.assignedUsers.filter((id) => id !== userId)
-      this.renderBoard()
-      this.showToast(`${user.name} unassigned from "${card.title}"`, "info")
-      // Note: Saving is handled by App.js listening to user:unassign event
-    }
-  }
-
   // Modal methods
   openPreviewModal(card) {
     const modal = document.getElementById("previewModal")
@@ -2966,16 +1641,6 @@ export class WorkspaceBoard {
     const previewModal = document.getElementById("previewModal")
     if (previewModal) {
       previewModal.style.display = "none"
-    }
-
-    const workspaceModal = document.getElementById("workspaceModal")
-    if (workspaceModal) {
-      workspaceModal.style.display = "none"
-    }
-
-    const stageSettingsModal = document.getElementById("stageSettingsModal")
-    if (stageSettingsModal) {
-      stageSettingsModal.style.display = "none"
     }
 
     document.body.style.overflow = ""
@@ -3367,7 +2032,7 @@ export class WorkspaceBoard {
     }
   }
 
-    async handleRevertStage() {
+  async handleRevertStage() {
     const revertBtn = document.getElementById("revertBtn")
     
     if (!revertBtn) return
@@ -3880,163 +2545,6 @@ export class WorkspaceBoard {
     }
   }
 
-  // User assignment is now handled purely through events
-  // App.js will listen to user:assign and user:unassign events
-
-  // User assignment methods
-  showCardUserAssignment(cardId, triggerElement) {
-    const card = this.getCardById(cardId)
-    if (!card) return
-
-    const existingDropdown = document.querySelector(".user-assignment-dropdown")
-    if (existingDropdown) {
-      existingDropdown.remove()
-    }
-
-    const dropdown = this.createUserAssignmentDropdown(cardId, card.assignedUsers || [])
-
-    const rect = triggerElement.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    dropdown.style.position = "fixed"
-    dropdown.style.zIndex = "9999"
-
-    if (rect.bottom + dropdown.offsetHeight + 10 > viewportHeight) {
-      dropdown.style.bottom = viewportHeight - rect.top + 5 + "px"
-    } else {
-      dropdown.style.top = rect.bottom + 5 + "px"
-    }
-
-    if (rect.left + dropdown.offsetWidth > viewportWidth) {
-      dropdown.style.right = viewportWidth - rect.right + "px"
-    } else {
-      dropdown.style.left = rect.left + "px"
-    }
-
-    document.body.appendChild(dropdown)
-
-    const closeHandler = (e) => {
-      if (!dropdown.contains(e.target) && !triggerElement.contains(e.target)) {
-        dropdown.remove()
-        document.removeEventListener("click", closeHandler)
-        document.removeEventListener("touchstart", closeHandler)
-      }
-    }
-
-    setTimeout(() => {
-      document.addEventListener("click", closeHandler)
-      document.addEventListener("touchstart", closeHandler)
-    }, 100)
-  }
-
-  createUserAssignmentDropdown(cardId, assignedUserIds) {
-    const dropdown = document.createElement("div")
-    dropdown.className = "user-assignment-dropdown"
-
-    const users = window.WorkspaceConfig?.users || []
-
-    dropdown.innerHTML = users
-      .map(
-        (user) => `
-       <div class="user-option ${assignedUserIds.includes(user.id) ? "assigned" : ""}" 
-            data-user-id="${user.id}" 
-            data-card-id="${cardId}">
-         <div class="user-avatar">
-           ${user.avatar ? `<img src="${user.avatar}" alt="${user.name}">` : this.getInitials(user.name)}
-         </div>
-         <div class="user-info">
-           <div class="user-name">${this.escapeHtml(user.name)}</div>
-           <div class="user-role">${this.escapeHtml(user.role)}</div>
-         </div>
-         <div class="assignment-status">
-           ${assignedUserIds.includes(user.id) ? '<i class="fas fa-check"></i>' : ""}
-         </div>
-       </div>
-     `,
-      )
-      .join("")
-
-    dropdown.addEventListener("click", (e) => {
-      e.stopPropagation()
-      const userOption = e.target.closest(".user-option")
-      if (userOption) {
-        const userId = userOption.dataset.userId
-        const cardId = userOption.dataset.cardId
-        const isAssigned = userOption.classList.contains("assigned")
-
-        if (isAssigned) {
-          this.emit("user:unassign", cardId, userId)
-        } else {
-          this.emit("user:assign", cardId, userId)
-        }
-
-        dropdown.remove()
-      }
-    })
-
-    return dropdown
-  }
-
-  setupColumnUserAssignment(column, stage) {
-    // Event listeners for column actions buttons are handled in setupColumnActions
-    // User avatars in column header are handled in setupColumnActions directly (newly added)
-
-    const addUserButtons = column.querySelectorAll(".card-assignees .add-user")
-    addUserButtons.forEach((button) => {
-      // Remove existing listener to prevent duplicates
-      if (button._clickListener) {
-        button.removeEventListener("click", button._clickListener)
-      }
-
-      const handler = (e) => {
-        e.stopPropagation()
-        const cardId = button.dataset.cardId
-        this.showCardUserAssignment(cardId, button)
-      }
-      button.addEventListener("click", handler)
-      button._clickListener = handler
-    })
-
-    const userAvatars = column.querySelectorAll(".card-assignees .user-avatar:not(.add-user)")
-    userAvatars.forEach((avatar) => {
-      if (avatar.dataset.userId) {
-        // Remove existing listener to prevent duplicates
-        if (avatar._clickListener) {
-          avatar.removeEventListener("click", avatar._clickListener)
-        }
-        const handler = (e) => {
-          e.stopPropagation()
-          const cardId = avatar.dataset.cardId
-          const userId = avatar.dataset.userId
-
-          if (confirm("Remove user assignment?")) {
-            this.emit("user:unassign", cardId, userId)
-          }
-        }
-        avatar.addEventListener("click", handler)
-        avatar._clickListener = handler
-      }
-    })
-  }
-
-  setupAllUserAssignments() {
-    const columns = document.querySelectorAll(".kanban-column")
-    columns.forEach((column) => {
-      const stageId = column.dataset.stageId
-      const stage = this.getStageById(stageId)
-      if (stage) {
-        this.setupColumnUserAssignment(column, stage)
-      }
-    })
-
-    const cards = document.querySelectorAll(".kanban-card")
-    cards.forEach((cardEl) => {
-      this.setupCardUserAssignment(cardEl)
-      this.setupCardMenuActions(cardEl)
-    })
-  }
-
   // Setup card menu button actions
   setupCardMenuActions(cardElement) {
     const menuButton = cardElement.querySelector('.card-menu')
@@ -4323,13 +2831,6 @@ export class WorkspaceBoard {
     return null
   }
 
-  getStageAssignedUsers(stageId) {
-    if (window.WorkspaceConfig && window.WorkspaceConfig.stageAssignments) {
-      return window.WorkspaceConfig.stageAssignments[stageId] || []
-    }
-    return []
-  }
-
   getCardComments(cardId) {
     if (this.data && this.data.comments) {
       const comments = this.data.comments[cardId];
@@ -4424,23 +2925,6 @@ export class WorkspaceBoard {
     const div = document.createElement("div")
     div.textContent = text
     return div.innerHTML
-  }
-
-  generateMockPreview(type) {
-    const isWorkspace = type === "workspace"
-    // Use direct colors for mock preview consistent with styles.css vars
-    const bgColor = isWorkspace ? "rgba(0, 123, 255, 0.05)" : "var(--bg-secondary)" // Using existing CSS var for secondary background
-    const borderColor = isWorkspace ? "rgba(0, 123, 255, 0.2)" : "var(--border-light)"
-
-    return `
-       <div class="preview-content">
-           <div class="preview-block" style="height: 20px; margin-bottom: 10px; width: 75%; background-color: ${bgColor}; border: 1px solid ${borderColor}; border-radius: var(--border-radius-sm);"></div>
-           <div class="preview-block" style="height: 20px; margin-bottom: 10px; width: 50%; background-color: ${bgColor}; border: 1px solid ${borderColor}; border-radius: var(--border-radius-sm);"></div>
-           <div class="preview-block" style="height: 120px; margin-bottom: 10px; width: 100%; background-color: ${bgColor}; border: 1px solid ${borderColor}; border-radius: var(--border-radius-sm);"></div>
-           <div class="preview-block" style="height: 20px; margin-bottom: 10px; width: 65%; background-color: ${bgColor}; border: 1px solid ${borderColor}; border-radius: var(--border-radius-sm);"></div>
-           ${isWorkspace ? '<div class="preview-highlight">Modified content</div>' : ""}
-       </div>
-     `
   }
 
   debounce(func, wait) {

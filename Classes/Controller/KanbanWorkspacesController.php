@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Devzspace\KanbanWorkspaces\Controller;
+namespace WebVision\KanbanWorkspaces\Controller;
 
-use Devzspace\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
+use WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
@@ -151,34 +151,13 @@ class KanbanWorkspacesController extends ActionController
     }
 
     /**
-     * Prototype action for the Kanban Workspaces backend module
-     */
-    public function prototypeAction(): ResponseInterface
-    {
-        $this->moduleTemplate = $this->moduleTemplateFactory->create($this->request);
-
-        // Add CSS and JS
-        $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
-        $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
-        $this->pageRenderer->addJsFile('EXT:kanban_workspaces/Resources/Public/JavaScript/ConfigPrototype.js');
-        $this->pageRenderer->loadJavaScriptModule('@devzspace/kanban-workspaces/Prototype.js');
-
-        // Assign variables to template
-        $this->moduleTemplate->assignMultiple([
-            'moduleTitle' => 'Kanban Workspaces',
-        ]);
-        return $this->moduleTemplate->renderResponse('KanbanWorkspaces/Prototype');
-    }
-
-    /**
      * Add CSS and JS assets
      */
     protected function addAssets(): void
     {
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
-        $this->pageRenderer->addJsFile('EXT:kanban_workspaces/Resources/Public/JavaScript/Config.js');
-        $this->pageRenderer->loadJavaScriptModule('@devzspace/kanban-workspaces/App.js');
+        $this->pageRenderer->loadJavaScriptModule('@webvision/kanban-workspaces/App.js');
         
         // Load workspaces send-to-stage-form Web Component
         $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');

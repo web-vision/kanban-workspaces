@@ -4,7 +4,7 @@ $EM_CONF[$_EXTKEY] = [
     'title' => 'Kanban Workspaces',
     'description' => 'Kanban Board Extension for TYPO3 - Manage tasks and projects with an intuitive kanban interface',
     'category' => 'plugin',
-    'author' => 'Devzspace',
+    'author' => 'WebVision',
     'author_email' => 'info@devzspace.com',
     'state' => 'stable',
     'version' => '1.0.0',
@@ -18,7 +18,7 @@ $EM_CONF[$_EXTKEY] = [
     ],
     'autoload' => [
         'psr-4' => [
-            'Devzspace\\KanbanWorkspaces\\' => 'Classes/',
+            'WebVision\\KanbanWorkspaces\\' => 'Classes/',
         ],
     ],
 ];

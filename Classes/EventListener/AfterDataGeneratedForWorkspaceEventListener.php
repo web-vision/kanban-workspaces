@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Devzspace\KanbanWorkspaces\EventListener;
+namespace WebVision\KanbanWorkspaces\EventListener;
 
-use Devzspace\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
+use WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;

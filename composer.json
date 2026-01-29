@@ -1,12 +1,12 @@
 {
-    "name": "devzspace/kanban-workspaces",
+    "name": "webvision/kanban-workspaces",
     "type": "typo3-cms-extension",
     "version": "1.0.0",
     "description": "Kanban Board Extension for TYPO3",
     "license": "GPL-2.0-or-later",
     "authors": [
         {
-            "name": "Devzspace",
+            "name": "WebVision",
             "email": "info@devzspace.com"
         }
     ],
@@ -24,12 +24,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Devzspace\\KanbanWorkspaces\\": "Classes/"
+            "WebVision\\KanbanWorkspaces\\": "Classes/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Devzspace\\KanbanWorkspaces\\Tests\\": "Tests/"
+            "WebVision\\KanbanWorkspaces\\Tests\\": "Tests/"
         }
     },
     "extra": {

@@ -17,3 +17,9 @@ services:
 
   WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration:
     public: true
+
+  # Public so AssignAjaxController can resolve them via container (controller is created by makeInstance)
+  WebVision\KanbanWorkspaces\Service\AssigneeMappingService:
+    public: true
+  WebVision\KanbanWorkspaces\Notification\AssignmentNotificationService:
+    public: true

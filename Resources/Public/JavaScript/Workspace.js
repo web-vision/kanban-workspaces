@@ -253,6 +253,28 @@ export class WorkspaceBoard {
       })
     }
 
+    // Assign modal
+    const assignModal = document.getElementById("assignModal")
+    const closeAssignModalBtn = document.getElementById("closeAssignModal")
+    const assignModalCancelBtn = document.getElementById("assignModalCancel")
+    const assignModalOkBtn = document.getElementById("assignModalOk")
+    if (closeAssignModalBtn) {
+      closeAssignModalBtn.addEventListener("click", () => this.closeAssignModal())
+    }
+    if (assignModalCancelBtn) {
+      assignModalCancelBtn.addEventListener("click", () => this.closeAssignModal())
+    }
+    if (assignModal) {
+      assignModal.addEventListener("click", (e) => {
+        if (e.target === assignModal) {
+          this.closeAssignModal()
+        }
+      })
+    }
+    if (assignModalOkBtn) {
+      assignModalOkBtn.addEventListener("click", () => this.handleAssignModalOk())
+    }
+
     // Add comment button
     const addCommentBtn = document.getElementById("addComment")
     if (addCommentBtn) {
@@ -635,8 +657,10 @@ export class WorkspaceBoard {
         hasSchedule: false, // TYPO3 workspace doesn't have built-in scheduling
         scheduleText: item.stage === -10 ? 'Published' : null,
         comments: 0, // Would need separate API call to get comments
-        assignedUsers: [], // Would need separate API call to get assigned users
+        assignedUsers: item.assignee_uid ? [{ uid: item.assignee_uid, username: item.assignee_username || '', avatar_url: item.assignee_avatar_url || null }] : [],
+        assignee: item.assignee_uid ? { uid: item.assignee_uid, username: item.assignee_username || '', avatar_url: item.assignee_avatar_url || null } : null,
         t3ver_oid: item.t3ver_oid || null,
+        t3ver_wsid: item.t3ver_wsid || null,
         table: item.table,
         pid: item.livepid || null,
         nextStage : item.value_nextStage,
@@ -868,7 +892,19 @@ export class WorkspaceBoard {
          </div>`
         : ""
 
-    /** ToDo: ${assignedUsersHTML} */
+    // Assignee(s) on card: card.assignee or card.assignedUsers; show avatar image if available
+    const assignees = card.assignee ? [card.assignee] : (card.assignedUsers || []);
+    const assignedUsersHTML = assignees.length > 0
+      ? `<div class="card-assignees">${assignees.map((u) => {
+          const title = this.escapeHtml(u.username || 'UID ' + u.uid);
+          const initial = (u.username || 'U' + u.uid).charAt(0).toUpperCase();
+          if (u.avatar_url) {
+            return `<span class="user-avatar" title="${title}"><img src="${this.escapeHtml(u.avatar_url)}" alt="${title}" loading="lazy" onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='flex';" /><span class="user-avatar-initial" style="display:none">${initial}</span></span>`;
+          }
+          return `<span class="user-avatar" title="${title}">${initial}</span>`;
+        }).join('')}</div>`
+      : '';
+
     return `
        <div class="kanban-card ${priorityClass} ${selectedClass}" 
             data-card-id="${card.id}"
@@ -925,6 +961,7 @@ export class WorkspaceBoard {
                <div class="card-language">
                    ${this.renderT3Icon(card.language.icon)} ${card.languageCode.toUpperCase()}
                </div>
+               ${assignedUsersHTML}
                <div class="card-stats">
                    ${
                      card.comments > 0
@@ -1104,12 +1141,13 @@ export class WorkspaceBoard {
     // Create drag placeholder
     this.createDragPlaceholder()
 
-    // Setup card drag events
+    // Setup card drag events and card menu (context menu) for each card
     cards.forEach((cardEl) => {
       const cardId = cardEl.dataset.cardId
       const cardData = this.getCardById(cardId)
       if (cardData) {
         this.setupCardDragAndClick(cardEl, cardData)
+        this.setupCardMenuActions(cardEl)
       } else {
         console.warn(`Card data not found for cardId: ${cardId}`)
       }
@@ -1637,12 +1675,23 @@ export class WorkspaceBoard {
     }
   }
 
+  closeAssignModal() {
+    const assignModal = document.getElementById("assignModal")
+    if (assignModal) {
+      assignModal.style.display = "none"
+    }
+    document.body.style.overflow = ""
+  }
+
   closeAllModals() {
     const previewModal = document.getElementById("previewModal")
     if (previewModal) {
       previewModal.style.display = "none"
     }
-
+    const assignModal = document.getElementById("assignModal")
+    if (assignModal) {
+      assignModal.style.display = "none"
+    }
     document.body.style.overflow = ""
   }
 
@@ -2658,6 +2707,10 @@ export class WorkspaceBoard {
         <i class="fas fa-edit"></i>
         <span>Open version of page</span>
       </div>
+      <div class="context-menu-item" data-action="assign-record" data-card-id="${card.id}">
+        <i class="fas fa-user-plus"></i>
+        <span>Assign</span>
+      </div>
       <div class="context-menu-item danger" data-action="delete-card" data-card-id="${card.id}">
         <i class="fas fa-trash"></i>
         <span>Discard version of record</span>
@@ -2678,6 +2731,9 @@ export class WorkspaceBoard {
         break
       case "page-version":
         this.pageVersion(card)
+        break
+      case "assign-record":
+        this.openAssignModal(card)
         break
       case "delete-card":
         this.deleteCard(card)
@@ -2738,6 +2794,110 @@ export class WorkspaceBoard {
   pageVersion(card) {
     const recordUid = card.table === 'pages' ? card.t3ver_oid : card.pid;
     window.location.href = TYPO3.settings.WebLayout.moduleUrl + '&id=' + recordUid;
+  }
+
+  openAssignModal(card) {
+    const assignUrl = TYPO3.settings?.ajaxUrls?.kanban_workspace_assign;
+    if (!assignUrl) {
+      Notification.error('Assign', 'Assign URL not configured', 5);
+      return;
+    }
+    this._assignModalCard = card;
+
+    const assignModal = document.getElementById('assignModal');
+    const assignModalTitle = document.getElementById('assignModalTitle');
+    const assignModalBody = document.getElementById('assignModalBody');
+    if (!assignModal || !assignModalTitle || !assignModalBody) return;
+
+    const titleLabel = TYPO3.lang?.['labels.title'] || 'Title';
+    const descLabel = TYPO3.lang?.['labels.description'] || 'Description';
+    const assigneeLabel = TYPO3.lang?.['labels.assignee'] || 'Assignee (Backend user UID)';
+    const selectUserLabel = TYPO3.lang?.['labels.selectUser'] || '-- Select user --';
+    const modalTitleText = TYPO3.lang?.['window.assign.title'] || 'Assign Record';
+
+    const beUsers = window.WorkspaceConfig?.beUsers || [];
+    const currentAssigneeUid = card.assignee?.uid != null ? parseInt(card.assignee.uid, 10) : null;
+    const optionsHTML = beUsers.map((u) => {
+      const selected = currentAssigneeUid === u.uid ? ' selected' : '';
+      const username = this.escapeHtml(String(u.username || ''));
+      return `<option value="${u.uid}"${selected}>${username} (${u.uid})</option>`;
+    }).join('');
+    const formHTML = `
+      <form class="t3js-assign-form">
+        <div class="form-group mb-3">
+          <label class="form-label">${titleLabel}</label>
+          <input type="text" name="title" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">${descLabel}</label>
+          <textarea name="description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">${assigneeLabel}</label>
+          <select name="be_user" class="form-control form-select" required>
+            <option value="">${selectUserLabel}</option>
+            ${optionsHTML}
+          </select>
+        </div>
+      </form>
+    `;
+
+    assignModalTitle.textContent = modalTitleText;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = formHTML;
+    assignModalBody.replaceChildren(...wrapper.childNodes);
+
+    assignModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  async handleAssignModalOk() {
+    const card = this._assignModalCard;
+    if (!card) return;
+    const assignUrl = TYPO3.settings?.ajaxUrls?.kanban_workspace_assign;
+    if (!assignUrl) return;
+
+    const assignModal = document.getElementById('assignModal');
+    const form = assignModal?.querySelector('.t3js-assign-form');
+    if (!form) return;
+
+    const data = Utility.convertFormToObject(form);
+    const beUser = parseInt(data.be_user, 10);
+    if (!beUser || beUser < 1) {
+      Notification.warning('Assign', 'Please select an assignee', 3);
+      return;
+    }
+
+    const workspaceId = card.t3ver_wsid != null ? parseInt(card.t3ver_wsid, 10) : (TYPO3.settings?.Workspaces?.id != null ? parseInt(TYPO3.settings.Workspaces.id, 10) : 0);
+    const payload = {
+      table: card.table,
+      record_uid: parseInt(card.uid, 10),
+      workspace_id: workspaceId,
+      stage_id: parseInt(card.stage, 10) || 0,
+      be_user: beUser,
+      title: (data.title || '').trim(),
+      description: (data.description || '').trim(),
+    };
+
+    try {
+      const response = await fetch(assignUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ data: [payload] }),
+      });
+      const result = await response.json();
+      if (result && result.success !== false) {
+        this.closeAssignModal();
+        Notification.success('Assign', 'Assignment saved', 2);
+        this.loadData();
+      } else {
+        throw new Error(result?.error || 'Assign failed');
+      }
+    } catch (err) {
+      console.error('Assign failed:', err);
+      Notification.error('Assign', err.message || 'Failed to save assignment', 5);
+      this.closeAssignModal();
+    }
   }
 
   deleteCard(card) {

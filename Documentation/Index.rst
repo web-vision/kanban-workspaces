@@ -42,6 +42,7 @@ Kanban Workspaces for TYPO3
    Introduction/Index
    Administrator/Index
    Editor/Index
+   Editor/AssignUser
    Configuration/Index
    Developer/Index
    KnownProblems/Index

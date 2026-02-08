@@ -20,6 +20,7 @@ Key Features
 * **Backend Module Integration** - Seamlessly integrated into TYPO3's web module navigation
 * **Workspace Integration** - Full integration with TYPO3's native workspace functionality
 * **Dynamic Stage Configuration** - Configure custom stages and disable default stages as needed
+* **Assign User to Card** - Assign a backend user to a workspace record (card) with optional title/description; assignee is shown on the card (with avatar); email notification is sent to the assignee when applicable
 * **Responsive Design** - Works on desktop and tablet interfaces
 
 What is Kanban Workflow?
@@ -76,3 +77,4 @@ Supported Features
 * Automatic stage configuration from workspace settings
 * Custom stage color coding
 * Edit and delete permissions per stage
+* Assign backend user to card with email notification and cleanup on publish

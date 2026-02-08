@@ -4,6 +4,38 @@
 ChangeLog
 =========
 
+Version 1.1.0 (2025-02-08)
+==========================
+
+**Assignment feature**
+
+This release adds the ability to assign a backend user to a workspace record (card) on the kanban board, with optional title and description, assignee display (including avatar), email notification to the assignee, and automatic cleanup of assignment data when the record is published.
+
+New Features
+------------
+
+* **Assign user to card** – Card context menu (⋯) → **Assign** opens a modal to set Title (optional), Description (optional), and Assignee (required; select from backend user list).
+* **Assignee on card** – Each card shows the assignee in the footer (avatar image from FAL when available, otherwise user initial).
+* **Assignment notification email** – When you assign a **different** user (not yourself) with a valid email, that user receives an email (Fluid templates, SystemEmail layout).
+* **Cleanup on publish** – When a record is published via TYPO3 workspace publish, assignment rows for that record/workspace are removed automatically.
+
+Technical Details
+-----------------
+
+* **Table:** ``sys_workspaces_assignee`` – stores assignee (be_user), table_name, record_uid, workspace_id, stage_id, title, description (see ``ext_tables.sql``).
+* **TCA:** ``t3ver_assignee`` column added to all versioned tables (references ``sys_workspaces_assignee``); see ``Configuration/TCA/Overrides/t3ver_assignee.php``.
+* **Ajax route:** ``kanban_workspace_assign`` (path ``/kanban-workspace/assign``) → ``AssignAjaxController::assignAction``; see ``Configuration/Backend/AjaxRoutes.php``.
+* **Services:** ``AssigneeMappingService`` (persist/cleanup), ``AssignmentNotificationService`` (email); both public in ``Configuration/Services.yaml``.
+* **Event listeners:** ``AssigneeEnrichmentListener`` (``AfterDataGeneratedForWorkspaceEvent`` – enriches workspace data with assignee/avatar); ``AssigneeCleanupAfterPublishListener`` (``AfterRecordPublishedEvent`` – cleanup).
+* **Email templates:** ``Resources/Private/Templates/Email/AssignmentNotification.html`` and ``AssignmentNotification.txt``; MAIL config (e.g. ``defaultMailFromAddress``, transport) required for sending.
+
+Documentation
+-------------
+
+* **Editor:** :doc:`Editor/AssignUser` – flow, email notification, avatar display, testing, troubleshooting.
+* **Configuration:** MAIL and Ajax route configuration for assignment emails; see :doc:`Configuration/Index`.
+* **Developer:** Assign feature implementation (controllers, services, listeners, DB, TCA); see :doc:`Developer/Index`.
+
 Version 1.0.0 (2025-01-29)
 ==========================
 

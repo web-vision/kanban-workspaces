@@ -1,0 +1,30 @@
+<f:layout name="SystemEmail" />
+<f:section name="Subject">You were assigned to a record in workspace "{workspace.title}"</f:section>
+<f:section name="Title">Assignment in workspace "{workspace.title}"</f:section>
+<f:section name="Main">
+At the TYPO3 site "{typo3.sitename}" in workspace "{workspace.title}" ({workspace.uid}) you were assigned to the following record:
+
+{recordTitle} ({tableName}:{recordUid})
+
+Location in the page tree: "{rootLine}"
+
+Stage: {stageTitle}
+
+You were assigned by {currentUser.realName} ({currentUser.username}).
+
+<f:if condition="{assignmentTitle}">
+
+Assignment title:
+{assignmentTitle}
+</f:if>
+
+<f:if condition="{assignmentDescription}">
+
+Assignment description:
+<f:format.nl2br>{assignmentDescription}</f:format.nl2br>
+</f:if>
+
+<f:if condition="{previewLink}">
+See a preview of the page here: {previewLink}
+</f:if>
+</f:section>

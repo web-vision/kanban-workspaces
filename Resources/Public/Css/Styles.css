@@ -1158,6 +1158,11 @@ body {
   object-fit: cover;
 }
 
+.user-avatar .user-avatar-initial {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
 /* User Assignment Dropdown */
 .user-assignment-dropdown {
   position: absolute;
@@ -1314,21 +1319,30 @@ body {
 /* Bootstrap modal-header override */
 .modal-overlay .modal-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border-bottom: 1px solid var(--border-light);
   background-color: var(--bg-primary);
+  flex-shrink: 0;
+  min-height: 56px;
 }
 
 .modal-title-section {
   flex: 1;
+  min-width: 0;
 }
 
 .modal-overlay .modal-title {
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.modal-overlay .modal-header .modal-title-section:has(.modal-meta) .modal-title {
   margin-bottom: var(--spacing-sm);
 }
 
@@ -1341,7 +1355,9 @@ body {
 }
 
 /* Bootstrap close button override */
-.modal-overlay .btn-close {
+.modal-overlay .modal-header .btn-close {
+  flex-shrink: 0;
+  margin-left: var(--spacing-sm);
   background: none;
   border: none;
   color: var(--text-muted);
@@ -1353,7 +1369,7 @@ body {
   font-size: 18px;
 }
 
-.modal-overlay .btn-close:hover {
+.modal-overlay .modal-header .btn-close:hover {
   background-color: var(--bg-secondary);
   opacity: 1;
 }
@@ -1361,7 +1377,7 @@ body {
 /* Bootstrap nav-tabs override */
 .modal-overlay .nav-tabs {
   border-bottom: 1px solid var(--border-light);
-  padding: 0 var(--spacing-lg);
+  padding: 0 var(--spacing-xl);
   margin-bottom: 0;
   background-color: transparent;
 }
@@ -1373,7 +1389,7 @@ body {
 .modal-overlay .nav-tabs .nav-link {
   background: none;
   border: none;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-xl);
   cursor: pointer;
   color: var(--text-secondary);
   border-bottom: 2px solid transparent;
@@ -1405,13 +1421,18 @@ body {
   padding: 0;
 }
 
+/* Modal body padding when no tab content (e.g. Assign modal) */
+.modal-overlay .modal-body:not(:has(.tab-content)) {
+  padding: var(--spacing-xl);
+}
+
 .modal-overlay .tab-content {
   height: 100%;
 }
 
 .modal-overlay .tab-pane {
   display: none;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
 }
 
 .modal-overlay .tab-pane.active {
@@ -1597,7 +1618,6 @@ body {
 /* Summary of changes (TYPO3 diff) */
 .changes-container {
   max-height: 500px;
-  overflow-y: auto;
   padding: var(--spacing-sm);
 }
 
@@ -1885,9 +1905,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border-top: 1px solid var(--border-light);
   background-color: var(--bg-primary);
+  flex-shrink: 0;
 }
 
 .modal-actions-left,

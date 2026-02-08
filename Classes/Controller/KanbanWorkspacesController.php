@@ -20,6 +20,7 @@ use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -108,6 +109,7 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addInlineSetting('FormEngine', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('record_edit'));
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('web_layout'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
         
         // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([
@@ -121,6 +123,11 @@ class KanbanWorkspacesController extends ActionController
             'window.sendToNextStageWindow.additionalRecipients' => 'Additional recipients',
             'window.sendToNextStageWindow.additionalRecipients.hint' => 'One recipient per line',
             'window.sendToNextStageWindow.comments' => 'Comments',
+            'window.assign.title' => 'Assign Record',
+            'labels.title' => 'Title',
+            'labels.description' => 'Description',
+            'labels.assignee' => 'Assignee (Backend user UID)',
+            'labels.selectUser' => '-- Select user --',
         ]);
 
         // Add CSS and JS
@@ -132,6 +139,7 @@ class KanbanWorkspacesController extends ActionController
             'selectedLanguage' => $selectedLanguage,
             'selectedDepth' => $selectedDepth,
             'selectedStage' => $selectedStage,
+            'beUsers' => $this->getBackendUsersList(),
             'filters' => [
                 'depth' => [
                     'label' => 'Depth',
@@ -178,6 +186,29 @@ class KanbanWorkspacesController extends ActionController
     protected function getBackendUser(): BackendUserAuthentication
     {
         return $GLOBALS['BE_USER'];
+    }
+
+    /**
+     * Get list of backend users (uid, username) for assignee selectbox.
+     */
+    protected function getBackendUsersList(): array
+    {
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable('be_users');
+        $result = $queryBuilder
+            ->select('uid', 'username')
+            ->from('be_users')
+            ->where($queryBuilder->expr()->gt('uid', 0))
+            ->orderBy('username', 'ASC')
+            ->executeQuery();
+        $list = [];
+        while ($row = $result->fetchAssociative()) {
+            $list[] = [
+                'uid' => (int)$row['uid'],
+                'username' => (string)($row['username'] ?? ''),
+            ];
+        }
+        return $list;
     }
 
     /**

@@ -175,11 +175,90 @@ The extension uses TYPO3's service container for dependency injection. Services 
      _defaults:
        autowire: true
        autoconfigure: true
+       public: false
 
      WebVision\KanbanWorkspaces\:
-       resource: '../Classes/'
+       resource: '../Classes/*'
+       exclude: '../Classes/Domain/Model/*'
 
-This configuration automatically registers all classes in the ``Classes/`` directory and enables autowiring for dependency injection.
+     WebVision\KanbanWorkspaces\Controller\KanbanWorkspacesController:
+       public: true
+       tags:
+         - name: 'backend.controller'
+           identifier: 'KanbanWorkspaces'
+
+     WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration:
+       public: true
+
+     WebVision\KanbanWorkspaces\Service\AssigneeMappingService:
+       public: true
+     WebVision\KanbanWorkspaces\Notification\AssignmentNotificationService:
+       public: true
+
+This configuration automatically registers classes in ``Classes/`` and enables autowiring. The listed services are explicitly **public** so they can be resolved when the Assign Ajax controller is instantiated by the backend dispatcher.
+
+Assignment Feature (Ajax Route and MAIL)
+========================================
+
+Ajax Route for Assign
+---------------------
+
+The Assign feature uses a backend Ajax route so the kanban board can save assignments without leaving the module.
+
+**File:** ``Configuration/Backend/AjaxRoutes.php``
+
+.. code-block:: php
+
+   return [
+       'kanban_workspace_assign' => [
+           'path' => '/kanban-workspace/assign',
+           'target' => \WebVision\KanbanWorkspaces\Controller\AssignAjaxController::class . '::assignAction',
+           'inheritAccessFromModule' => 'web_kanbanworkspaces',
+       ],
+   ];
+
+* **path** – URL path for the Ajax endpoint.
+* **target** – Controller class and action handling the request.
+* **inheritAccessFromModule** – Access is inherited from the Kanban Workspaces module (``web_kanbanworkspaces``).
+
+No additional configuration is required; the route is registered when the extension is active. Clear backend cache if the route does not appear.
+
+MAIL Configuration for Assignment Emails
+-----------------------------------------
+
+When you assign a **different** backend user (not yourself) to a card, the extension can send an assignment notification email. TYPO3’s global **MAIL** configuration is used.
+
+**Recommended in your project config (e.g. ``config/system/settings.php``):**
+
+.. code-block:: php
+
+   'MAIL' => [
+       'defaultMailFromAddress' => 'noreply@your-domain.com',
+       'defaultMailFromName' => 'TYPO3 Kanban Workspaces',
+       'transport' => 'sendmail',
+       'transport_sendmail_command' => '/usr/local/bin/mailpit sendmail -t --smtp-addr 127.0.0.1:1025',
+       // ... other transport options
+   ],
+
+* **defaultMailFromAddress** – Sender address when no page-specific sender is set. Required for emails to be accepted by many mail servers.
+* **defaultMailFromName** – Sender name shown in the email client.
+* **transport** / **transport_sendmail_command** – How mail is sent (e.g. sendmail, SMTP, or a local tool like Mailpit for development).
+
+**Optional – Page TSconfig (per-page sender/format):**
+
+You can override sender and format per page using the workspaces email config:
+
+.. code-block:: typoscript
+
+   tx_workspaces.emails {
+       senderEmail = no-reply@example.com
+       senderName = My Site
+       format = both
+   }
+
+The extension uses the same pattern as EXT:workspaces for email (FluidEmail, SystemEmail layout). Template/layout paths fall back to TYPO3 core/backend defaults when the global MAIL config does not define ``templateRootPaths`` / ``layoutRootPaths``.
+
+**Troubleshooting:** If assignment emails are not sent, ensure the assignee has a valid email in the backend user record, check ``MAIL.transport`` and ``defaultMailFromAddress``, and review TYPO3 logs (e.g. ``var/log/typo3_*.log``) for transport or template errors.
 
 JavaScript Module Configuration
 ================================

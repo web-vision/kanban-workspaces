@@ -173,6 +173,34 @@
        </div>
    </div>
 
+   <!-- Assign Record Modal (same structure as #previewModal) -->
+   <div class="modal-overlay" id="assignModal" style="display: none;">
+       <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="assignModalTitle" aria-modal="true">
+           <div class="modal-content">
+               <div class="modal-header">
+                   <div class="modal-title-section">
+                       <h4 class="modal-title" id="assignModalTitle">Assign Record</h4>
+                   </div>
+                   <button class="modal-close btn-close" id="closeAssignModal" aria-label="Close">
+                       <i class="fas fa-times"></i>
+                   </button>
+               </div>
+
+               <div class="modal-body" id="assignModalBody">
+                   <!-- Assign form will be injected here -->
+               </div>
+
+               <div class="modal-footer">
+                   <div class="modal-actions-left"></div>
+                   <div class="modal-actions-right">
+                       <button class="btn btn-outline" id="assignModalCancel">Cancel</button>
+                       <button class="btn btn-primary" id="assignModalOk">OK</button>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+
    <!-- Workspace Management Modal -->
    <div class="modal-overlay" id="workspaceModal" style="display: none;">
        <div class="modal-container workspace-modal">

@@ -183,6 +183,84 @@ AfterDataGeneratedForWorkspaceEventListener
 
    Entry point for event processing (implements Invokable interface).
 
+Assign Feature (Implementation)
+================================
+
+The Assign feature allows editors to assign a backend user to a workspace record (card). It consists of an Ajax controller, persistence service, notification service, two event listeners, a dedicated database table, and TCA enrichment.
+
+AssignAjaxController
+--------------------
+
+*Namespace:* ``WebVision\KanbanWorkspaces\Controller\AssignAjaxController``
+
+*Responsibility:* Handles the Ajax request for saving an assignment (assignee, title, description) and triggers persistence and email notification.
+
+*Route:* ``kanban_workspace_assign``, path ``/kanban-workspace/assign`` (see ``Configuration/Backend/AjaxRoutes.php``). Access is inherited from module ``web_kanbanworkspaces``.
+
+*Key method:* ``assignAction(ServerRequestInterface $request): ResponseInterface`` – parses request body (table, record_uid, workspace_id, stage_id, be_user, title, description), calls ``AssigneeMappingService::persistAssignmentWithMeta()`` and ``AssignmentNotificationService::notifyAssignee()``, returns JSON success/error.
+
+*Note:* The controller is instantiated by the backend dispatcher via ``GeneralUtility::makeInstance()`` (no constructor args). It resolves ``AssigneeMappingService`` and ``AssignmentNotificationService`` from the container inside the action; both services are registered as **public** in ``Configuration/Services.yaml``.
+
+AssigneeMappingService
+----------------------
+
+*Namespace:* ``WebVision\KanbanWorkspaces\Service\AssigneeMappingService``
+
+*Responsibility:* Persists assignment data to ``sys_workspaces_assignee`` (insert or update per record/workspace), sets ``t3ver_assignee`` on the versioned record, and cleans up assignee rows when a record is published.
+
+*Key methods:*
+  * ``persistAssignmentWithMeta(beUserId, tableName, recordUid, workspaceId, stageId, title, description)`` – upserts one row in ``sys_workspaces_assignee`` and updates the record’s ``t3ver_assignee`` column.
+  * ``cleanupForPublished(table, recordId, workspaceId)`` – deletes rows in ``sys_workspaces_assignee`` for the given table/record/workspace (called by ``AssigneeCleanupAfterPublishListener``).
+
+AssignmentNotificationService
+-----------------------------
+
+*Namespace:* ``WebVision\KanbanWorkspaces\Notification\AssignmentNotificationService``
+
+*Responsibility:* Sends an email to the assignee when they are assigned to a record (unless the assignee is the current user or has no valid email). Uses TYPO3’s ``MailerInterface`` and ``FluidEmail`` with the extension’s templates and the core **SystemEmail** layout.
+
+*Dependencies:* ``MailerInterface``, ``LoggerInterface``, ``StagesService``, ``PreviewUriBuilder``.
+
+*Templates:* ``Resources/Private/Templates/Email/AssignmentNotification.html`` and ``AssignmentNotification.txt``. Fallback MAIL template/layout/partial paths (EXT:core, EXT:backend) are used when global MAIL config does not define them.
+
+*Configuration:* Sender/format can be overridden via Page TSconfig ``tx_workspaces.emails.*``; otherwise ``MAIL.defaultMailFromAddress`` / ``defaultMailFromName`` and transport apply.
+
+AssigneeEnrichmentListener
+--------------------------
+
+*Namespace:* ``WebVision\KanbanWorkspaces\EventListener\AssigneeEnrichmentListener``
+
+*Event:* ``TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent``
+
+*Identifier:* ``kanban-workspaces/assignee-enrichment`` (runs after ``kanban-workspaces/after-data-generated-for-workspace``).
+
+*Responsibility:* Enriches each workspace item in the event data with assignee info from ``sys_workspaces_assignee`` and ``be_users``: ``assignee_uid``, ``assignee_username``, ``assignee_avatar_url`` (from FAL avatar when available). The frontend uses these to display the assignee on the card.
+
+AssigneeCleanupAfterPublishListener
+------------------------------------
+
+*Namespace:* ``WebVision\KanbanWorkspaces\EventListener\AssigneeCleanupAfterPublishListener``
+
+*Event:* ``TYPO3\CMS\Workspaces\Event\AfterRecordPublishedEvent``
+
+*Identifier:* ``kanban-workspaces/assignee-cleanup-after-publish``
+
+*Responsibility:* After a record is published, calls ``AssigneeMappingService::cleanupForPublished()`` to remove assignee rows for that table/record/workspace.
+
+Database and TCA
+----------------
+
+*Table:* ``sys_workspaces_assignee`` (defined in ``ext_tables.sql``). Columns include ``uid``, ``pid``, ``tstamp``, ``crdate``, ``title``, ``description``, ``be_user``, ``table_name``, ``record_uid``, ``workspace_id``, ``stage_id``. One row per record/workspace (last assignee wins on update).
+
+*TCA:* ``Configuration/TCA/Overrides/t3ver_assignee.php`` adds a read-only ``t3ver_assignee`` column (select on ``sys_workspaces_assignee``) to all tables with ``versioningWS``, so the versioned record can reference the assignee mapping row.
+
+Services and Ajax Route
+-----------------------
+
+*Services.yaml:* ``AssigneeMappingService`` and ``AssignmentNotificationService`` are explicitly **public** so they can be resolved from the container when ``AssignAjaxController`` is created by ``makeInstance``. ``KanbanWorkspacesController`` and ``EmConfiguration`` remain public for module and config access.
+
+*Ajax route:* ``Configuration/Backend/AjaxRoutes.php`` registers route ``kanban_workspace_assign`` with path ``/kanban-workspace/assign`` and target ``AssignAjaxController::assignAction``.
+
 API Reference
 =============
 

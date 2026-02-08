@@ -239,6 +239,15 @@ Troubleshooting
 * Check that the target stage allows item transition
 * Verify your TYPO3 user has sufficient workspace permissions
 
+Assigning a User to a Card
+==========================
+
+You can assign a backend user to a content element (card) and optionally add a title and description. The assignee is shown on the card (with avatar when available). If you assign a **different** user (not yourself), that user receives an **email notification**. Assignments are cleaned up when the record is published.
+
+**How to assign:** Open the card context menu (⋯) → **Assign** → fill in Title (optional), Description (optional), Assignee (required; select from dropdown) → **OK**.
+
+For a full description of the flow, email notification, and how to test it, see :doc:`AssignUser`.
+
 Getting Help
 ============
 

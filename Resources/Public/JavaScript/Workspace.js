@@ -5,7 +5,7 @@ import DeferredAction from '@typo3/backend/action-button/deferred-action.js';
 import Icons from '@typo3/backend/icons.js';
 import Utility from '@typo3/backend/utility.js';
 
-(function() {
+(function () {
   let isDragging = false;
   let startX = 0;
   let scrollLeft = 0;
@@ -14,7 +14,7 @@ import Utility from '@typo3/backend/utility.js';
   if (!main || !board) return;
 
   // Only allow drag-to-scroll if mousedown is on empty main area (not on a card or column)
-  main.addEventListener('mousedown', function(e) {
+  main.addEventListener('mousedown', function (e) {
     // Only left mouse button
     if (e.button !== 0) return;
     // Ignore if clicking on a card, column, or any child of kanban-board
@@ -26,17 +26,17 @@ import Utility from '@typo3/backend/utility.js';
     document.body.style.cursor = 'grabbing';
     e.preventDefault();
   });
-  main.addEventListener('mouseleave', function() {
+  main.addEventListener('mouseleave', function () {
     isDragging = false;
     main.classList.remove('drag-scroll-active');
     document.body.style.cursor = '';
   });
-  main.addEventListener('mouseup', function() {
+  main.addEventListener('mouseup', function () {
     isDragging = false;
     main.classList.remove('drag-scroll-active');
     document.body.style.cursor = '';
   });
-  main.addEventListener('mousemove', function(e) {
+  main.addEventListener('mousemove', function (e) {
     if (!isDragging) return;
     const x = e.pageX;
     board.scrollLeft = scrollLeft - (x - startX);
@@ -45,16 +45,16 @@ import Utility from '@typo3/backend/utility.js';
   // Touch support
   let touchStartX = 0;
   let touchScrollLeft = 0;
-  main.addEventListener('touchstart', function(e) {
+  main.addEventListener('touchstart', function (e) {
     if (e.target.closest('.kanban-column, .kanban-card')) return;
     isDragging = true;
     touchStartX = e.touches[0].pageX - board.scrollLeft;
     touchScrollLeft = board.scrollLeft;
   });
-  main.addEventListener('touchend', function() {
+  main.addEventListener('touchend', function () {
     isDragging = false;
   });
-  main.addEventListener('touchmove', function(e) {
+  main.addEventListener('touchmove', function (e) {
     if (!isDragging) return;
     const x = e.touches[0].pageX;
     board.scrollLeft = touchScrollLeft - (x - touchStartX);
@@ -151,8 +151,8 @@ export class WorkspaceBoard {
       })
 
       this.data.activeFilters.depth = window.WorkspaceConfig.selectedDepth ? [String(window.WorkspaceConfig.selectedDepth)] : [];
-      this.data.activeFilters.language = window.WorkspaceConfig.selectedLanguage? [String(window.WorkspaceConfig.selectedLanguage)] : [];
-      this.data.activeFilters.stage = window.WorkspaceConfig.selectedStage? [String(window.WorkspaceConfig.selectedStage)] : [];
+      this.data.activeFilters.language = window.WorkspaceConfig.selectedLanguage ? [String(window.WorkspaceConfig.selectedLanguage)] : [];
+      this.data.activeFilters.stage = window.WorkspaceConfig.selectedStage ? [String(window.WorkspaceConfig.selectedStage)] : [];
 
       if (this.options.mockData && window.WorkspaceConfig.mockData) {
         this.data.cards = [...window.WorkspaceConfig.mockData.cards]
@@ -291,6 +291,29 @@ export class WorkspaceBoard {
     const nextStageBtn = document.getElementById("approveBtn")
     if (nextStageBtn) {
       nextStageBtn.addEventListener("click", () => this.handleNextStage())
+    }
+
+    // Send to Stage modal
+    const sendToStageModal = document.getElementById("sendToStageModal")
+    const closeSendToStageModalBtn = document.getElementById("closeSendToStageModal")
+    const cancelSendToStageBtn = document.getElementById("cancelSendToStageBtn")
+    const submitSendToStageBtn = document.getElementById("submitSendToStageBtn")
+
+    if (closeSendToStageModalBtn) {
+      closeSendToStageModalBtn.addEventListener("click", () => this.closeSendToStageModal())
+    }
+    if (cancelSendToStageBtn) {
+      cancelSendToStageBtn.addEventListener("click", () => this.closeSendToStageModal())
+    }
+    if (submitSendToStageBtn) {
+      submitSendToStageBtn.addEventListener("click", () => this.handleSendToStageSubmit())
+    }
+    if (sendToStageModal) {
+      sendToStageModal.addEventListener("click", (e) => {
+        if (e.target === sendToStageModal) {
+          this.closeSendToStageModal()
+        }
+      })
     }
   }
 
@@ -487,7 +510,7 @@ export class WorkspaceBoard {
   // Fetch data from API
   fetchData() {
     const url = this.options.getDataApiUrl || this.options.apiUrl;
-    
+
     if (!url) {
       console.error('No API URL configured');
       return Promise.reject(new Error('No API URL configured'));
@@ -513,7 +536,7 @@ export class WorkspaceBoard {
 
   fetchCardDetails(card) {
     const url = this.options.getDataApiUrl || this.options.apiUrl;
-    
+
     if (!url) {
       console.error('No API URL configured');
       return Promise.reject(new Error('No API URL configured'));
@@ -542,7 +565,7 @@ export class WorkspaceBoard {
       .then((apiResponse) => {
         // Convert the TYPO3 workspace row data to kanban cards history and comments
         const details = this.convertCardDetailsToFormat(apiResponse, card.id);
-        
+
         if (!this.data.comments) {
           this.data.comments = {};
         }
@@ -552,18 +575,18 @@ export class WorkspaceBoard {
         if (!this.data.diffs) {
           this.data.diffs = {};
         }
-        
+
         this.data.comments[card.id] = details.comments;
         this.data.history[card.id] = details.history;
         this.data.diffs[card.id] = details.diff;
-        
+
         return details;
       });
   }
 
   processData(action, filterType, filterValue) {
     const url = this.options.getProcessApiUrl || this.options.apiUrl;
-    
+
     if (!url) {
       console.error('No API URL configured');
       return Promise.reject(new Error('No API URL configured'));
@@ -581,10 +604,10 @@ export class WorkspaceBoard {
       method: "POST",
       body: formData,
     })
-    .then((response) => response.json())
-    .then((apiResponse) => {
-      console.log(apiResponse);
-    });
+      .then((response) => response.json())
+      .then((apiResponse) => {
+        console.log(apiResponse);
+      });
   }
 
   convertWorkspaceDataToCards(apiResponse) {
@@ -600,7 +623,7 @@ export class WorkspaceBoard {
     }
 
     const workspaceData = result.result.data;
-    
+
     return workspaceData.map((item, index) => {
 
       // Map table type to content type
@@ -628,7 +651,7 @@ export class WorkspaceBoard {
 
       // Process integrity data from TYPO3 Workspaces IntegrityService
       const integrity = item.integrity || { status: 'success', messages: '' };
-      
+
       // Adjust priority based on integrity status
       let adjustedPriority = priority;
       if (integrity.status === 'error') {
@@ -663,15 +686,15 @@ export class WorkspaceBoard {
         t3ver_wsid: item.t3ver_wsid || null,
         table: item.table,
         pid: item.livepid || null,
-        nextStage : item.value_nextStage,
-        prevStage : item.value_prevStage
+        nextStage: item.value_nextStage,
+        prevStage: item.value_prevStage
       };
     });
   }
 
   extractPageNameFromPath(path) {
     if (!path) return 'Home';
-    
+
     const parts = path.split('/').filter(part => part.length > 0);
     return parts.length > 0 ? parts[parts.length - 1] : 'Home';
   }
@@ -679,13 +702,13 @@ export class WorkspaceBoard {
   // Helper function to convert TYPO3 date format to ISO string
   convertWorkspaceDate(dateString) {
     if (!dateString) return new Date().toISOString();
-    
+
     try {
       // TYPO3 format is usually "YYYY-MM-DD HH:mm"
       const [datePart, timePart] = dateString.split(' ');
       const [year, month, day] = datePart.split('-');
       const [hour, minute] = timePart ? timePart.split(':') : ['00', '00'];
-      
+
       const date = new Date(year, month - 1, day, hour, minute);
       return date.toISOString();
     } catch (error) {
@@ -706,16 +729,16 @@ export class WorkspaceBoard {
     }
 
     const data = result.result.data[0];
-    
+
     // Transform comments
     const comments = this.transformCommentsFromAPI(data.comments || []);
-    
+
     // Transform history
     const history = this.transformHistoryFromAPI(data.history || {});
-    
+
     // Extract diff data (already in HTML format from TYPO3)
     const diff = data.diff || [];
-    
+
     return { comments, history, diff };
   }
 
@@ -729,7 +752,7 @@ export class WorkspaceBoard {
       // Extract avatar from HTML or use username
       const avatarMatch = comment.user_avatar?.match(/src="([^"]+)"/);
       const avatarUrl = avatarMatch ? avatarMatch[1] : null;
-      
+
       // Build content: show user comment if exists, otherwise show stage movement
       let content = '';
       if (comment.user_comment && comment.user_comment.trim() !== '') {
@@ -759,11 +782,11 @@ export class WorkspaceBoard {
 
     return apiHistory.data.map((item, index) => {
       let action = '';
-      
+
       // Extract avatar from HTML or use null
       const avatarMatch = item.user_avatar?.match(/src="([^"]+)"/);
       const avatarUrl = avatarMatch ? avatarMatch[1] : null;
-      
+
       // Determine action based on differences
       if (item.differences === 'insert') {
         action = 'Created card';
@@ -854,11 +877,10 @@ export class WorkspaceBoard {
            </div>
        </div>
        <div class="column-content" data-stage-id="${stage.id}">
-           ${
-             cardsForStage.length === 0
-               ? '<div class="column-empty">No items in this stage</div>'
-               : cardsForStage.map((card) => this.createCardHTML(card)).join("")
-           }
+           ${cardsForStage.length === 0
+        ? '<div class="column-empty">No items in this stage</div>'
+        : cardsForStage.map((card) => this.createCardHTML(card)).join("")
+      }
        </div>
      `
 
@@ -896,13 +918,13 @@ export class WorkspaceBoard {
     const assignees = card.assignee ? [card.assignee] : (card.assignedUsers || []);
     const assignedUsersHTML = assignees.length > 0
       ? `<div class="card-assignees">${assignees.map((u) => {
-          const title = this.escapeHtml(u.username || 'UID ' + u.uid);
-          const initial = (u.username || 'U' + u.uid).charAt(0).toUpperCase();
-          if (u.avatar_url) {
-            return `<span class="user-avatar" title="${title}"><img src="${this.escapeHtml(u.avatar_url)}" alt="${title}" loading="lazy" onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='flex';" /><span class="user-avatar-initial" style="display:none">${initial}</span></span>`;
-          }
-          return `<span class="user-avatar" title="${title}">${initial}</span>`;
-        }).join('')}</div>`
+        const title = this.escapeHtml(u.username || 'UID ' + u.uid);
+        const initial = (u.username || 'U' + u.uid).charAt(0).toUpperCase();
+        if (u.avatar_url) {
+          return `<span class="user-avatar" title="${title}"><img src="${this.escapeHtml(u.avatar_url)}" alt="${title}" loading="lazy" onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='flex';" /><span class="user-avatar-initial" style="display:none">${initial}</span></span>`;
+        }
+        return `<span class="user-avatar" title="${title}">${initial}</span>`;
+      }).join('')}</div>`
       : '';
 
     return `
@@ -947,14 +969,13 @@ export class WorkspaceBoard {
            ` : ''}
            
            <div class="card-badges">
-               ${
-                 card.hasSchedule
-                   ? `<span class="card-badge schedule">
+               ${card.hasSchedule
+        ? `<span class="card-badge schedule">
                        <i class="fas fa-clock"></i>
                        ${card.scheduleText}
                    </span>`
-                   : ""
-               }
+        : ""
+      }
                ${dueDateHTML}
            </div>           
            <div class="card-footer">
@@ -963,14 +984,13 @@ export class WorkspaceBoard {
                </div>
                ${assignedUsersHTML}
                <div class="card-stats">
-                   ${
-                     card.comments > 0
-                       ? `<div class="card-comments">
+                   ${card.comments > 0
+        ? `<div class="card-comments">
                            <i class="fas fa-comment"></i>
                            <span>${card.comments}</span>
                        </div>`
-                       : ""
-                   }
+        : ""
+      }
                </div>
            </div>
        </div>
@@ -983,23 +1003,23 @@ export class WorkspaceBoard {
     if (!card.integrityStatus || card.integrityStatus === 'success' || card.integrityStatus === 'info') {
       return '';
     }
-    
+
     const iconMap = {
       info: 'fa-info-circle',
       warning: 'fa-exclamation-triangle',
       error: 'fa-exclamation-circle'
     };
-    
+
     const labelMap = {
       info: 'Info',
       warning: 'Warning',
       error: 'Error'
     };
-    
+
     const icon = iconMap[card.integrityStatus] || 'fa-info-circle';
     const label = labelMap[card.integrityStatus] || 'Info';
     const messages = card.integrityMessages || 'Integrity check';
-    
+
     return `
       <div class="card-integrity integrity-${card.integrityStatus}" 
            title="${this.escapeHtml(messages)}">
@@ -1200,10 +1220,10 @@ export class WorkspaceBoard {
             // Determine if moving to next or previous stage
             const sourceStageIndex = this.data.stages.findIndex(s => s.id === sourceStage.id)
             const targetStageIndex = this.data.stages.findIndex(s => s.id === targetStage.id)
-            
+
             // Show notification modal before stage transition (reusing existing logic)
             const cardIds = this.ui.selectedCards.size > 0 ? Array.from(this.ui.selectedCards) : [cardId]
-            
+
             if (targetStageIndex > sourceStageIndex) {
               // Moving forward - use next stage workflow
               this.handleStageTransitionWithModal(cardIds, 'next', targetStage, sourceStage)
@@ -1211,7 +1231,7 @@ export class WorkspaceBoard {
               // Moving backward - use prev stage workflow
               this.handleStageTransitionWithModal(cardIds, 'prev', targetStage, sourceStage)
             }
-            
+
             this.emit("card:drop", this.ui.draggedCard, targetStage, sourceStage)
           }
         }
@@ -1234,7 +1254,7 @@ export class WorkspaceBoard {
         console.error("Card data is missing in dragstart handler")
         return
       }
-      
+
       this.ui.draggedCard = cardData
       this.ui.draggedElement = e.target
 
@@ -1269,7 +1289,7 @@ export class WorkspaceBoard {
         console.error("Card data is missing in click handler")
         return
       }
-      
+
       this.emit("card:click", cardData)
     }
 
@@ -1346,16 +1366,16 @@ export class WorkspaceBoard {
         // Get current selected value
         let selectedValue;
         if (filterType === 'depth') {
-          selectedValue = this.data.activeFilters.depth && this.data.activeFilters.depth.length > 0 
-            ? this.data.activeFilters.depth[0] 
+          selectedValue = this.data.activeFilters.depth && this.data.activeFilters.depth.length > 0
+            ? this.data.activeFilters.depth[0]
             : '0';
         } else if (filterType === 'language') {
-          selectedValue = this.data.activeFilters.language && this.data.activeFilters.language.length > 0 
-            ? this.data.activeFilters.language[0] 
+          selectedValue = this.data.activeFilters.language && this.data.activeFilters.language.length > 0
+            ? this.data.activeFilters.language[0]
             : 'all';
         } else if (filterType === 'stage') {
-          selectedValue = this.data.activeFilters.stage && this.data.activeFilters.stage.length > 0 
-            ? this.data.activeFilters.stage[0] 
+          selectedValue = this.data.activeFilters.stage && this.data.activeFilters.stage.length > 0
+            ? this.data.activeFilters.stage[0]
             : '-99';
         }
 
@@ -1377,14 +1397,14 @@ export class WorkspaceBoard {
                      tabindex="0">
                ${allOption}
                ${filterConfig.options
-                 .map(
-                   (option) => `
+            .map(
+              (option) => `
                  <option value="${option.id}" ${option.id == selectedValue ? 'selected' : ''}>
                    ${option.flag ? option.flag + ' ' : ''}${this.escapeHtml(option.label)}
                  </option>
                `,
-                 )
-                 .join("")}
+            )
+            .join("")}
              </select>
            </div>
          </div>
@@ -1395,8 +1415,8 @@ export class WorkspaceBoard {
          <h3 class="filter-group-title">${filterConfig.label}</h3>
          <div class="filter-options">
            ${filterConfig.options
-             .map(
-               (option) => `
+            .map(
+              (option) => `
                <div class="filter-option">
                    <input type="checkbox" 
                           id="filter-${filterType}-${option.id}"
@@ -1410,8 +1430,8 @@ export class WorkspaceBoard {
                    </label>
                </div>
            `,
-             )
-             .join("")}
+            )
+            .join("")}
          </div>
        `
       }
@@ -1436,25 +1456,25 @@ export class WorkspaceBoard {
     selects.forEach((select) => {
       // Ensure the select is focusable and clickable
       select.setAttribute('tabindex', '0');
-      
+
       // Add both change and click listeners to ensure interaction
       select.addEventListener("click", (e) => {
         e.stopPropagation(); // Prevent any parent handlers from interfering
       });
-      
+
       select.addEventListener("change", (e) => {
         e.stopPropagation(); // Prevent event bubbling
         const filterType = e.target.dataset.filterType
         const filterValue = e.target.value
-        
+
         // Clear previous filter first
         if (this.data.activeFilters[filterType]) {
           delete this.data.activeFilters[filterType]
         }
-        
+
         this.emit("filter:change", filterType, filterValue, true)
       });
-      
+
       // Add mousedown listener to ensure dropdown opens
       select.addEventListener("mousedown", (e) => {
         e.stopPropagation(); // Prevent any parent handlers from interfering
@@ -1522,7 +1542,8 @@ export class WorkspaceBoard {
   }
 
   handleCardDrop(card, targetStage, sourceStage) {
-    this.showToast(`Moved "${card.title}" from ${sourceStage.label} to ${targetStage.label}`, "success")
+    // Notification is handled in handleSendToStageSubmit after successful API response
+    console.debug(`Dropped "${card.title}" from ${sourceStage.label} to ${targetStage.label}`)
   }
 
   handleStageDragOver(stage, element) {
@@ -1559,7 +1580,7 @@ export class WorkspaceBoard {
     }
 
     this.updateActiveFiltersCount()
-    this.processData('set',filterType, filterValue)
+    this.processData('set', filterType, filterValue)
     this.loadData()
     // this.renderBoard()
   }
@@ -1635,7 +1656,7 @@ export class WorkspaceBoard {
 
     // Reset to first tab (Summary of changes)
     this.switchModalTab('changes');
-    
+
     // Initialize comment count (will be updated after data loads)
     const commentsCount = document.getElementById("commentsCount")
     if (commentsCount) {
@@ -1644,7 +1665,7 @@ export class WorkspaceBoard {
 
     modal.style.display = "flex"
     document.body.style.overflow = "hidden"
-    
+
     // Fetch card details and then load modal content
     this.showLoading();
     this.fetchCardDetails(card)
@@ -1746,7 +1767,7 @@ export class WorkspaceBoard {
     if (!commentsContainer) return
 
     const comments = this.getCardComments(cardId)
-    
+
     // Update the comments count badge with actual number of comments
     const commentsCount = document.getElementById("commentsCount")
     if (commentsCount) {
@@ -1773,11 +1794,10 @@ export class WorkspaceBoard {
              <div class="comment-text">${this.escapeHtml(comment.content)}</div>
            </div>
          </div>
-         ${
-           comment.replies
-             ? comment.replies
-                 .map(
-                   (reply) => `
+         ${comment.replies
+            ? comment.replies
+              .map(
+                (reply) => `
            <div class="comment reply">
              <div class="comment-avatar">
                ${reply.avatar ? `<img src="${reply.avatar}" alt="${this.escapeHtml(reply.author)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : this.getInitials(reply.author)}
@@ -1791,46 +1811,46 @@ export class WorkspaceBoard {
              </div>
            </div>
          `,
-                 )
-                 .join("")
-             : ""
-         }
+              )
+              .join("")
+            : ""
+          }
        `,
       )
       .join("")
   }
-  
+
   // Handle adding a new comment
   handleAddComment() {
     const commentTextarea = document.getElementById("newComment")
     const addCommentBtn = document.getElementById("addComment")
-    
+
     if (!commentTextarea || !addCommentBtn) return
-    
+
     const commentText = commentTextarea.value.trim()
-    
+
     if (!commentText) {
       this.showToast("Please enter a comment", "warning")
       return
     }
-    
+
     // Get the current card ID from the modal
     const modalMeta = document.getElementById("modalMeta")
     if (!modalMeta) return
 
     const cardId = modalMeta.getAttribute('data-id')
-    
+
     // Find the card by title (you may want to store cardId differently)
     const currentCard = this.getCardById(cardId);
     if (!currentCard) {
       this.showToast("Unable to identify current card", "error")
       return
     }
-        
+
     // Disable button and show loading state
     addCommentBtn.disabled = true
     addCommentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...'
-    
+
     // Prepare API request
     const url = this.options.getDataApiUrl || this.options.apiUrl
     if (!url) {
@@ -1840,12 +1860,12 @@ export class WorkspaceBoard {
       addCommentBtn.innerHTML = '<i class="fas fa-comment"></i> Add Comment'
       return
     }
-    
+
     const payload = {
       action: "Actions",
       method: "sendToSpecificStageExecute",
       data: [{
-        "comments" : commentText,
+        "comments": commentText,
         "affects": {
           "elements": [
             {
@@ -1858,7 +1878,7 @@ export class WorkspaceBoard {
         }
       }]
     }
-    
+
     // Send AJAX POST request
     fetch(url, {
       method: "POST",
@@ -1873,10 +1893,10 @@ export class WorkspaceBoard {
         if (result && result.success !== false) {
           // Clear the textarea
           commentTextarea.value = ''
-          
+
           // Show success message
           this.showToast("Comment added successfully", "success")
-          
+
           // Reload comments to show the new one
           this.fetchCardDetails(currentCard)
             .then(() => {
@@ -1885,7 +1905,7 @@ export class WorkspaceBoard {
             .catch(error => {
               console.error('Failed to reload comments:', error)
             })
-          
+
           // Emit event
           this.emit("comment:added", currentCard.id, commentText)
         } else {
@@ -1903,6 +1923,181 @@ export class WorkspaceBoard {
       })
   }
 
+  // Open the custom Send to Stage modal
+  openSendToStageModal(formData, context) {
+    const modal = document.getElementById("sendToStageModal")
+    if (!modal) return
+
+    // Store context for submit handler
+    this.currentStageFormContext = context
+    this.currentStageFormData = formData
+
+    // Update UI
+    const recipientsGroup = document.getElementById("recipientsGroup")
+    const recipientsList = document.getElementById("stageRecipientsList")
+    const additionalGroup = document.getElementById("additionalRecipientsGroup")
+    const commentsInput = document.getElementById("stageComments")
+    const infoBanner = document.getElementById("stageInfoBanner")
+    const infoText = document.getElementById("stageInfoText")
+
+    // Reset form
+    if (commentsInput) commentsInput.value = (formData.comments && formData.comments.value) || ""
+    if (document.getElementById("stageAdditionalRecipients")) {
+      document.getElementById("stageAdditionalRecipients").value = (formData.additional && formData.additional.value) || ""
+    }
+
+    // Setup Info Banner
+    if (infoBanner && infoText) {
+      if (context.targetStage) {
+        infoText.textContent = `Sending ${context.cardIds.length > 1 ? context.cardIds.length + ' items' : 'item'} to ${context.targetStage.label}`
+        infoBanner.style.display = "flex"
+      } else {
+        infoBanner.style.display = "none"
+      }
+    }
+
+    // Render recipients
+    if (recipientsList && formData.sendMailTo && formData.sendMailTo.length > 0) {
+      recipientsGroup.style.display = "block"
+      recipientsList.innerHTML = formData.sendMailTo.map(recipient => `
+        <div class="stage-recipient-item">
+            <div class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  class="t3js-workspace-recipient" 
+                  id="${recipient.name}" 
+                  value="${recipient.value}"
+                  ${recipient.checked ? 'checked' : ''}
+                  ${recipient.disabled ? 'disabled' : ''}
+                />
+                <span class="checkmark"></span>
+                <label for="${recipient.name}">${this.escapeHtml(recipient.label)}</label>
+            </div>
+        </div>
+      `).join("")
+    } else {
+      if (recipientsGroup) recipientsGroup.style.display = "none"
+    }
+
+    // Render additional recipients
+    if (additionalGroup) {
+      additionalGroup.style.display = formData.additional ? "block" : "none"
+    }
+
+    // Show modal
+    modal.style.display = "flex"
+    document.body.style.overflow = "hidden"
+
+    // Focus comments
+    if (commentsInput) commentsInput.focus()
+  }
+
+  closeSendToStageModal() {
+    const modal = document.getElementById("sendToStageModal")
+    if (modal) {
+      modal.style.display = "none"
+      document.body.style.overflow = ""
+    }
+
+    // If cancelled and we have context (drag drop), revert
+    if (this.currentStageFormContext && this.currentStageFormContext.isDragDrop) {
+      this.renderBoard()
+    }
+
+    this.currentStageFormContext = null
+    this.currentStageFormData = null
+  }
+
+  async handleSendToStageSubmit() {
+    if (!this.currentStageFormContext || !this.currentStageFormData) return
+
+    const { url, executeMethod, cardIds, targetStage } = this.currentStageFormContext
+    const submitBtn = document.getElementById("submitSendToStageBtn")
+
+    // Collect form data
+    const comments = document.getElementById("stageComments")?.value || ""
+    const additional = document.getElementById("stageAdditionalRecipients")?.value || ""
+
+    // Get checked recipients
+    const recipients = []
+    document.querySelectorAll(".t3js-workspace-recipient:checked").forEach(cb => {
+      recipients.push(cb.value)
+    })
+
+    // Construct form values object (mimicking Utility.convertFormToObject)
+    const formValues = {
+      comments: comments,
+      recipients: recipients,
+      additional: additional,
+      affects: this.currentStageFormData.affects
+    }
+
+    const executePayload = {
+      action: "Actions",
+      method: executeMethod,
+      data: [formValues]
+    }
+
+    // UI Loading state
+    if (submitBtn) {
+      const originalText = submitBtn.innerHTML
+      submitBtn.disabled = true
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...'
+
+      try {
+        const executeResponse = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: JSON.stringify(executePayload),
+        })
+
+        if (!executeResponse.ok) {
+          throw new Error(`HTTP error! status: ${executeResponse.status}`)
+        }
+
+        const executeResult = await executeResponse.json()
+        console.log(`${executeMethod} response:`, executeResult)
+
+        if (executeResult && executeResult[0]?.result?.success !== false) {
+          // Success
+          if (targetStage) {
+            this.moveCard(cardIds, targetStage.id, true)
+            Notification.success(
+              TYPO3.lang['actionSendToStage'] || 'Send to stage',
+              `Content moved to ${targetStage.label} and notifications sent`
+            )
+          } else {
+            // Refresh if not a drag-drop (revert/next)
+            this.loadData()
+            this.closePreviewModal()
+            this.showToast("Action completed successfully", "success")
+          }
+
+          // Close modal (skip revert logic)
+          this.currentStageFormContext = null
+          const modal = document.getElementById("sendToStageModal")
+          if (modal) {
+            modal.style.display = "none"
+            document.body.style.overflow = ""
+          }
+        } else {
+          throw new Error(executeResult[0]?.result?.message || "Stage transition failed")
+        }
+      } catch (error) {
+        console.error("Failed to execute stage transition:", error)
+        this.showToast("Failed to execute: " + error.message, "error")
+        // Revert on error
+        this.renderBoard()
+      } finally {
+        submitBtn.disabled = false
+        submitBtn.innerHTML = originalText
+      }
+    }
+  }
+
   /**
    * Handle stage transition with modal for drag and drop
    * Reuses existing sendToStageWindow/Execute logic
@@ -1917,7 +2112,7 @@ export class WorkspaceBoard {
 
       // Use the first card for the API call (TYPO3 workspaces handles one card at a time)
       const cardId = Array.isArray(cardIds) ? cardIds[0] : cardIds
-      
+
       // Get the card object to extract workspace version info
       const card = this.getCardById(cardId)
       if (!card) {
@@ -1925,18 +2120,18 @@ export class WorkspaceBoard {
         this.showToast("Card not found", "error")
         return
       }
-      
+
       // Step 1: Get window data using sendToNextStageWindow or sendToPrevStageWindow
       const method = direction === 'next' ? 'sendToNextStageWindow' : 'sendToPrevStageWindow'
       const executeMethod = direction === 'next' ? 'sendToNextStageExecute' : 'sendToPrevStageExecute'
-      
+
       // Build payload with correct parameter structure
       // sendToNextStageWindow expects: ($uid, $table, $t3ver_oid)
       // sendToPrevStageWindow expects: ($uid, $table)
       const payload = {
         action: "Actions",
         method: method,
-        data: direction === 'next' 
+        data: direction === 'next'
           ? [card.uid, card.table, card.t3ver_oid]
           : [card.uid, card.table]
       }
@@ -1956,123 +2151,23 @@ export class WorkspaceBoard {
 
       const data = await response.json()
       console.log(`${method} API response:`, data)
-      
+
       if (!data || !data[0] || !data[0].result) {
         throw new Error(`Invalid response from ${method}`)
       }
 
       const formData = data[0].result
-      
-      // Step 2: Create modal with Web Component form
-      await customElements.whenDefined('typo3-workspaces-send-to-stage-form')
-      
-      const modal = Modal.advanced({
-        title: TYPO3.lang['actionSendToStage'] || 'Send to stage',
-        content: '',
-        severity: SeverityEnum.info,
-        buttons: [
-          {
-            text: TYPO3.lang['cancel'] || 'Cancel',
-            active: true,
-            btnClass: "btn-default",
-            name: "cancel",
-            trigger: () => {
-              modal.hideModal()
-              // Revert the visual move since user cancelled
-              this.renderBoard()
-            }
-          },
-          {
-            text: TYPO3.lang['ok'] || 'OK',
-            btnClass: "btn-primary",
-            name: "ok"
-          }
-        ],
-        callback: (currentModal) => {
-          const form = currentModal.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
-          form.data = formData
-          form.TYPO3lang = TYPO3.lang
-          
-          currentModal.querySelector('.t3js-modal-body').replaceChildren(form)
-          
-          if (form.updateComplete) {
-            form.updateComplete.then(() => {
-              const formElement = form.querySelector('form')
-              if (!formElement) {
-                console.warn('Using fallback form renderer')
-                this.renderStageFallbackForm(currentModal, formData)
-              }
-            })
-          } else {
-            this.renderStageFallbackForm(currentModal, formData)
-          }
-        }
+
+      // Open custom modal instead of TYPO3 Modal
+      this.openSendToStageModal(formData, {
+        url: url,
+        executeMethod: executeMethod,
+        cardIds: cardIds,
+        targetStage: targetStage,
+        sourceStage: sourceStage,
+        isDragDrop: true
       })
-      
-      // Step 3: Handle OK button click to execute stage transition
-      modal.addEventListener('button.clicked', async (evt) => {
-        if (evt.target.name === 'ok') {
-          let formElement = modal.querySelector('typo3-workspaces-send-to-stage-form form')
-          if (!formElement) {
-            formElement = modal.querySelector('.t3js-modal-body form')
-          }
-          
-          if (!formElement) {
-            console.error('Form not found in modal')
-            this.showToast("Form not found", "error")
-            return
-          }
-          
-          const formValues = Utility.convertFormToObject(formElement)
-          formValues.affects = formData.affects
-          
-          const executePayload = {
-            action: "Actions",
-            method: executeMethod,
-            data: [formValues]
-          }
-          
-          try {
-            const executeResponse = await fetch(url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-              },
-              body: JSON.stringify(executePayload),
-            })
-            
-            if (!executeResponse.ok) {
-              throw new Error(`HTTP error! status: ${executeResponse.status}`)
-            }
-            
-            const executeResult = await executeResponse.json()
-            console.log(`${executeMethod} response:`, executeResult)
-            
-            if (executeResult && executeResult[0]?.result?.success !== false) {
-              // Now actually move the card(s) since notification was sent
-              this.moveCard(cardIds, targetStage.id, true)
-              
-              Notification.success(
-                TYPO3.lang['actionSendToStage'] || 'Send to stage',
-                `Content moved to ${targetStage.label} and notifications sent`
-              )
-              modal.hideModal()
-            } else {
-              throw new Error(executeResult[0]?.result?.message || "Stage transition failed")
-            }
-          } catch (error) {
-            console.error("Failed to execute stage transition:", error)
-            Notification.error(
-              'Error',
-              "Failed to execute stage transition: " + error.message
-            )
-            // Revert the visual state on error
-            this.renderBoard()
-          }
-        }
-      })
-      
+
     } catch (error) {
       console.error("Failed to load stage form:", error)
       this.showToast("Failed to load stage form: " + error.message, "error")
@@ -2083,15 +2178,15 @@ export class WorkspaceBoard {
 
   async handleRevertStage() {
     const revertBtn = document.getElementById("revertBtn")
-    
+
     if (!revertBtn) return
-    
+
     // Get the current card ID from the modal
     const modalMeta = document.getElementById("modalMeta")
     if (!modalMeta) return
 
     const cardId = modalMeta.getAttribute('data-id')
-    
+
     // Find the card by ID
     const currentCard = this.getCardById(cardId);
     if (!currentCard) {
@@ -2106,14 +2201,14 @@ export class WorkspaceBoard {
       this.showToast("API URL not configured", "error")
       return
     }
-    
+
     // Step 1: Fetch stage form data by calling sendToPrevStageWindow
     const windowPayload = {
       action: "Actions",
       method: "sendToPrevStageWindow",
       data: [currentCard.uid, currentCard.table]
     }
-    
+
     try {
       const windowResponse = await fetch(url, {
         method: "POST",
@@ -2123,139 +2218,28 @@ export class WorkspaceBoard {
         },
         body: JSON.stringify(windowPayload),
       })
-      
+
       const windowResult = await windowResponse.json()
-      
+
       if (!windowResult || windowResult.length === 0 || !windowResult[0].result) {
         throw new Error("Invalid response from sendToPrevStageWindow")
       }
-      
+
       const formData = windowResult[0].result
-      
+
       // Debug: Log form data structure
       console.log('sendToPrevStageWindow API response:', windowResult)
       console.log('Form data:', formData)
-      console.log('Has comments?', formData.comments)
-      console.log('Has additional?', formData.additional)
-      console.log('Has sendMailTo?', formData.sendMailTo)
-      
-      // Step 2: Wait for Web Component to be defined, then show modal
-      customElements.whenDefined('typo3-workspaces-send-to-stage-form').then(() => {
-        console.log('Web Component is now defined')
-        
-        // Show modal with send-to-stage-form Web Component (exact copy of workspaces implementation)
-        const modal = Modal.advanced({
-          title: TYPO3.lang['actionSendToStage'] || 'Send to stage',
-          content: '<div class="modal-loading"></div>',
-          severity: SeverityEnum.info,
-          buttons: [
-            {
-              text: TYPO3.lang['cancel'] || 'Cancel',
-              active: true,
-              btnClass: "btn-default",
-              name: "cancel",
-              trigger: () => {
-                modal.hideModal()
-              }
-            },
-            {
-              text: TYPO3.lang['ok'] || 'OK',
-              btnClass: "btn-primary",
-              name: "ok"
-            }
-          ],
-          callback: (currentModal) => {
-            // Create Web Component exactly like workspaces does
-            const form = currentModal.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
-            form.data = formData
-            form.TYPO3lang = TYPO3.lang
-            
-            console.log('Created form element:', form)
-            console.log('Form.data:', form.data)
-            console.log('Form.TYPO3lang:', form.TYPO3lang)
-            
-            // Replace modal body content with form (exactly like workspaces)
-            currentModal.querySelector('.t3js-modal-body').replaceChildren(form)
-            
-            // Wait for Lit component to complete rendering (Lit components render asynchronously)
-            if (form.updateComplete) {
-              form.updateComplete.then(() => {
-                console.log('Lit component rendered successfully')
-                console.log('Form HTML after updateComplete:', form.innerHTML)
-                const formElement = form.querySelector('form')
-                console.log('Inner form element:', formElement)
-                
-                if (!formElement) {
-                  console.error('Form still not rendered after updateComplete!')
-                  console.error('Form outerHTML:', form.outerHTML)
-                  console.warn('Using fallback form renderer')
-                  this.renderStageFallbackForm(currentModal, formData)
-                }
-              })
-            } else {
-              console.warn('updateComplete not available, component might not be Lit element')
-              this.renderStageFallbackForm(currentModal, formData)
-            }
-          }
-        })
-        
-        // Step 3: Handle OK button click to execute stage transition (using Utility.convertFormToObject like workspaces)
-        modal.addEventListener('button.clicked', async (evt) => {
-          if (evt.target.name === 'ok') {
-            // Try Web Component form first, fallback to direct form selector
-            let formElement = modal.querySelector('typo3-workspaces-send-to-stage-form form')
-            if (!formElement) {
-              formElement = modal.querySelector('.t3js-modal-body form')
-            }
-            
-            if (!formElement) {
-              console.error('Form not found in modal')
-              this.showToast("Form not found", "error")
-              return
-            }
-            
-            // Extract form values using Utility.convertFormToObject (exactly like workspaces)
-            const formValues = Utility.convertFormToObject(formElement)
-            formValues.affects = formData.affects
-            
-            // Step 4: Execute stage transition
-            const executePayload = {
-              action: "Actions",
-              method: "sendToPrevStageExecute",
-              data: [formValues]
-            }
-            
-            try {
-              const executeResponse = await fetch(url, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify(executePayload),
-              })
-              
-              const executeResult = await executeResponse.json()
-              
-              if (executeResult && executeResult[0]?.result?.success !== false) {
-                this.loadData()
-                modal.hideModal()
-                this.closePreviewModal()
-                this.showToast("Moved to previous stage successfully", "success")
-              } else {
-                throw new Error(executeResult[0]?.result?.message || "Failed to move")
-              }
-            } catch (error) {
-              console.error("Failed to move:", error)
-              this.showToast("Failed to move: " + error.message, "error")
-            }
-          }
-        })
-      }).catch(error => {
-        console.error('Web Component not available:', error)
-        this.showToast('Form component not available. Please refresh the page.', 'error')
+
+      // Open custom modal
+      this.openSendToStageModal(formData, {
+        url: url,
+        executeMethod: "sendToPrevStageExecute",
+        cardIds: [currentCard.id],
+        // targetStage: null for revert (handled differently or implied)
+        isDragDrop: false
       })
-      
+
     } catch (error) {
       console.error("Failed to load stage form:", error)
       this.showToast("Failed to load stage form: " + error.message, "error")
@@ -2271,7 +2255,7 @@ export class WorkspaceBoard {
     if (!modalMeta) return
 
     const cardId = modalMeta.getAttribute('data-id')
-    
+
     // Find the card by ID
     const currentCard = this.getCardById(cardId);
     if (!currentCard) {
@@ -2286,14 +2270,14 @@ export class WorkspaceBoard {
       this.showToast("API URL not configured", "error")
       return
     }
-    
+
     // Step 1: Fetch stage form data by calling sendToNextStageWindow
     const windowPayload = {
       action: "Actions",
       method: "sendToNextStageWindow",
       data: [currentCard.uid, currentCard.table, currentCard.t3ver_oid]
     }
-    
+
     try {
       const windowResponse = await fetch(url, {
         method: "POST",
@@ -2303,206 +2287,32 @@ export class WorkspaceBoard {
         },
         body: JSON.stringify(windowPayload),
       })
-      
+
       const windowResult = await windowResponse.json()
-      
+
       if (!windowResult || windowResult.length === 0 || !windowResult[0].result) {
         throw new Error("Invalid response from sendToNextStageWindow")
       }
-      
+
       const formData = windowResult[0].result
-      
+
       // Debug: Log form data structure
       console.log('sendToNextStageWindow API response:', windowResult)
       console.log('Form data:', formData)
-      console.log('Has comments?', formData.comments)
-      console.log('Has additional?', formData.additional)
-      console.log('Has sendMailTo?', formData.sendMailTo)
-      
-      // Step 2: Wait for Web Component to be defined, then show modal
-      customElements.whenDefined('typo3-workspaces-send-to-stage-form').then(() => {
-        console.log('Web Component is now defined')
-        
-        // Show modal with send-to-stage-form Web Component (exact copy of workspaces implementation)
-        const modal = Modal.advanced({
-          title: TYPO3.lang['actionSendToStage'] || 'Send to stage',
-          content: '<div class="modal-loading"></div>',
-          severity: SeverityEnum.info,
-          buttons: [
-            {
-              text: TYPO3.lang['cancel'] || 'Cancel',
-              active: true,
-              btnClass: "btn-default",
-              name: "cancel",
-              trigger: () => {
-                modal.hideModal()
-              }
-            },
-            {
-              text: TYPO3.lang['ok'] || 'OK',
-              btnClass: "btn-primary",
-              name: "ok"
-            }
-          ],
-          callback: (currentModal) => {
-            // Create Web Component exactly like workspaces does
-            const form = currentModal.ownerDocument.createElement('typo3-workspaces-send-to-stage-form')
-            form.data = formData
-            form.TYPO3lang = TYPO3.lang
-            
-            console.log('Created form element:', form)
-            console.log('Form.data:', form.data)
-            console.log('Form.TYPO3lang:', form.TYPO3lang)
-            
-            // Replace modal body content with form (exactly like workspaces)
-            currentModal.querySelector('.t3js-modal-body').replaceChildren(form)
-            
-            // Wait for Lit component to complete rendering (Lit components render asynchronously)
-            if (form.updateComplete) {
-              form.updateComplete.then(() => {
-                console.log('Lit component rendered successfully')
-                console.log('Form HTML after updateComplete:', form.innerHTML)
-                const formElement = form.querySelector('form')
-                console.log('Inner form element:', formElement)
-                
-                if (!formElement) {
-                  console.error('Form still not rendered after updateComplete!')
-                  console.error('Form outerHTML:', form.outerHTML)
-                  console.warn('Using fallback form renderer')
-                  this.renderStageFallbackForm(currentModal, formData)
-                }
-              })
-            } else {
-              console.warn('updateComplete not available, component might not be Lit element')
-              this.renderStageFallbackForm(currentModal, formData)
-            }
-          }
-        })
-        
-        // Step 3: Handle OK button click to execute stage transition (using Utility.convertFormToObject like workspaces)
-        modal.addEventListener('button.clicked', async (evt) => {
-          if (evt.target.name === 'ok') {
-            // Try Web Component form first, fallback to direct form selector
-            let formElement = modal.querySelector('typo3-workspaces-send-to-stage-form form')
-            if (!formElement) {
-              formElement = modal.querySelector('.t3js-modal-body form')
-            }
-            
-            if (!formElement) {
-              console.error('Form not found in modal')
-              this.showToast("Form not found", "error")
-              return
-            }
-            
-            // Extract form values using Utility.convertFormToObject (exactly like workspaces)
-            const formValues = Utility.convertFormToObject(formElement)
-            formValues.affects = formData.affects
-            
-            // Step 4: Execute stage transition
-            const executePayload = {
-              action: "Actions",
-              method: "sendToNextStageExecute",
-              data: [formValues]
-            }
-            
-            try {
-              const executeResponse = await fetch(url, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify(executePayload),
-              })
-              
-              const executeResult = await executeResponse.json()
-              
-              if (executeResult && executeResult[0]?.result?.success !== false) {
-                this.loadData()
-                modal.hideModal()
-                this.closePreviewModal()
-                this.showToast("Moved to next stage successfully", "success")
-              } else {
-                throw new Error(executeResult[0]?.result?.message || "Failed to move")
-              }
-            } catch (error) {
-              console.error("Failed to move:", error)
-              this.showToast("Failed to move: " + error.message, "error")
-            }
-          }
-        })
-      }).catch(error => {
-        console.error('Web Component not available:', error)
-        this.showToast('Form component not available. Please refresh the page.', 'error')
+
+      // Open custom modal
+      this.openSendToStageModal(formData, {
+        url: url,
+        executeMethod: "sendToNextStageExecute",
+        cardIds: [currentCard.id],
+        // targetStage: null (will imply next stage via ID usually, or handled by API)
+        isDragDrop: false
       })
-      
+
     } catch (error) {
       console.error("Failed to load stage form:", error)
       this.showToast("Failed to load stage form: " + error.message, "error")
     }
-  }
-
-  /**
-   * Fallback method to render stage form manually if Web Component fails
-   */
-  renderStageFallbackForm(modalElement, formData) {
-    console.log('Rendering fallback form manually')
-    const modalBody = modalElement.querySelector('.t3js-modal-body')
-    
-    let formHtml = '<form>'
-    
-    // Render recipients if available
-    if (formData.sendMailTo && formData.sendMailTo.length > 0) {
-      formHtml += `<label class="form-label">${TYPO3.lang['window.sendToNextStageWindow.itemsWillBeSentTo'] || 'Recipients'}</label>`
-      formData.sendMailTo.forEach(recipient => {
-        formHtml += `
-          <div class="form-check">
-            <input 
-              type="checkbox" 
-              name="recipients" 
-              class="form-check-input t3js-workspace-recipient" 
-              id="${recipient.name}" 
-              value="${recipient.value}"
-              ${recipient.checked ? 'checked' : ''}
-              ${recipient.disabled ? 'disabled' : ''}
-            />
-            <label class="form-check-label" for="${recipient.name}">
-              ${recipient.label}
-            </label>
-          </div>
-        `
-      })
-    }
-    
-    // Render additional recipients textarea if available
-    if (formData.additional) {
-      formHtml += `
-        <div class="form-group">
-          <label for="additional" class="form-label">
-            ${TYPO3.lang['window.sendToNextStageWindow.additionalRecipients'] || 'Additional recipients'}
-          </label>
-          <textarea class="form-control" name="additional" id="additional">${formData.additional.value || ''}</textarea>
-          <div class="form-text">
-            ${TYPO3.lang['window.sendToNextStageWindow.additionalRecipients.hint'] || 'One recipient per line'}
-          </div>
-        </div>
-      `
-    }
-    
-    // Render comments textarea (always present)
-    formHtml += `
-      <div class="form-group">
-        <label for="comments" class="form-label">
-          ${TYPO3.lang['window.sendToNextStageWindow.comments'] || 'Comments'}
-        </label>
-        <textarea class="form-control" name="comments" id="comments">${formData.comments && formData.comments.value || ''}</textarea>
-      </div>
-    `
-    
-    formHtml += '</form>'
-    
-    modalBody.innerHTML = formHtml
-    console.log('Fallback form rendered successfully')
   }
 
   loadHistory(cardId) {
@@ -2551,22 +2361,22 @@ export class WorkspaceBoard {
   moveCard(cardId, targetStageId, addToHistory = true) {
     // Handle both single cardId (string) and array of cardIds
     const cardIds = Array.isArray(cardId) ? cardId : [cardId];
-    
+
     const cards = [];
     const oldStages = {};
 
     console.log("selected cards : ", cardIds);
-    
+
     // Process each card
     cardIds.forEach(id => {
       const card = this.getCardById(id);
       if (!card) return;
-      
+
       oldStages[id] = card.stage;
       card.stage = targetStageId;
       cards.push(card);
     });
-    
+
     if (cards.length === 0) return;
 
     this.renderBoard();
@@ -2608,7 +2418,7 @@ export class WorkspaceBoard {
         const cardId = cardElement.dataset.cardId
         this.showCardContextMenu(cardId, menuButton)
       }
-      
+
       menuButton.addEventListener('click', handler)
       menuButton._clickListener = handler
     }
@@ -2676,11 +2486,11 @@ export class WorkspaceBoard {
   createCardContextMenu(card) {
     const menu = document.createElement("div")
     menu.className = "context-menu card-context-menu"
-    
+
     // Get available stages for move actions
     const currentStage = this.getStageById(card.stage)
     const otherStages = this.data.stages.filter(s => s.id !== card.stage)
-    
+
     // Build move options HTML
     const moveOptionsHTML = otherStages.length > 0 ? `
       <div class="context-menu-item" data-action="move-card" data-card-id="${card.id}">
@@ -2746,7 +2556,7 @@ export class WorkspaceBoard {
   // Card action methods
   previewElement(card) {
     const url = this.options.getDataApiUrl || this.options.apiUrl;
-    
+
     if (!url) {
       console.error('No API URL configured');
       return Promise.reject(new Error('No API URL configured'));
@@ -2755,7 +2565,7 @@ export class WorkspaceBoard {
     const payload = {
       action: "Actions",
       method: "viewSingleRecord",
-      data: [ card.table, card.uid]
+      data: [card.table, card.uid]
     }
 
     return fetch(url, {
@@ -2902,7 +2712,7 @@ export class WorkspaceBoard {
 
   deleteCard(card) {
     const url = this.options.getDataApiUrl || this.options.apiUrl;
-    
+
     if (!url) {
       console.error('No API URL configured');
       return Promise.reject(new Error('No API URL configured'));
@@ -2911,7 +2721,7 @@ export class WorkspaceBoard {
     const payload = {
       action: "Actions",
       method: "deleteSingleRecord",
-      data: [ card.table, card.uid]
+      data: [card.table, card.uid]
     };
 
     // Create deferred action for the delete operation
@@ -2935,11 +2745,11 @@ export class WorkspaceBoard {
             console.warn('No data found in API response');
             throw new Error('No data found in API response');
           }
-          
+
           // Reload data and show success message
           this.loadData();
           this.showToast(`Card "${card.title}" deleted successfully`, "success");
-          
+
           return result;
         })
         .catch((error) => {
@@ -3121,13 +2931,13 @@ export class WorkspaceBoard {
       'warning': 2, // WARNING
       'error': 3    // ERROR
     };
-    
+
     const severity = severityMap[type] || 0;
     const durationInSeconds = Math.floor(duration / 1000);
-    
+
     if (typeof Notification !== 'undefined') {
       // Use TYPO3 Notification API
-      switch(severity) {
+      switch (severity) {
         case 1: // success
           Notification.success('', message, durationInSeconds);
           break;

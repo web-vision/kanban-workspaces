@@ -11,7 +11,7 @@ services:
   # Backend Controllers - TYPO3 v13 compatible
   WebVision\KanbanWorkspaces\Controller\KanbanWorkspacesController:
     public: true
-    tags: 
+    tags:
       - name: 'backend.controller'
         identifier: 'KanbanWorkspaces'
 

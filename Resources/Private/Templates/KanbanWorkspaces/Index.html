@@ -11,7 +11,7 @@
                 </div>
                 <h1 class="header-title">Workspace Board</h1>
             </div>
-        
+
             <div class="header-center">
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
@@ -21,7 +21,7 @@
                     </button>
                 </div>
             </div>
-        
+
             <div class="header-right">
                 <button class="filter-toggle" id="filterToggle">
                     <i class="fas fa-filter"></i>
@@ -32,414 +32,482 @@
     </header>
 </f:section>
 
-<f:section name="Content">    
-   <!-- Main Content Area -->
-   <main class="workspace-main">
+<f:section name="Content">
+    <!-- Main Content Area -->
+    <main class="workspace-main">
         <f:if condition="{workspaceIsAccessible}">
             <div class="container mt-5">
                 <f:be.infobox title="Wait!">You're on live workspace, Please select workspace.</f:be.infobox>
             </div>
         </f:if>
-       <!-- Filter Sidebar -->
-       <aside class="filter-sidebar" id="filterSidebar">
-           <div class="sidebar-header">
-               <div class="sidebar-title">
-                   <i class="fas fa-filter"></i>
-                   <span>Filters</span>
-               </div>
-               <button class="sidebar-close" id="closeSidebar">
-                   <i class="fas fa-times"></i>
-               </button>
-           </div>
+        <!-- Filter Sidebar -->
+        <aside class="filter-sidebar" id="filterSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <i class="fas fa-filter"></i>
+                    <span>Filters</span>
+                </div>
+                <button class="sidebar-close" id="closeSidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
-           <div class="sidebar-content">
-               <div class="filter-actions">
-                   <span class="active-filters-count">Active filters: <span id="activeFiltersCount">0</span></span>
-                   <button class="clear-filters" id="clearAllFilters">Clear all</button>
-               </div>
+            <div class="sidebar-content">
+                <div class="filter-actions">
+                    <span class="active-filters-count">Active filters: <span id="activeFiltersCount">0</span></span>
+                    <button class="clear-filters" id="clearAllFilters">Clear all</button>
+                </div>
 
-               <div class="filter-groups" id="filterGroups">
-                   <!-- Dynamic filter groups will be inserted here -->
-               </div>
-           </div>
-       </aside>
+                <div class="filter-groups" id="filterGroups">
+                    <!-- Dynamic filter groups will be inserted here -->
+                </div>
+            </div>
+        </aside>
 
-       <!-- Kanban Board -->
-       <section class="kanban-container">
-        <f:comment>
-           <!-- Bulk Actions Bar -->
-           <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
-               <div class="bulk-actions-content">
-                   <span class="selected-count">
-                       <span id="selectedCount">0</span> items selected
-                   </span>
-                   <div class="bulk-actions">
-                       <button class="btn btn-outline" id="bulkMoveBtn">
-                           <i class="fas fa-arrows-alt"></i>
-                           Move to Stage
-                       </button>
-                       <button class="btn btn-outline" id="bulkAssignBtn">
-                           <i class="fas fa-user-plus"></i>
-                           Assign Users
-                       </button>
-                       <button class="btn btn-outline" id="bulkDeleteBtn">
-                           <i class="fas fa-trash"></i>
-                           Delete
-                       </button>
-                       <button class="btn btn-outline" id="clearSelectionBtn">
-                           <i class="fas fa-times"></i>
-                           Clear Selection
-                       </button>
-                   </div>
-               </div>
-           </div>
-        </f:comment>
-           <div class="kanban-board" id="kanbanBoard">
-               <!-- Dynamic columns will be inserted here -->
-           </div>
-       </section>
-   </main>
+        <!-- Kanban Board -->
+        <section class="kanban-container">
+            <f:comment>
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions-bar" id="bulkActionsBar" style="display: none;">
+                    <div class="bulk-actions-content">
+                        <span class="selected-count">
+                            <span id="selectedCount">0</span> items selected
+                        </span>
+                        <div class="bulk-actions">
+                            <button class="btn btn-outline" id="bulkMoveBtn">
+                                <i class="fas fa-arrows-alt"></i>
+                                Move to Stage
+                            </button>
+                            <button class="btn btn-outline" id="bulkAssignBtn">
+                                <i class="fas fa-user-plus"></i>
+                                Assign Users
+                            </button>
+                            <button class="btn btn-outline" id="bulkDeleteBtn">
+                                <i class="fas fa-trash"></i>
+                                Delete
+                            </button>
+                            <button class="btn btn-outline" id="clearSelectionBtn">
+                                <i class="fas fa-times"></i>
+                                Clear Selection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </f:comment>
+            <div class="kanban-board" id="kanbanBoard">
+                <!-- Dynamic columns will be inserted here -->
+            </div>
+        </section>
+    </main>
 
-   <!-- Preview Modal -->
-   <div class="modal-overlay" id="previewModal" style="display: none;">
-       <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
-           <div class="modal-content">
-               <div class="modal-header">
-                   <div class="modal-title-section">
-                       <h4 class="modal-title" id="modalTitle">Card Title</h4>
-                       <div class="modal-meta" id="modalMeta">
-                           <!-- Card metadata will be inserted here -->
-                       </div>
-                   </div>
-                   <button class="modal-close btn-close" id="closeModal" aria-label="Close">
-                       <i class="fas fa-times"></i>
-                   </button>
-               </div>
+    <!-- Preview Modal -->
+    <div class="modal-overlay" id="previewModal" style="display: none;">
+        <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h4 class="modal-title" id="modalTitle">Card Title</h4>
+                        <div class="modal-meta" id="modalMeta">
+                            <!-- Card metadata will be inserted here -->
+                        </div>
+                    </div>
+                    <button class="modal-close btn-close" id="closeModal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
-               <ul class="nav nav-tabs" role="tablist">
-                   <li class="nav-item" role="presentation">
-                       <button class="nav-link active" data-tab="changes" role="tab" aria-selected="true">Summary of changes</button>
-                   </li>
-                   <li class="nav-item" role="presentation">
-                       <button class="nav-link" data-tab="comments" role="tab" aria-selected="false">Activity (<span id="commentsCount">0</span>)</button>
-                   </li>
-                   <li class="nav-item" role="presentation">
-                       <button class="nav-link" data-tab="history" role="tab" aria-selected="false">History</button>
-                   </li>
-               </ul>
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-tab="changes" role="tab" aria-selected="true">Summary of
+                            changes</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-tab="comments" role="tab" aria-selected="false">Activity (<span
+                                id="commentsCount">0</span>)</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-tab="history" role="tab" aria-selected="false">History</button>
+                    </li>
+                </ul>
 
-               <div class="modal-body">
-                   <div class="tab-content">
-                       <div class="tab-pane active" id="changesTab" role="tabpanel">
-                           <div class="changes-container" id="changesContainer">
-                               <!-- Summary of changes (diff data from TYPO3) will be inserted here -->
-                           </div>
-                       </div>
+                <div class="modal-body">
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="changesTab" role="tabpanel">
+                            <div class="changes-container" id="changesContainer">
+                                <!-- Summary of changes (diff data from TYPO3) will be inserted here -->
+                            </div>
+                        </div>
 
-                       <div class="tab-pane" id="commentsTab" role="tabpanel">
-                           <div class="comments-container" id="commentsContainer">
-                               <!-- Comments will be inserted here -->
-                           </div>
-                           <div class="comment-form">
-                               <textarea id="newComment" class="form-control" placeholder="Add a comment..." rows="3"></textarea>
-                               <button class="btn btn-primary" id="addComment">
-                                   <i class="fas fa-comment"></i> Add Comment
-                               </button>
-                           </div>
-                       </div>
+                        <div class="tab-pane" id="commentsTab" role="tabpanel">
+                            <div class="comments-container" id="commentsContainer">
+                                <!-- Comments will be inserted here -->
+                            </div>
+                            <div class="comment-form">
+                                <textarea id="newComment" class="form-control" placeholder="Add a comment..."
+                                    rows="3"></textarea>
+                                <button class="btn btn-primary" id="addComment">
+                                    <i class="fas fa-comment"></i> Add Comment
+                                </button>
+                            </div>
+                        </div>
 
-                       <div class="tab-pane" id="historyTab" role="tabpanel">
-                           <div class="history-container" id="historyContainer">
-                               <!-- History will be inserted here -->
-                           </div>
-                       </div>
-                   </div>
-               </div>
+                        <div class="tab-pane" id="historyTab" role="tabpanel">
+                            <div class="history-container" id="historyContainer">
+                                <!-- History will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-               <div class="modal-footer">
-                   <div class="modal-actions-left">
-                       <button class="btn btn-outline" id="revertBtn">
-                           <i class="fas fa-undo"></i> Revert
-                       </button>
-                   </div>
-                   <div class="modal-actions-right">
-                       <button class="btn btn-outline" id="closeModalBtn">Close</button>
-                       <button class="btn btn-primary" id="approveBtn">
-                           <i class="fas fa-thumbs-up"></i> Approve
-                       </button>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
+                <div class="modal-footer">
+                    <div class="modal-actions-left">
+                        <button class="btn btn-outline" id="revertBtn">
+                            <i class="fas fa-undo"></i> Revert
+                        </button>
+                    </div>
+                    <div class="modal-actions-right">
+                        <button class="btn btn-outline" id="closeModalBtn">Close</button>
+                        <button class="btn btn-primary" id="approveBtn">
+                            <i class="fas fa-thumbs-up"></i> Approve
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-   <!-- Assign Record Modal (same structure as #previewModal) -->
-   <div class="modal-overlay" id="assignModal" style="display: none;">
-       <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="assignModalTitle" aria-modal="true">
-           <div class="modal-content">
-               <div class="modal-header">
-                   <div class="modal-title-section">
-                       <h4 class="modal-title" id="assignModalTitle">Assign Record</h4>
-                   </div>
-                   <button class="modal-close btn-close" id="closeAssignModal" aria-label="Close">
-                       <i class="fas fa-times"></i>
-                   </button>
-               </div>
+    <!-- Assign Record Modal (same structure as #previewModal) -->
+    <div class="modal-overlay" id="assignModal" style="display: none;">
+        <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="assignModalTitle" aria-modal="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h4 class="modal-title" id="assignModalTitle">Assign Record</h4>
+                    </div>
+                    <button class="modal-close btn-close" id="closeAssignModal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
-               <div class="modal-body" id="assignModalBody">
-                   <!-- Assign form will be injected here -->
-               </div>
+                <div class="modal-body" id="assignModalBody">
+                    <!-- Assign form will be injected here -->
+                </div>
 
-               <div class="modal-footer">
-                   <div class="modal-actions-left"></div>
-                   <div class="modal-actions-right">
-                       <button class="btn btn-outline" id="assignModalCancel">Cancel</button>
-                       <button class="btn btn-primary" id="assignModalOk">OK</button>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
+                <div class="modal-footer">
+                    <div class="modal-actions-left"></div>
+                    <div class="modal-actions-right">
+                        <button class="btn btn-outline" id="assignModalCancel">Cancel</button>
+                        <button class="btn btn-primary" id="assignModalOk">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-   <!-- Workspace Management Modal -->
-   <div class="modal-overlay" id="workspaceModal" style="display: none;">
-       <div class="modal-container workspace-modal">
-           <div class="modal-header">
-               <h2 class="modal-title" id="workspaceModalTitle">Create New Workspace</h2>
-               <button class="modal-close" id="closeWorkspaceModal">
-                   <i class="fas fa-times"></i>
-               </button>
-           </div>
+    <!-- Workspace Management Modal -->
+    <div class="modal-overlay" id="workspaceModal" style="display: none;">
+        <div class="modal-container workspace-modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="workspaceModalTitle">Create New Workspace</h2>
+                <button class="modal-close" id="closeWorkspaceModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
-           <div class="modal-tabs">
-               <button class="tab-btn active" data-tab="general">General</button>
-               <button class="tab-btn" data-tab="stages">Internal Stages</button>
-               <button class="tab-btn" data-tab="permissions">Permissions</button>
-               <button class="tab-btn" data-tab="notifications">Notifications</button>
-           </div>
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="general">General</button>
+                <button class="tab-btn" data-tab="stages">Internal Stages</button>
+                <button class="tab-btn" data-tab="permissions">Permissions</button>
+                <button class="tab-btn" data-tab="notifications">Notifications</button>
+            </div>
 
-           <div class="modal-content">
-               <!-- General Tab -->
-               <div class="tab-content active" id="generalTab">
-                   <div class="form-section">
-                       <div class="form-group">
-                           <label for="workspaceTitle">Title *</label>
-                           <input type="text" id="workspaceTitle" class="form-input" placeholder="Enter workspace title" required>
-                       </div>
+            <div class="modal-content">
+                <!-- General Tab -->
+                <div class="tab-content active" id="generalTab">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="workspaceTitle">Title *</label>
+                            <input type="text" id="workspaceTitle" class="form-input"
+                                placeholder="Enter workspace title" required>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="workspaceDescription">Description</label>
-                           <textarea id="workspaceDescription" class="form-input" rows="3" placeholder="Enter workspace description"></textarea>
-                       </div>
+                        <div class="form-group">
+                            <label for="workspaceDescription">Description</label>
+                            <textarea id="workspaceDescription" class="form-input" rows="3"
+                                placeholder="Enter workspace description"></textarea>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="sendNotifications">
-                               <span class="checkmark"></span>
-                               Send notifications upon state changes
-                           </label>
-                       </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="sendNotifications">
+                                <span class="checkmark"></span>
+                                Send notifications upon state changes
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="workspaceOwners">Owners</label>
-                           <div class="user-selector" id="workspaceOwners">
-                               <div class="selected-users" id="selectedOwners"></div>
-                               <button type="button" class="btn btn-outline add-user-btn" data-target="owners">
-                                   <i class="fas fa-plus"></i> Add Owner
-                               </button>
-                           </div>
-                       </div>
+                        <div class="form-group">
+                            <label for="workspaceOwners">Owners</label>
+                            <div class="user-selector" id="workspaceOwners">
+                                <div class="selected-users" id="selectedOwners"></div>
+                                <button type="button" class="btn btn-outline add-user-btn" data-target="owners">
+                                    <i class="fas fa-plus"></i> Add Owner
+                                </button>
+                            </div>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="workspaceMembers">Members</label>
-                           <div class="user-selector" id="workspaceMembers">
-                               <div class="selected-users" id="selectedMembers"></div>
-                               <button type="button" class="btn btn-outline add-user-btn" data-target="members">
-                                   <i class="fas fa-plus"></i> Add Member
-                               </button>
-                           </div>
-                       </div>
+                        <div class="form-group">
+                            <label for="workspaceMembers">Members</label>
+                            <div class="user-selector" id="workspaceMembers">
+                                <div class="selected-users" id="selectedMembers"></div>
+                                <button type="button" class="btn btn-outline add-user-btn" data-target="members">
+                                    <i class="fas fa-plus"></i> Add Member
+                                </button>
+                            </div>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="freezeEditing">
-                               <span class="checkmark"></span>
-                               Freeze editing
-                           </label>
-                       </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="freezeEditing">
+                                <span class="checkmark"></span>
+                                Freeze editing
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="liveEditing">
-                               <span class="checkmark"></span>
-                               Live editing
-                           </label>
-                       </div>
-                   </div>
-               </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="liveEditing">
+                                <span class="checkmark"></span>
+                                Live editing
+                            </label>
+                        </div>
+                    </div>
+                </div>
 
-               <!-- Internal Stages Tab -->
-               <div class="tab-content" id="stagesTab">
-                   <div class="form-section">
-                       <div class="stages-header">
-                           <h3>Stage Configuration</h3>
-                           <button type="button" class="btn btn-primary" id="addStageBtn">
-                               <i class="fas fa-plus"></i> Add Stage
-                           </button>
-                       </div>
+                <!-- Internal Stages Tab -->
+                <div class="tab-content" id="stagesTab">
+                    <div class="form-section">
+                        <div class="stages-header">
+                            <h3>Stage Configuration</h3>
+                            <button type="button" class="btn btn-primary" id="addStageBtn">
+                                <i class="fas fa-plus"></i> Add Stage
+                            </button>
+                        </div>
 
-                       <div class="stages-list" id="stagesList">
-                           <!-- Dynamic stages will be inserted here -->
-                       </div>
-                   </div>
-               </div>
+                        <div class="stages-list" id="stagesList">
+                            <!-- Dynamic stages will be inserted here -->
+                        </div>
+                    </div>
+                </div>
 
-               <!-- Permissions Tab -->
-               <div class="tab-content" id="permissionsTab">
-                   <div class="form-section">
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="allowLiveEdit">
-                               <span class="checkmark"></span>
-                               Allow live edit
-                           </label>
-                       </div>
+                <!-- Permissions Tab -->
+                <div class="tab-content" id="permissionsTab">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="allowLiveEdit">
+                                <span class="checkmark"></span>
+                                Allow live edit
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="allowPublishAll">
-                               <span class="checkmark"></span>
-                               Allow publishing of all content
-                           </label>
-                       </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="allowPublishAll">
+                                <span class="checkmark"></span>
+                                Allow publishing of all content
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="allowSwapMode">
-                               <span class="checkmark"></span>
-                               Allow swap mode
-                           </label>
-                       </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="allowSwapMode">
+                                <span class="checkmark"></span>
+                                Allow swap mode
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="dbMountPoints">DB Mount Points</label>
-                           <textarea id="dbMountPoints" class="form-input" rows="3" placeholder="Enter database mount points"></textarea>
-                       </div>
+                        <div class="form-group">
+                            <label for="dbMountPoints">DB Mount Points</label>
+                            <textarea id="dbMountPoints" class="form-input" rows="3"
+                                placeholder="Enter database mount points"></textarea>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="fileMountPoints">File Mount Points</label>
-                           <textarea id="fileMountPoints" class="form-input" rows="3" placeholder="Enter file mount points"></textarea>
-                       </div>
-                   </div>
-               </div>
+                        <div class="form-group">
+                            <label for="fileMountPoints">File Mount Points</label>
+                            <textarea id="fileMountPoints" class="form-input" rows="3"
+                                placeholder="Enter file mount points"></textarea>
+                        </div>
+                    </div>
+                </div>
 
-               <!-- Notifications Tab -->
-               <div class="tab-content" id="notificationsTab">
-                   <div class="form-section">
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="emailNotifications">
-                               <span class="checkmark"></span>
-                               Enable email notifications
-                           </label>
-                       </div>
+                <!-- Notifications Tab -->
+                <div class="tab-content" id="notificationsTab">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emailNotifications">
+                                <span class="checkmark"></span>
+                                Enable email notifications
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="notificationStages">Notification Stages</label>
-                           <div class="checkbox-group" id="notificationStages">
-                               <!-- Dynamic notification stages will be inserted here -->
-                           </div>
-                       </div>
+                        <div class="form-group">
+                            <label for="notificationStages">Notification Stages</label>
+                            <div class="checkbox-group" id="notificationStages">
+                                <!-- Dynamic notification stages will be inserted here -->
+                            </div>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="notifyOwners">
-                               <span class="checkmark"></span>
-                               Pre-select recipients: Owners
-                           </label>
-                       </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="notifyOwners">
+                                <span class="checkmark"></span>
+                                Pre-select recipients: Owners
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label class="checkbox-label">
-                               <input type="checkbox" id="notifyMembers">
-                               <span class="checkmark"></span>
-                               Pre-select recipients: Members
-                           </label>
-                       </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="notifyMembers">
+                                <span class="checkmark"></span>
+                                Pre-select recipients: Members
+                            </label>
+                        </div>
 
-                       <div class="form-group">
-                           <label for="customNotificationText">Custom notification text</label>
-                           <textarea id="customNotificationText" class="form-input" rows="4" placeholder="Enter custom notification message"></textarea>
-                       </div>
-                   </div>
-               </div>
-           </div>
+                        <div class="form-group">
+                            <label for="customNotificationText">Custom notification text</label>
+                            <textarea id="customNotificationText" class="form-input" rows="4"
+                                placeholder="Enter custom notification message"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-           <div class="modal-footer">
-               <button class="btn btn-outline" id="cancelWorkspaceBtn">Cancel</button>
-               <button class="btn btn-primary" id="saveWorkspaceBtn">
-                   <i class="fas fa-save"></i> Save Workspace
-               </button>
-           </div>
-       </div>
-   </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelWorkspaceBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveWorkspaceBtn">
+                    <i class="fas fa-save"></i> Save Workspace
+                </button>
+            </div>
+        </div>
+    </div>
 
-   <!-- Stage Settings Modal (New) -->
-   <div class="modal-overlay" id="stageSettingsModal" style="display: none;">
-       <div class="modal-container" style="width: 500px;">
-           <div class="modal-header">
-               <h2 class="modal-title" id="stageSettingsModalTitle">Edit Stage</h2>
-               <button class="modal-close" id="closeStageSettingsModal">
-                   <i class="fas fa-times"></i>
-               </button>
-           </div>
-           <div class="modal-content" style="padding: var(--spacing-lg);">
-               <div class="form-section">
-                   <div class="form-group">
-                       <label for="editStageId">Stage ID</label>
-                       <input type="text" id="editStageId" class="form-input" disabled>
-                   </div>
-                   <div class="form-group">
-                       <label for="editStageLabel">Stage Name *</label>
-                       <input type="text" id="editStageLabel" class="form-input" required>
-                   </div>
-                   <div class="form-group">
-                       <label for="editStageColor">Color</label>
-                       <input type="color" id="editStageColor" class="form-input" style="height: 40px; padding: 0;">
-                   </div>
-                   <div class="form-group">
-                       <label class="checkbox-label">
-                           <input type="checkbox" id="editStageAllowEdit">
-                           <span class="checkmark"></span>
-                           Allow Editing Cards
-                       </label>
-                   </div>
-                   <div class="form-group">
-                       <label class="checkbox-label">
-                           <input type="checkbox" id="editStageAllowDelete">
-                           <span class="checkmark"></span>
-                           Allow Deleting Cards
-                       </label>
-                   </div>
-               </div>
-           </div>
-           <div class="modal-footer">
-               <button class="btn btn-outline" id="cancelStageSettingsBtn">Cancel</button>
-               <button class="btn btn-primary" id="saveStageSettingsBtn">
-                   <i class="fas fa-save"></i> Save Stage
-               </button>
-           </div>
-       </div>
-   </div>
+    <!-- Stage Settings Modal (New) -->
+    <div class="modal-overlay" id="stageSettingsModal" style="display: none;">
+        <div class="modal-container" style="width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="stageSettingsModalTitle">Edit Stage</h2>
+                <button class="modal-close" id="closeStageSettingsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content" style="padding: var(--spacing-lg);">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="editStageId">Stage ID</label>
+                        <input type="text" id="editStageId" class="form-input" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStageLabel">Stage Name *</label>
+                        <input type="text" id="editStageLabel" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStageColor">Color</label>
+                        <input type="color" id="editStageColor" class="form-input" style="height: 40px; padding: 0;">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editStageAllowEdit">
+                            <span class="checkmark"></span>
+                            Allow Editing Cards
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editStageAllowDelete">
+                            <span class="checkmark"></span>
+                            Allow Deleting Cards
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelStageSettingsBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveStageSettingsBtn">
+                    <i class="fas fa-save"></i> Save Stage
+                </button>
+            </div>
+        </div>
+    </div>
 
 
-   <!-- Loading Overlay -->
-   <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-       <div class="loading-spinner">
-           <i class="fas fa-spinner fa-spin"></i>
-           <span>Loading...</span>
-       </div>
-   </div>
+
+    <!-- Send to Stage Modal (New) -->
+
+    <div class="modal-overlay" id="sendToStageModal" style="display: none;">
+        <div class="modal modal-dialog modal-xl" role="dialog" aria-labelledby="sendToStageModalTitle"
+            aria-modal="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title-section">
+                        <h4 class="modal-title" id="sendToStageModalTitle">Send to Stage</h4>
+                    </div>
+                    <button class="modal-close btn-close" id="closeSendToStageModal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Stage Info Banner -->
+                    <div class="stage-info-banner" id="stageInfoBanner" style="display: none;">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="stageInfoText">Sending items to next stage</span>
+                    </div>
+
+                    <!-- Recipients Section -->
+                    <div class="form-group" id="recipientsGroup" style="display: none;">
+                        <label class="form-label">Recipients</label>
+                        <div class="stage-recipients" id="stageRecipientsList">
+                            <!-- Dynamic recipients checkboxes -->
+                        </div>
+                    </div>
+
+                    <!-- Additional Recipients -->
+                    <div class="form-group" id="additionalRecipientsGroup" style="display: none;">
+                        <label for="stageAdditionalRecipients" class="form-label">Additional recipients</label>
+                        <textarea class="form-control" id="stageAdditionalRecipients" rows="2"
+                            placeholder="One recipient per line"></textarea>
+                        <div class="form-text">One recipient per line</div>
+                    </div>
+
+                    <!-- Comments (Always visible) -->
+                    <div class="form-group">
+                        <label for="stageComments" class="form-label">Comments</label>
+                        <textarea class="form-control" id="stageComments" rows="4"
+                            placeholder="Add a comment..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="modal-actions-left"></div>
+                    <div class="modal-actions-right">
+                        <button class="btn btn-outline" id="cancelSendToStageBtn">Cancel</button>
+                        <button class="btn btn-primary" id="submitSendToStageBtn">
+                            <i class="fas fa-check"></i> Send to Stage
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading...</span>
+        </div>
+    </div>
 </f:section>
 
 </html>

@@ -20,3 +20,21 @@ CREATE TABLE sys_workspaces_assignee (
   KEY table_record (table_name, record_uid),
   KEY workspace_stage (workspace_id, stage_id)
 );
+
+#
+# Table structure for table 'tx_kanbanworkspaces_stage_checklist'
+# Checklist items for workspace stages (EXT:kanban_workspaces)
+#
+CREATE TABLE tx_kanbanworkspaces_stage_checklist (
+  uid int(11) unsigned NOT NULL auto_increment,
+  pid int(11) unsigned DEFAULT '0' NOT NULL,
+  tstamp int(11) unsigned DEFAULT '0' NOT NULL,
+  crdate int(11) unsigned DEFAULT '0' NOT NULL,
+  deleted smallint(1) unsigned DEFAULT '0' NOT NULL,
+  sorting int(11) unsigned DEFAULT '0' NOT NULL,
+  stage int(11) unsigned DEFAULT '0' NOT NULL,
+  title varchar(255) DEFAULT '' NOT NULL,
+  PRIMARY KEY (uid),
+  KEY parent (pid),
+  KEY stage (stage)
+);

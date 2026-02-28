@@ -64,9 +64,11 @@ final class AfterDataGeneratedForWorkspaceEventListener
                 ['uid' => $uid]
             );
         } catch (\Exception $e) {
-            \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump($e);
-            die;
-
+            throw new \RuntimeException(
+                'Failed to update record stage: ' . $e->getMessage(),
+                (int)$e->getCode(),
+                $e
+            );
         }
     }
 }

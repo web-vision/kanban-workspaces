@@ -15,11 +15,11 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
-use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 /**
@@ -39,6 +39,7 @@ class KanbanWorkspacesController extends ActionController
         protected readonly WorkspaceRepository $workspaceRepository,
         protected readonly EmConfiguration $emSettings,
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
+        protected readonly ConnectionPool $connectionPool,
     ) {}
 
     /**
@@ -65,6 +66,7 @@ class KanbanWorkspacesController extends ActionController
         $this->moduleTemplate = $this->moduleTemplateFactory->create($this->request);
 
         // Build stage config. If disabling default stages, include only custom stages (uid >= 1).
+        $order = 0;
         foreach ($stages as $stage) {
             // If disableDefaultStage is true, skip stages that don't look like custom stages.
             if ($this->emSettings->getDisableDefaultStage()) {
@@ -73,12 +75,15 @@ class KanbanWorkspacesController extends ActionController
                     continue;
                 }
             }
+            $checklist = $this->getChecklistForStage((int)$stage->uid);
             $stageConfig[] = [
                 'id' => $stage->uid,
                 'label' => $stage->title,
                 'color' => '#FF5733',
                 'allowEdit' => $stage->isEditStage,
                 'allowDelete' => $stage->isAllowed,
+                'order' => $order++,
+                'checklist' => $checklist,
             ];
         }
 
@@ -178,6 +183,42 @@ class KanbanWorkspacesController extends ActionController
     {
         $inlineScript = 'window.WorkspaceConfig = ' . json_encode($stageConfig) . ';';
         $this->pageRenderer->addJsFooterInlineCode('kanban-config', $inlineScript, 'text/javascript', true, true);
+    }
+
+    /**
+     * Get checklist items for a workspace stage (only custom stages with uid > 0).
+     *
+     * @return array<int, array{id: int, title: string}>
+     */
+    protected function getChecklistForStage(int $stageUid): array
+    {
+        if ($stageUid < 1) {
+            return [];
+        }
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tx_kanbanworkspaces_stage_checklist');
+        $result = $queryBuilder
+            ->select('uid', 'title')
+            ->from('tx_kanbanworkspaces_stage_checklist')
+            ->where(
+                $queryBuilder->expr()->eq('stage', $queryBuilder->createNamedParameter($stageUid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->eq('deleted', 0)
+            )
+            ->orderBy('sorting', 'ASC')
+            ->executeQuery();
+        $checklistByUid = [];
+        $seenTitles = [];
+        while ($row = $result->fetchAssociative()) {
+            $uid = (int)$row['uid'];
+            $title = (string)($row['title'] ?? '');
+            if ($title !== '' && !in_array($title, $seenTitles, true)) {
+                $seenTitles[] = $title;
+                $checklistByUid[$uid] = [
+                    'id' => $uid,
+                    'title' => $title,
+                ];
+            }
+        }
+        return array_values($checklistByUid);
     }
 
     /**

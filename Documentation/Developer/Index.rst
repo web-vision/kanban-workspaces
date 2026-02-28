@@ -183,6 +183,36 @@ AfterDataGeneratedForWorkspaceEventListener
 
    Entry point for event processing (implements Invokable interface).
 
+Stage Checklist Feature (Implementation)
+=========================================
+
+The Stage Checklist feature adds optional checklist items per workspace stage. When editors move a card to a stage (drag or Approve/Revert), the "Send to Stage" modal shows that stage's checklist at the top. The checklist is display-only (no checkboxes or submission).
+
+Database and TCA
+----------------
+
+* **Table:** ``tx_kanbanworkspaces_stage_checklist`` (see ``ext_tables.sql``). Columns: ``uid``, ``pid``, ``tstamp``, ``crdate``, ``deleted``, ``sorting``, ``stage`` (FK to ``sys_workspace_stage.uid``), ``title``.
+* **TCA:** ``Configuration/TCA/tx_kanbanworkspaces_stage_checklist.php`` defines the checklist table (label, sorting, delete, columns ``stage``, ``title``; record icon ``kanban-workspaces-stage-checklist``).
+* **TCA override:** ``Configuration/TCA/Overrides/sys_workspace_stage.php`` adds ``checklist_items`` inline field to ``sys_workspace_stage`` (after ``responsible_persons``). Inline: sortable, ``expandSingle``, no sync/localization links.
+
+Icons
+~~~~~
+
+* **File:** ``Configuration/Icons.php`` registers ``kanban-workspaces-stage-checklist`` with ``SvgIconProvider``, source ``EXT:kanban_workspaces/Resources/Public/Icons/checklist.svg``. Used for TCA record icons and for each checklist row in the Send to Stage modal.
+
+Controller
+~~~~~~~~~~
+
+* In ``KanbanWorkspacesController::indexAction()``, each stage in the config is enriched with a ``checklist`` array. For each stage with ``uid >= 1``, ``getChecklistForStage($stageUid)`` is called.
+* ``getChecklistForStage(int $stageUid): array`` – queries ``tx_kanbanworkspaces_stage_checklist`` for the given ``stage``, ``deleted = 0``, ordered by ``sorting``. Deduplicates by ``uid`` and by ``title``. Returns ``[ ['id' => uid, 'title' => title], ... ]``. The array is part of ``WorkspaceConfig`` (JSON) passed to the frontend.
+
+Frontend (Template, JavaScript, CSS)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* **Template:** Send to Stage modal (``#sendToStageModal``) body order: ``#stageInfoBanner``, then ``#stageChecklistSection`` / ``#stageChecklistList``, then recipients, additional recipients, comments.
+* **JavaScript:** ``openSendToStageModal(formData, context)`` in ``Workspace.js`` reads ``context.targetStage?.checklist``, deduplicates by ``id``/``title``, renders ``<ul>`` of ``<li class="stage-checklist-item">`` with ``<span class="stage-checklist-item-icon"></span>`` and title; injects icon via ``Icons.getIcon('kanban-workspaces-stage-checklist', Icons.sizes.small)`` into each icon span. When modal is opened via Approve/Revert, ``handleNextStage`` / ``handleRevertStage`` compute target stage and pass ``targetStage`` in context.
+* **CSS:** ``Resources/Public/Css/Styles.css`` – ``.stage-checklist-section``, ``.stage-checklist-list`` (max-height, overflow, scrollable), ``.stage-checklist-ul``, ``.stage-checklist-item``, ``.stage-checklist-item-icon``.
+
 Assign Feature (Implementation)
 ================================
 

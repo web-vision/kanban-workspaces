@@ -30,6 +30,18 @@
 			<trans-unit id="t3ver_assignee">
 				<source>Workspace assignee</source>
 			</trans-unit>
+			<trans-unit id="stage_checklist">
+				<source>Stage checklist</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist.stage">
+				<source>Stage</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items">
+				<source>Checklist items</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_item">
+				<source>Checklist item</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

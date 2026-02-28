@@ -4,6 +4,35 @@
 ChangeLog
 =========
 
+Version 1.2.0 (2025-02-28)
+==========================
+
+**Stage Checklist feature**
+
+This release adds optional per-stage checklists for workspace stages. Administrators can define checklist items in the workspace stage form; when editors move a card to that stage (drag-and-drop or Approve/Revert), the "Send to Stage" modal shows the checklist at the top. The checklist is display-only (no checkboxes or submission).
+
+New Features
+------------
+
+* **Checklist items per stage** – In Admin Tools > Workspaces, edit a workspace and expand a custom stage; add, reorder, or remove checklist entries in the "Checklist items" inline section.
+* **Checklist in Send to Stage modal** – When moving a card to a stage, the modal shows that stage's checklist (list with icon per item) below the info banner; empty stages show no checklist section.
+
+Technical Details
+-----------------
+
+* **Table:** ``tx_kanbanworkspaces_stage_checklist`` – stores stage (FK to ``sys_workspace_stage``), title, sorting (see ``ext_tables.sql``).
+* **TCA:** ``Configuration/TCA/tx_kanbanworkspaces_stage_checklist.php``; ``Configuration/TCA/Overrides/sys_workspace_stage.php`` adds ``checklist_items`` inline to workspace stage form.
+* **Icons:** ``Configuration/Icons.php`` registers ``kanban-workspaces-stage-checklist`` (``Resources/Public/Icons/checklist.svg``) for TCA and modal list items.
+* **Controller:** ``KanbanWorkspacesController::getChecklistForStage()`` loads and deduplicates items; stage config passed to frontend includes ``checklist`` array per stage.
+* **Frontend:** ``Workspace.js`` renders checklist in ``openSendToStageModal``; ``targetStage`` passed from approve/revert handlers so checklist and banner show for the correct stage.
+
+Documentation
+-------------
+
+* **Administrator:** Stage Checklist (Workspace Stages) – where and how to configure checklist items; see :doc:`Administrator/Index`.
+* **Editor:** Stage checklist in the Send to Stage modal – when it appears and what you see; see :doc:`Editor/Index`.
+* **Developer:** Stage Checklist feature (implementation) – TCA, controller, JS, CSS, data model; see :doc:`Developer/Index`.
+
 Version 1.1.0 (2025-02-08)
 ==========================
 

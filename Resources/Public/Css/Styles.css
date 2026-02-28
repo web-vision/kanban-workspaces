@@ -2376,6 +2376,62 @@ textarea:focus {
   gap: var(--spacing-sm);
 }
 
+.stage-checklist-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.stage-checklist-section .form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.stage-checklist-list {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.stage-checklist-list .stage-checklist-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stage-checklist-list .stage-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stage-checklist-list .stage-checklist-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.stage-checklist-list .stage-checklist-item:first-child {
+  padding-top: 0;
+}
+
+.stage-checklist-list .stage-checklist-item-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-checklist-list .stage-checklist-item-icon .icon-color,
+.stage-checklist-list .stage-checklist-item-icon img {
+  width: 1rem;
+  height: 1rem;
+}
+
 .form-text {
   font-size: 12px;
   color: var(--text-muted);

@@ -458,10 +458,18 @@
                 </div>
 
                 <div class="modal-body">
-                    <!-- Stage Info Banner -->
+                    <!-- Stage Info Banner (at top of modal) -->
                     <div class="stage-info-banner" id="stageInfoBanner" style="display: none;">
                         <i class="fas fa-info-circle"></i>
                         <span id="stageInfoText">Sending items to next stage</span>
+                    </div>
+
+                    <!-- Stage Checklist -->
+                    <div class="form-group stage-checklist-section" id="stageChecklistSection" style="display: none;">
+                        <label class="form-label">Checklist</label>
+                        <div class="stage-checklist-list" id="stageChecklistList">
+                            <!-- Dynamic checklist list rendered by JS -->
+                        </div>
                     </div>
 
                     <!-- Recipients Section -->

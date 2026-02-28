@@ -97,6 +97,21 @@ Example Configuration
 
 This configuration removes the default "Editing" stage and sets stage 1 as the initial stage for new records.
 
+Stage Checklist (Workspace Stages)
+----------------------------------
+
+You can add optional **checklist items** to each **custom workspace stage**. When editors move a card to that stage on the kanban board, the "Send to Stage" modal shows the checklist at the top (informational only; no checkboxes or submission).
+
+**Where to configure:** Admin Tools > Workspaces. Edit a workspace that has custom stages (Internal Stages / Custom Stages).
+
+**Steps:**
+
+1. Expand a custom stage (e.g. "Review", "Publish").
+2. In the stage form, find the **Checklist items** (or "Stage checklist") inline section.
+3. Add, reorder, or remove entries (each has a **Title**). Save the workspace/stage.
+
+Only **custom** workspace stages (with a database record) can have checklist items. Internal/system stages (e.g. default "Editing") have no checklist configuration.
+
 Site Configuration
 ------------------
 

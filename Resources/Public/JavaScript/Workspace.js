@@ -78,8 +78,8 @@ export class WorkspaceBoard {
       activeFilters: {},
       currentWorkspace: "main",
       searchQuery: "",
-      columnUserFilters: {}, // NEW: Stores active user filter per column { stageId: userId | null }
-      columnSorts: {}, // NEW: Stores active sort for each column { stageId: 'modifiedDate' | null }
+      columnUserFilters: {},
+      columnSorts: {},
       diffs: {}, // Stores TYPO3 diff data per card
       comments: {}, // Stores comments per card
       history: {}, // Stores history per card
@@ -200,7 +200,6 @@ export class WorkspaceBoard {
     // Modal events
     this.setupModalEvents()
 
-    // Keyboard shortcuts - FIXED
     this.setupKeyboardShortcuts()
 
     // Window events
@@ -211,11 +210,8 @@ export class WorkspaceBoard {
       }, 250),
     )
 
-    // Listen to TYPO3 color scheme changes
-    document.addEventListener("typo3:color-scheme:update", (e) => {
-      console.log("TYPO3 color scheme changed:", e.detail.colorScheme)
-      // The theme is automatically applied to document element by TYPO3
-      // No additional action needed - CSS variables will update automatically
+    document.addEventListener("typo3:color-scheme:update", () => {
+      // Theme applied by TYPO3; CSS variables update automatically
     })
 
     // Custom events
@@ -317,7 +313,6 @@ export class WorkspaceBoard {
     }
   }
 
-  // FIXED: Setup keyboard shortcuts
   setupKeyboardShortcuts() {
     document.addEventListener("keydown", (e) => {
       // Don't trigger shortcuts when typing in inputs
@@ -605,20 +600,16 @@ export class WorkspaceBoard {
       body: formData,
     })
       .then((response) => response.json())
-      .then((apiResponse) => {
-        console.log(apiResponse);
-      });
+      .then(() => {});
   }
 
   convertWorkspaceDataToCards(apiResponse) {
     if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
-      console.warn('Invalid API response format');
       return [];
     }
 
     const result = apiResponse[0];
     if (!result || !result.result || !result.result.data) {
-      console.warn('No data found in API response');
       return [];
     }
 
@@ -712,7 +703,6 @@ export class WorkspaceBoard {
       const date = new Date(year, month - 1, day, hour, minute);
       return date.toISOString();
     } catch (error) {
-      console.warn('Failed to parse date:', dateString, error);
       return new Date().toISOString();
     }
   }
@@ -868,12 +858,7 @@ export class WorkspaceBoard {
                    <span class="column-name">${this.escapeHtml(stage.label)}</span>
                    <span class="column-count">${cardsForStage.length}</span>
                </div>
-               <div class="column-actions">
-                   <!-- ToDo: user assignment per stage 
-                    <button class="column-action" title="Assign users to stage" data-action="assign-users" data-stage-id="${stage.id}">
-                       <i class="fas fa-user-plus"></i>
-                   </button> -->
-               </div>
+               <div class="column-actions"></div>
            </div>
        </div>
        <div class="column-content" data-stage-id="${stage.id}">
@@ -1169,7 +1154,6 @@ export class WorkspaceBoard {
         this.setupCardDragAndClick(cardEl, cardData)
         this.setupCardMenuActions(cardEl)
       } else {
-        console.warn(`Card data not found for cardId: ${cardId}`)
       }
     })
 
@@ -1543,7 +1527,6 @@ export class WorkspaceBoard {
 
   handleCardDrop(card, targetStage, sourceStage) {
     // Notification is handled in handleSendToStageSubmit after successful API response
-    console.debug(`Dropped "${card.title}" from ${sourceStage.label} to ${targetStage.label}`)
   }
 
   handleStageDragOver(stage, element) {
@@ -1933,18 +1916,53 @@ export class WorkspaceBoard {
     this.currentStageFormData = formData
 
     // Update UI
+    const checklistSection = document.getElementById("stageChecklistSection")
+    const checklistList = document.getElementById("stageChecklistList")
     const recipientsGroup = document.getElementById("recipientsGroup")
     const recipientsList = document.getElementById("stageRecipientsList")
     const additionalGroup = document.getElementById("additionalRecipientsGroup")
     const commentsInput = document.getElementById("stageComments")
+    const additionalRecipientsInput = document.getElementById("stageAdditionalRecipients")
     const infoBanner = document.getElementById("stageInfoBanner")
     const infoText = document.getElementById("stageInfoText")
 
+    // Render stage checklist (at top of modal)
+    if (checklistSection && checklistList) {
+      checklistList.innerHTML = ""
+      const rawChecklist = context.targetStage?.checklist || []
+      const seenIds = new Set()
+      const seenTitles = new Set()
+      const checklist = Array.isArray(rawChecklist)
+        ? rawChecklist.filter((item) => {
+            const id = item && (item.id ?? item.uid)
+            const title = item && (item.title ?? '').toString().trim()
+            if (id === undefined || seenIds.has(id)) return false
+            if (title !== '' && seenTitles.has(title)) return false
+            seenIds.add(id)
+            if (title !== '') seenTitles.add(title)
+            return true
+          })
+        : []
+      if (checklist.length > 0) {
+        checklistSection.style.display = "block"
+        checklistList.innerHTML =
+          '<ul class="stage-checklist-ul">' +
+          checklist.map((item) => '<li class="stage-checklist-item"><span class="stage-checklist-item-icon"></span>' + this.escapeHtml(item.title) + '</li>').join('') +
+          '</ul>'
+        Icons.getIcon("kanban-workspaces-stage-checklist", Icons.sizes.small).then((markup) => {
+          checklistList.querySelectorAll(".stage-checklist-item-icon").forEach((el) => {
+            el.innerHTML = markup
+          })
+        })
+      } else {
+        checklistSection.style.display = "none"
+        checklistList.innerHTML = ""
+      }
+    }
+
     // Reset form
     if (commentsInput) commentsInput.value = (formData.comments && formData.comments.value) || ""
-    if (document.getElementById("stageAdditionalRecipients")) {
-      document.getElementById("stageAdditionalRecipients").value = (formData.additional && formData.additional.value) || ""
-    }
+    if (additionalRecipientsInput) additionalRecipientsInput.value = (formData.additional && formData.additional.value) || ""
 
     // Setup Info Banner
     if (infoBanner && infoText) {
@@ -2059,7 +2077,6 @@ export class WorkspaceBoard {
         }
 
         const executeResult = await executeResponse.json()
-        console.log(`${executeMethod} response:`, executeResult)
 
         if (executeResult && executeResult[0]?.result?.success !== false) {
           // Success
@@ -2072,11 +2089,12 @@ export class WorkspaceBoard {
           } else {
             // Refresh if not a drag-drop (revert/next)
             this.loadData()
-            this.closePreviewModal()
             this.showToast("Action completed successfully", "success")
           }
 
-          // Close modal (skip revert logic)
+          this.closePreviewModal()
+
+          // Close send-to-stage modal
           this.currentStageFormContext = null
           const modal = document.getElementById("sendToStageModal")
           if (modal) {
@@ -2150,7 +2168,6 @@ export class WorkspaceBoard {
       }
 
       const data = await response.json()
-      console.log(`${method} API response:`, data)
 
       if (!data || !data[0] || !data[0].result) {
         throw new Error(`Invalid response from ${method}`)
@@ -2227,16 +2244,14 @@ export class WorkspaceBoard {
 
       const formData = windowResult[0].result
 
-      // Debug: Log form data structure
-      console.log('sendToPrevStageWindow API response:', windowResult)
-      console.log('Form data:', formData)
+      const currentIndex = this.data.stages.findIndex((s) => s.id == currentCard.stage || s.id === currentCard.stage)
+      const targetStage = currentIndex > 0 ? this.data.stages[currentIndex - 1] : null
 
-      // Open custom modal
       this.openSendToStageModal(formData, {
         url: url,
         executeMethod: "sendToPrevStageExecute",
         cardIds: [currentCard.id],
-        // targetStage: null for revert (handled differently or implied)
+        targetStage: targetStage,
         isDragDrop: false
       })
 
@@ -2296,16 +2311,16 @@ export class WorkspaceBoard {
 
       const formData = windowResult[0].result
 
-      // Debug: Log form data structure
-      console.log('sendToNextStageWindow API response:', windowResult)
-      console.log('Form data:', formData)
+      const currentIndex = this.data.stages.findIndex((s) => s.id == currentCard.stage || s.id === currentCard.stage)
+      const targetStage = currentIndex >= 0 && currentIndex < this.data.stages.length - 1
+        ? this.data.stages[currentIndex + 1]
+        : null
 
-      // Open custom modal
       this.openSendToStageModal(formData, {
         url: url,
         executeMethod: "sendToNextStageExecute",
         cardIds: [currentCard.id],
-        // targetStage: null (will imply next stage via ID usually, or handled by API)
+        targetStage: targetStage,
         isDragDrop: false
       })
 
@@ -2365,7 +2380,6 @@ export class WorkspaceBoard {
     const cards = [];
     const oldStages = {};
 
-    console.log("selected cards : ", cardIds);
 
     // Process each card
     cardIds.forEach(id => {
@@ -2381,18 +2395,7 @@ export class WorkspaceBoard {
 
     this.renderBoard();
 
-    // Emit card:moved event with array of cards - let App.js handle saving
     this.emit("card:moved", cards, targetStageId, oldStages);
-
-    // if (addToHistory) {
-    //   this.addToHistory({
-    //     type: "move",
-    //     cardId: cardId,
-    //     from: oldStage,
-    //     to: targetStageId,
-    //     timestamp: Date.now(),
-    //   })
-    // }
   }
 
   // Revert card move - called by App.js if save fails
@@ -2549,7 +2552,7 @@ export class WorkspaceBoard {
         this.deleteCard(card)
         break
       default:
-        console.log(`Card action not implemented: ${action}`)
+        break
     }
   }
 
@@ -2578,13 +2581,11 @@ export class WorkspaceBoard {
       .then((response) => response.json())
       .then((apiResponse) => {
         if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
-          console.warn('Invalid API response format');
           return [];
         }
 
         const result = apiResponse[0];
         if (!result || !result.result) {
-          console.warn('No data found in API response');
           return [];
         }
         const newTab = window.open(result.result, 'newTYPO3frontendWindow');
@@ -2736,13 +2737,11 @@ export class WorkspaceBoard {
         .then((response) => response.json())
         .then((apiResponse) => {
           if (!apiResponse || !Array.isArray(apiResponse) || apiResponse.length === 0) {
-            console.warn('Invalid API response format');
             throw new Error('Invalid API response format');
           }
 
           const result = apiResponse[0];
           if (!result) {
-            console.warn('No data found in API response');
             throw new Error('No data found in API response');
           }
 
@@ -2950,9 +2949,6 @@ export class WorkspaceBoard {
         default: // info
           Notification.info('', message, durationInSeconds);
       }
-    } else {
-      // Fallback to console if Notification API is not available
-      console.log(`[${type.toUpperCase()}] ${message}`);
     }
   }
 

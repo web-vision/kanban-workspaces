@@ -24,8 +24,7 @@ function initWorkspaceApp() {
     document.documentElement.setAttribute("data-color-scheme", "auto")
   })
 
-  workspaceBoard.on("card:moved", (cards, targetStage, sourceStage) => {
-    console.log(`Card moved event: ${cards.length} card(s) moved to stage ${targetStage}`)    
+  workspaceBoard.on("card:moved", (cards, targetStage) => {
     // Handle saving card move to server
     const url = workspaceBoard.options.getDataApiUrl || workspaceBoard.options.apiUrl
     
@@ -74,22 +73,14 @@ function initWorkspaceApp() {
       .catch((error) => {
         console.error("Failed to save card move:", error)
         Notification.warning('', 'Failed to save changes to server (moved locally only)', 5)
-        // Optionally revert the move
-        // workspaceBoard.revertCardMove(cardId, sourceStage)
       })
   })
 
-  workspaceBoard.on("workspace:switch", (oldWorkspace, newWorkspace) => {
-    console.log(`Switched workspace from ${oldWorkspace} to ${newWorkspace}`)
-  })
+  workspaceBoard.on("workspace:switch", () => {})
 
-  workspaceBoard.on("filter:change", (filterType, filterValue, isActive) => {
-    console.log(`Filter ${filterType}:${filterValue} ${isActive ? "activated" : "deactivated"}`)
-  })
+  workspaceBoard.on("filter:change", () => {})
 
-  workspaceBoard.on("search:change", (query) => {
-    console.log(`Search query changed: ${query}`)
-  })
+  workspaceBoard.on("search:change", () => {})
 
   // Error handling
   workspaceBoard.on("error", (error) => {
@@ -97,32 +88,13 @@ function initWorkspaceApp() {
     Notification.error('', 'An error occurred. Please try again.', 5)
   })
 
-  // Comment added event
-  workspaceBoard.on("comment:added", (cardId, commentText) => {
-    console.log(`💬 Comment added to card ${cardId}: ${commentText}`)
-  })
+  workspaceBoard.on("comment:added", () => {})
 
-  // Performance monitoring
-  const performanceMetrics = {
-    renderTime: 0,
-    dragOperations: 0,
-    apiCalls: 0,
-  }
+  workspaceBoard.on("board:rendered", () => {})
 
-  workspaceBoard.on("board:rendered", () => {
-    const renderEnd = performance.now()
-    performanceMetrics.renderTime = renderEnd
-  })
+  workspaceBoard.on("card:dragstart", () => {})
 
-  workspaceBoard.on("card:dragstart", (cardData, element) => {
-    console.log("🎯 card:dragstart event fired!", { cardData, element })
-    performanceMetrics.dragOperations++
-  })
-
-  // Expose workspace board to global scope for debugging
   window.workspaceBoard = workspaceBoard
-  window.performanceMetrics = performanceMetrics
-
 }
 
 initWorkspaceApp();

@@ -46,6 +46,8 @@ To move a content item to a different stage:
 
 The item will automatically transition to the new stage, and the change will be reflected in TYPO3's workspace system.
 
+When you drag a card to another column (or use **Approve** or **Revert** on a card), the **Send to Stage** modal opens. If the target stage has checklist items configured by an administrator, a **Checklist** section appears at the top of the modal (below the blue info banner). Each item is shown as a list row with a checklist icon and the item title. The list is **informational only** (no checkboxes, no submission of state). Complete recipients/comments as needed and confirm to perform the stage transition.
+
 Viewing Item Details
 --------------------
 

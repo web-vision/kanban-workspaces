@@ -57,15 +57,13 @@ final class ExtensionLoadedTest extends FunctionalTestCase
     #[Test]
     public function verifyCore13(): void
     {
-        $this->markTestSkipped('Needs phpunit update first');
-        //$this->assertSame(13, (new Typo3Version())->getMajorVersion());
+        $this->assertSame(13, (new Typo3Version())->getMajorVersion());
     }
 
     #[Group('not-core-13')]
     #[Test]
     public function verifyCore14(): void
     {
-        $this->markTestSkipped('Needs phpunit update first');
-        //$this->assertSame(14, (new Typo3Version())->getMajorVersion());
+        $this->assertSame(14, (new Typo3Version())->getMajorVersion());
     }
 }

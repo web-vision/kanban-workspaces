@@ -15,12 +15,18 @@ use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
  * Enriches workspace data with assignee from sys_workspaces_assignee so cards can display assignee.
  * Includes assignee avatar URL from be_users.avatar (FAL) when available.
  */
-#[AsEventListener(
-    identifier: 'kanban-workspaces/assignee-enrichment',
-    after: 'kanban-workspaces/after-data-generated-for-workspace',
-)]
 final class AssigneeEnrichmentListener
 {
+    public function __construct(
+        private readonly ConnectionPool $connectionPool,
+        private readonly ResourceFactory $resourceFactory,
+    ) {
+    }
+
+    #[AsEventListener(
+        identifier: 'kanban-workspaces/assignee-enrichment',
+        after: 'kanban-workspaces/after-data-generated-for-workspace',
+    )]
     public function __invoke(AfterDataGeneratedForWorkspaceEvent $event): void
     {
         $data = $event->getData();
@@ -28,9 +34,8 @@ final class AssigneeEnrichmentListener
             return;
         }
 
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-        $assigneeConn = $connectionPool->getConnectionForTable('sys_workspaces_assignee');
-        $beUsersConn = $connectionPool->getConnectionForTable('be_users');
+        $assigneeConn = $this->connectionPool->getConnectionForTable('sys_workspaces_assignee');
+        $beUsersConn = $this->connectionPool->getConnectionForTable('be_users');
 
         foreach ($data as &$item) {
             $item['assignee_uid'] = null;
@@ -72,8 +77,7 @@ final class AssigneeEnrichmentListener
     private function getAvatarUrlForBeUser(int $beUserId): ?string
     {
         try {
-            $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-            $refRow = $connectionPool->getConnectionForTable('sys_file_reference')->executeQuery(
+            $refRow = $this->connectionPool->getConnectionForTable('sys_file_reference')->executeQuery(
                 'SELECT uid FROM sys_file_reference WHERE uid_foreign = ? AND tablenames = ? AND fieldname = ? AND deleted = 0 LIMIT 1',
                 [$beUserId, 'be_users', 'avatar'],
                 ['integer', 'string', 'string']
@@ -81,8 +85,7 @@ final class AssigneeEnrichmentListener
             if (!$refRow || empty($refRow['uid'])) {
                 return null;
             }
-            $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
-            $fileReference = $resourceFactory->getFileReferenceObject((int)$refRow['uid']);
+            $fileReference = $this->resourceFactory->getFileReferenceObject((int)$refRow['uid']);
             $publicUrl = $fileReference->getPublicUrl();
             if ($publicUrl === null || $publicUrl === '') {
                 return null;

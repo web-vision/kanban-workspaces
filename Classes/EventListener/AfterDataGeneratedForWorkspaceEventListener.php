@@ -26,7 +26,7 @@ final class AfterDataGeneratedForWorkspaceEventListener
         }
 
         $data = $event->getData();
-        if (empty($data) || !is_array($data)) {
+        if ($data === []) {
             return;
         }
 
@@ -58,9 +58,10 @@ final class AfterDataGeneratedForWorkspaceEventListener
 
                     $item['stage'] = $targetStage;
 
-                    if ($targetStage > 0 && $targetStage !== $currentStage) {
-                        $this->updateRecordStage($table, $uid, $targetStage);
-                    }
+                    // $targetStage is always > 0 (both branches yield a positive int) and
+                    // $currentStage is <= 0 here (>0 case handled above), so the record stage
+                    // always needs to be persisted.
+                    $this->updateRecordStage($table, $uid, $targetStage);
                 }
             }
             unset($item);

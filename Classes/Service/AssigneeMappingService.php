@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\Service;
 
-use Doctrine\DBAL\ParameterType;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 class AssigneeMappingService
@@ -81,7 +81,7 @@ class AssigneeMappingService
                 'uid' => $recordUid,
                 't3ver_wsid' => $workspaceId,
             ],
-            ['t3ver_assignee' => ParameterType::INTEGER]
+            ['t3ver_assignee' => Connection::PARAM_INT]
         );
     }
 
@@ -99,7 +99,7 @@ class AssigneeMappingService
             $tableName,
             ['t3ver_assignee' => 0],
             ['uid' => $recordUid],
-            ['t3ver_assignee' => ParameterType::INTEGER]
+            ['t3ver_assignee' => Connection::PARAM_INT]
         );
     }
 
@@ -128,8 +128,8 @@ class AssigneeMappingService
             ->from('sys_workspaces_assignee')
             ->where(
                 $queryBuilder->expr()->eq('table_name', $queryBuilder->createNamedParameter($tableName)),
-                $queryBuilder->expr()->eq('record_uid', $queryBuilder->createNamedParameter($recordUid, ParameterType::INTEGER)),
-                $queryBuilder->expr()->eq('workspace_id', $queryBuilder->createNamedParameter($workspaceId, ParameterType::INTEGER))
+                $queryBuilder->expr()->eq('record_uid', $queryBuilder->createNamedParameter($recordUid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->eq('workspace_id', $queryBuilder->createNamedParameter($workspaceId, Connection::PARAM_INT))
             )
             ->orderBy('tstamp', 'DESC')
             ->setMaxResults(1)
@@ -159,9 +159,9 @@ class AssigneeMappingService
             ->select('uid')
             ->from('sys_workspaces_assignee')
             ->where(
-                $queryBuilder->expr()->eq('workspace_id', $queryBuilder->createNamedParameter($workspaceId, ParameterType::INTEGER)),
+                $queryBuilder->expr()->eq('workspace_id', $queryBuilder->createNamedParameter($workspaceId, Connection::PARAM_INT)),
                 $queryBuilder->expr()->eq('table_name', $queryBuilder->createNamedParameter($tableName)),
-                $queryBuilder->expr()->eq('record_uid', $queryBuilder->createNamedParameter($recordUid, ParameterType::INTEGER))
+                $queryBuilder->expr()->eq('record_uid', $queryBuilder->createNamedParameter($recordUid, Connection::PARAM_INT))
             )
             ->setMaxResults(1)
             ->executeQuery();

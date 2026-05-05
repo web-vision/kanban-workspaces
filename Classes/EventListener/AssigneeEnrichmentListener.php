@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\EventListener;
 
-use Doctrine\DBAL\ParameterType;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
 use WebVision\KanbanWorkspaces\Backend\BackendUserAvatarResolver;
@@ -55,7 +55,7 @@ final class AssigneeEnrichmentListener
                     ->where(
                         $beUsersQueryBuilder->expr()->eq(
                             'uid',
-                            $beUsersQueryBuilder->createNamedParameter($beUserId, ParameterType::INTEGER)
+                            $beUsersQueryBuilder->createNamedParameter($beUserId, Connection::PARAM_INT)
                         )
                     )
                     ->setMaxResults(1)

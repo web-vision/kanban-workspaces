@@ -7,9 +7,8 @@ namespace WebVision\KanbanWorkspaces\EventListener;
 use Doctrine\DBAL\ParameterType;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Resource\ResourceFactory;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
+use WebVision\KanbanWorkspaces\Backend\BackendUserAvatarResolver;
 use WebVision\KanbanWorkspaces\Service\AssigneeMappingService;
 
 /**
@@ -20,8 +19,8 @@ final class AssigneeEnrichmentListener
 {
     public function __construct(
         private readonly ConnectionPool $connectionPool,
-        private readonly ResourceFactory $resourceFactory,
         private readonly AssigneeMappingService $assigneeMappingService,
+        private readonly BackendUserAvatarResolver $backendUserAvatarResolver,
     ) {
     }
 
@@ -65,37 +64,10 @@ final class AssigneeEnrichmentListener
                 if ($userRow !== false && isset($userRow['username'])) {
                     $item['assignee_username'] = $userRow['username'];
                 }
-                $item['assignee_avatar_url'] = $this->getAvatarUrlForBeUser($beUserId);
+                $item['assignee_avatar_url'] = $this->backendUserAvatarResolver->resolveAvatarUrl($beUserId);
             }
         }
         unset($item);
         $event->setData($data);
-    }
-
-    /**
-     * Resolve avatar image URL for a backend user (be_users.avatar FAL field).
-     * Returns full URL or null if no avatar or on error.
-     */
-    private function getAvatarUrlForBeUser(int $beUserId): ?string
-    {
-        try {
-            $refRow = $this->connectionPool->getConnectionForTable('sys_file_reference')->executeQuery(
-                'SELECT uid FROM sys_file_reference WHERE uid_foreign = ? AND tablenames = ? AND fieldname = ? AND deleted = 0 LIMIT 1',
-                [$beUserId, 'be_users', 'avatar'],
-                ['integer', 'string', 'string']
-            )->fetchAssociative();
-            if (!$refRow || empty($refRow['uid'])) {
-                return null;
-            }
-            $fileReference = $this->resourceFactory->getFileReferenceObject((int)$refRow['uid']);
-            $publicUrl = $fileReference->getPublicUrl();
-            if ($publicUrl === null) {
-                return null;
-            }
-            $siteUrl = GeneralUtility::getIndpEnv('TYPO3_SITE_URL') ?: '';
-            return $siteUrl . ltrim($publicUrl, '/');
-        } catch (\Throwable $e) {
-            return null;
-        }
     }
 }

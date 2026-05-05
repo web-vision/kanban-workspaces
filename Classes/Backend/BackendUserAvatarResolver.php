@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\Backend;
 
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Resolves the absolute URL of a backend user's avatar (FAL field `be_users.avatar`).
@@ -23,8 +24,14 @@ final class BackendUserAvatarResolver
     /**
      * Build the absolute avatar URL for the given backend user, or `null` when no
      * avatar reference is set or the FAL resource cannot be resolved.
+     *
+     * @param ServerRequestInterface|null $request Active request (preferred). Falls back to
+     *                                             `$GLOBALS['TYPO3_REQUEST']` when omitted, which
+     *                                             is the typical situation inside backend event
+     *                                             listeners that do not receive the request through
+     *                                             the event payload.
      */
-    public function resolveAvatarUrl(int $beUserId): ?string
+    public function resolveAvatarUrl(int $beUserId, ?ServerRequestInterface $request = null): ?string
     {
         $referenceUid = $this->findAvatarReferenceUid($beUserId);
         if ($referenceUid === null) {
@@ -39,8 +46,7 @@ final class BackendUserAvatarResolver
         if ($publicUrl === null) {
             return null;
         }
-        $siteUrl = GeneralUtility::getIndpEnv('TYPO3_SITE_URL') ?: '';
-        return $siteUrl . ltrim($publicUrl, '/');
+        return $this->getSiteUrl($request) . ltrim($publicUrl, '/');
     }
 
     /**
@@ -66,5 +72,18 @@ final class BackendUserAvatarResolver
             return null;
         }
         return (int)$row['uid'];
+    }
+
+    private function getSiteUrl(?ServerRequestInterface $request): string
+    {
+        $request ??= $GLOBALS['TYPO3_REQUEST'] ?? null;
+        if (!$request instanceof ServerRequestInterface) {
+            return '';
+        }
+        $normalizedParams = $request->getAttribute('normalizedParams');
+        if (!$normalizedParams instanceof NormalizedParams) {
+            return '';
+        }
+        return $normalizedParams->getSiteUrl();
     }
 }

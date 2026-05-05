@@ -181,7 +181,7 @@ class KanbanWorkspacesController extends ActionController
     protected function configureKanban(array $stageConfig): void
     {
         $inlineScript = 'window.WorkspaceConfig = ' . json_encode($stageConfig) . ';';
-        $this->pageRenderer->addJsFooterInlineCode('kanban-config', $inlineScript, 'text/javascript', true, true);
+        $this->pageRenderer->addJsFooterInlineCode('kanban-config', $inlineScript, true, true, true);
     }
 
     /**

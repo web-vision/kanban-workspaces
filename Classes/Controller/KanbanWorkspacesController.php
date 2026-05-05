@@ -20,7 +20,7 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
-use WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
+use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible

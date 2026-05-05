@@ -15,6 +15,16 @@ final class ExtensionLoadedTest extends FunctionalTestCase
 {
     private const ALLOWED_MAJOR_VERSIONS = [13, 14];
 
+    /**
+     * @var string[]
+     */
+    protected array $coreExtensionsToLoad = [
+        'typo3/cms-workspaces',
+    ];
+
+    /**
+     * @var string[]
+     */
     protected array $testExtensionsToLoad = [
         'web-vision/kanban-workspaces',
     ];

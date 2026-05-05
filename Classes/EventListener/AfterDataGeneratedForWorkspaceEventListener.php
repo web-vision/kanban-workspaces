@@ -9,7 +9,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\DataHandling\History\RecordHistoryStore;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
-use WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
+use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
 
 #[AsEventListener(
     identifier: 'kanban-workspaces/after-data-generated-for-workspace',

@@ -20,6 +20,9 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95.1",
+        "phpstan/phpstan": "^2.1.54",
+        "phpstan/phpstan-phpunit": "^2.0.16",
+        "saschaegerer/phpstan-typo3": "^3.0.1",
         "typo3/cms-install": "~13.4.0@dev || ~14.3.0@dev",
         "typo3/cms-setup": "~13.4.0@dev || ~14.3.0@dev",
         "typo3/testing-framework": "^9.5"
@@ -65,6 +68,10 @@
     "prefer-stable": true,
     "scripts": {
         "cs:check": "${PHP_BINARY} .Build/bin/php-cs-fixer fix --config Build/php-cs-fixer/php-cs-rules.php --diff --dry-run",
-        "cs:fix": "${PHP_BINARY} .Build/bin/php-cs-fixer fix --config Build/php-cs-fixer/php-cs-rules.php"
+        "cs:fix": "${PHP_BINARY} .Build/bin/php-cs-fixer fix --config Build/php-cs-fixer/php-cs-rules.php",
+        "phpstan:core13": "${PHP_BINARY} .Build/bin/phpstan analyse -c Build/phpstan/Core13/phpstan.neon --no-progress",
+        "phpstan:core14": "${PHP_BINARY} .Build/bin/phpstan analyse -c Build/phpstan/Core14/phpstan.neon --no-progress",
+        "phpstan:baseline:core13": "${PHP_BINARY} .Build/bin/phpstan analyse -c Build/phpstan/Core13/phpstan.neon --generate-baseline=Build/phpstan/Core13/phpstan-baseline.neon --allow-empty-baseline",
+        "phpstan:baseline:core14": "${PHP_BINARY} .Build/bin/phpstan analyse -c Build/phpstan/Core14/phpstan.neon --generate-baseline=Build/phpstan/Core14/phpstan-baseline.neon --allow-empty-baseline"
     }
 }

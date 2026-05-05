@@ -71,11 +71,8 @@ class KanbanWorkspacesController extends ActionController
         $order = 0;
         foreach ($stages as $stage) {
             // If disableDefaultStage is true, skip stages that don't look like custom stages.
-            if ($this->emSettings->getDisableDefaultStage()) {
-                // Defensive checks: ensure uid is set and is an integer >= 1
-                if (!isset($stage->uid) || (int)$stage->uid < 1) {
-                    continue;
-                }
+            if ($this->emSettings->getDisableDefaultStage() && (int)$stage->uid < 1) {
+                continue;
             }
             $checklist = $this->getChecklistForStage((int)$stage->uid);
             $stageConfig[] = [
@@ -89,9 +86,9 @@ class KanbanWorkspacesController extends ActionController
             ];
         }
 
-        $selectedLanguage = (string)$moduleData->get('language', 'all');
-        $selectedDepth = (int)$moduleData->get('depth', '0');
-        $selectedStage = (int)$moduleData->get('stage', '-99');
+        $selectedLanguage = (string)($moduleData?->get('language', 'all') ?? 'all');
+        $selectedDepth = (int)($moduleData?->get('depth', '0') ?? 0);
+        $selectedStage = (int)($moduleData?->get('stage', '-99') ?? -99);
 
         // Assign variables to template
         $this->moduleTemplate->assignMultiple([
@@ -269,7 +266,7 @@ class KanbanWorkspacesController extends ActionController
             $languagesNew[] = [
                 'id' => (string)$language['uid'],
                 'label' => $language['title'],
-                'flag' => $language['flag'] ?? '',
+                'flag' => $language['flagIcon'],
             ];
         }
         return $languagesNew;

@@ -8,13 +8,6 @@ services:
     resource: '../Classes/*'
     exclude: '../Classes/Domain/Model/*'
 
-  # Backend Controllers - TYPO3 v13 compatible
-  WebVision\KanbanWorkspaces\Controller\KanbanWorkspacesController:
-    public: true
-    tags:
-      - name: 'backend.controller'
-        identifier: 'KanbanWorkspaces'
-
   WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration:
     public: true
 

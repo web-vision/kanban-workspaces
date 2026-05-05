@@ -6,17 +6,23 @@ namespace WebVision\KanbanWorkspaces\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Http\JsonResponse;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use WebVision\KanbanWorkspaces\Notification\AssignmentNotificationService;
 use WebVision\KanbanWorkspaces\Service\AssigneeMappingService;
 
+#[AsController]
 class AssignAjaxController
 {
+    public function __construct(
+        private readonly AssigneeMappingService $assigneeMappingService,
+        private readonly AssignmentNotificationService $assignmentNotificationService,
+    ) {
+    }
+
     public function assignAction(ServerRequestInterface $request): ResponseInterface
     {
-        $assigneeMappingService = GeneralUtility::getContainer()->get(AssigneeMappingService::class);
-        $assignmentNotificationService = GeneralUtility::getContainer()->get(AssignmentNotificationService::class);
         $parsedBody = $request->getParsedBody();
         $data = null;
         if (is_array($parsedBody)) {
@@ -43,14 +49,14 @@ class AssignAjaxController
             return new JsonResponse(['success' => false, 'error' => 'Invalid parameters'], 400);
         }
 
-        $assigneeMappingService->persistAssignmentWithMeta($beUserId, $table, $recordUid, $workspaceId, $stageId, $title, $description);
+        $this->assigneeMappingService->persistAssignmentWithMeta($beUserId, $table, $recordUid, $workspaceId, $stageId, $title, $description);
 
-        $assignmentNotificationService->notifyAssignee($beUserId, $table, $recordUid, $workspaceId, $stageId, $title, $description);
+        $this->assignmentNotificationService->notifyAssignee($beUserId, $table, $recordUid, $workspaceId, $stageId, $title, $description);
 
         return new JsonResponse(['success' => true]);
     }
 
-    protected function getBackendUser(): \TYPO3\CMS\Core\Authentication\BackendUserAuthentication
+    protected function getBackendUser(): BackendUserAuthentication
     {
         return $GLOBALS['BE_USER'];
     }

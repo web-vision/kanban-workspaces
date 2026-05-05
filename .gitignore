@@ -3,6 +3,7 @@
 .Build
 !.Build/Web/.gitkeep
 composer.lock
+composer.lock.*
 composer.json.testing
 composer.json.orig
 composer.json.pretty
@@ -12,3 +13,10 @@ var
 .php-cs-fixer.cache
 .DS_Store
 /vendor
+/Documentation-GENERATED-temp/
+/.test-results
+/Build/testing-docker/.env
+/config/
+Build/node_modules/
+/tailor-version-artefact/
+/tailor-version-upload/

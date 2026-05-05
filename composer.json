@@ -44,7 +44,8 @@
             "version": "1.0.0-dev",
             "Package": {
                 "providesPackages": []
-            }
+            },
+            "app-dir": ".Build"
         },
         "patches": {
             "typo3/cms-workspaces": {

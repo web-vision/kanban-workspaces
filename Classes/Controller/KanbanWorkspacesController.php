@@ -174,7 +174,9 @@ class KanbanWorkspacesController extends ActionController
     }
 
     /**
-     * Configure Kanban board with stage configuration
+     * Configure Kanban board with stage configuration.
+     *
+     * @param array<string, mixed> $stageConfig
      */
     protected function configureKanban(array $stageConfig): void
     {
@@ -228,6 +230,8 @@ class KanbanWorkspacesController extends ActionController
 
     /**
      * Get list of backend users (uid, username) for assignee selectbox.
+     *
+     * @return list<array{uid: int, username: string}>
      */
     protected function getBackendUsersList(): array
     {
@@ -250,6 +254,8 @@ class KanbanWorkspacesController extends ActionController
 
     /**
      * Gets all available system languages.
+     *
+     * @return list<array{id: string, label: string, flag: string}>
      */
     protected function getSystemLanguages(int $pageId, string $selectedLanguage = ''): array
     {

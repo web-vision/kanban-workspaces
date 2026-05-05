@@ -158,6 +158,11 @@ class AssignmentNotificationService
         10 => 'EXT:backend/Resources/Private/Partials/',
     ];
 
+    /**
+     * @param array{email: string, realName?: string, lang?: string} $recipientData
+     * @param array<string, mixed> $emailConfig
+     * @param array<string, mixed> $variablesForView
+     */
     private function sendEmail(array $recipientData, array $emailConfig, array $variablesForView): void
     {
         $mailDefaults = $GLOBALS['TYPO3_CONF_VARS']['MAIL'] ?? [];

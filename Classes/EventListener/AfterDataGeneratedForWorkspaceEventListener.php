@@ -7,33 +7,32 @@ namespace WebVision\KanbanWorkspaces\EventListener;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\DataHandling\History\RecordHistoryStore;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
 use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
 
-#[AsEventListener(
-    identifier: 'kanban-workspaces/after-data-generated-for-workspace',
-)]
 final class AfterDataGeneratedForWorkspaceEventListener
 {
+    public function __construct(
+        private readonly ConnectionPool $connectionPool,
+        private readonly EmConfiguration $emConfiguration,
+    ) {
+    }
+
+    #[AsEventListener(identifier: 'kanban-workspaces/after-data-generated-for-workspace')]
     public function __invoke(AfterDataGeneratedForWorkspaceEvent $event): void
     {
-        // Get extension configuration
-        $emSettings = GeneralUtility::makeInstance(EmConfiguration::class);
-
-        if (empty($emSettings->getDisableDefaultStage())) {
+        if (!$this->emConfiguration->getDisableDefaultStage()) {
             return;
         }
 
         $data = $event->getData();
-        // Check if data contains records
         if (empty($data) || !is_array($data)) {
             return;
         }
 
         // Get the default stage ID (typically 0 for "Editing" stage)
         $defaultStageId = 0;
-        $customDefaultStageId = (int)$emSettings->getDefaultStageId();
+        $customDefaultStageId = $this->emConfiguration->getDefaultStageId();
 
         if ($customDefaultStageId > 0) {
             foreach ($data as &$item) {
@@ -65,7 +64,6 @@ final class AfterDataGeneratedForWorkspaceEventListener
                 }
             }
             unset($item);
-            // Update the event data
             $event->setData($data);
         }
     }
@@ -76,9 +74,7 @@ final class AfterDataGeneratedForWorkspaceEventListener
     private function updateRecordStage(string $table, int $uid, int $stageId): void
     {
         try {
-            $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-            $connection = $connectionPool->getConnectionForTable($table);
-
+            $connection = $this->connectionPool->getConnectionForTable($table);
             $connection->update(
                 $table,
                 ['t3ver_stage' => $stageId],
@@ -99,9 +95,7 @@ final class AfterDataGeneratedForWorkspaceEventListener
     private function getCurrentStage(string $table, int $uid): int
     {
         try {
-            $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-            $connection = $connectionPool->getConnectionForTable($table);
-
+            $connection = $this->connectionPool->getConnectionForTable($table);
             $result = $connection->select(['t3ver_stage'], $table, ['uid' => $uid])->fetchAssociative();
             return (int)($result['t3ver_stage'] ?? 0);
         } catch (\Exception $e) {
@@ -115,9 +109,7 @@ final class AfterDataGeneratedForWorkspaceEventListener
     private function getLatestHistoricalStage(string $table, int $uid): int
     {
         try {
-            $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-            $connection = $connectionPool->getConnectionForTable('sys_history');
-
+            $connection = $this->connectionPool->getConnectionForTable('sys_history');
             $rows = $connection->select(
                 ['history_data'],
                 'sys_history',

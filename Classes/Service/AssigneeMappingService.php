@@ -117,6 +117,31 @@ class AssigneeMappingService
     }
 
     /**
+     * Look up the most recent assignee (`be_users.uid`) for the given workspace record.
+     * Returns `null` when no mapping exists.
+     */
+    public function findLatestAssigneeBeUserIdForRecord(int $workspaceId, string $tableName, int $recordUid): ?int
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('sys_workspaces_assignee');
+        $row = $queryBuilder
+            ->select('be_user')
+            ->from('sys_workspaces_assignee')
+            ->where(
+                $queryBuilder->expr()->eq('table_name', $queryBuilder->createNamedParameter($tableName)),
+                $queryBuilder->expr()->eq('record_uid', $queryBuilder->createNamedParameter($recordUid, ParameterType::INTEGER)),
+                $queryBuilder->expr()->eq('workspace_id', $queryBuilder->createNamedParameter($workspaceId, ParameterType::INTEGER))
+            )
+            ->orderBy('tstamp', 'DESC')
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchAssociative();
+        if ($row === false || empty($row['be_user'])) {
+            return null;
+        }
+        return (int)$row['be_user'];
+    }
+
+    /**
      * Whether the table has the t3ver_assignee column in TCA (and thus in schema after DB compare).
      */
     private function tableHasT3verAssignee(string $tableName): bool

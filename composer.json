@@ -1,5 +1,5 @@
 {
-    "name": "webvision/kanban-workspaces",
+    "name": "web-vision/kanban-workspaces",
     "type": "typo3-cms-extension",
     "description": "Kanban Board Extension for TYPO3",
     "license": "GPL-2.0-or-later",

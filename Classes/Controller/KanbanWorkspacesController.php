@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\Controller;
 
-use WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
@@ -12,15 +11,16 @@ use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Page\PageRenderer;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
+use WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -40,7 +40,8 @@ class KanbanWorkspacesController extends ActionController
         protected readonly EmConfiguration $emSettings,
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
         protected readonly ConnectionPool $connectionPool,
-    ) {}
+    ) {
+    }
 
     /**
      * Main index action for the Kanban Workspaces backend module
@@ -87,9 +88,9 @@ class KanbanWorkspacesController extends ActionController
             ];
         }
 
-        $selectedLanguage = (string)$moduleData->get('language','all');
+        $selectedLanguage = (string)$moduleData->get('language', 'all');
         $selectedDepth = (int)$moduleData->get('depth', '0');
-        $selectedStage = (int)$moduleData->get('stage', '-99');        
+        $selectedStage = (int)$moduleData->get('stage', '-99');
 
         // Assign variables to template
         $this->moduleTemplate->assignMultiple([
@@ -109,13 +110,12 @@ class KanbanWorkspacesController extends ActionController
             'label' => 'Infinite',
         ];
 
-        
         $backendUriBuilder = GeneralUtility::makeInstance(\TYPO3\CMS\Backend\Routing\UriBuilder::class);
         $this->pageRenderer->addInlineSetting('FormEngine', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('record_edit'));
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('web_layout'));
         $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
-        
+
         // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([
             'ok' => 'OK',
@@ -171,7 +171,7 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
         $this->pageRenderer->loadJavaScriptModule('@webvision/kanban-workspaces/App.js');
-        
+
         // Load workspaces send-to-stage-form Web Component
         $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');
     }

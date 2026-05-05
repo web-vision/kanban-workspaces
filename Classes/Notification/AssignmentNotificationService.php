@@ -29,7 +29,8 @@ class AssignmentNotificationService
         private readonly LoggerInterface $logger,
         private readonly StagesService $stagesService,
         private readonly PreviewUriBuilder $previewUriBuilder,
-    ) {}
+    ) {
+    }
 
     /**
      * Notify the assignee (backend user) that they were assigned to a record.

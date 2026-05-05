@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\EventListener;
 
+use Doctrine\DBAL\ParameterType;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -35,8 +36,6 @@ final class AssigneeEnrichmentListener
             return;
         }
 
-        $beUsersConn = $this->connectionPool->getConnectionForTable('be_users');
-
         foreach ($data as &$item) {
             $item['assignee_uid'] = null;
             $item['assignee_username'] = null;
@@ -50,12 +49,20 @@ final class AssigneeEnrichmentListener
             $beUserId = $this->assigneeMappingService->findLatestAssigneeBeUserIdForRecord($workspaceId, $tableName, $uid);
             if ($beUserId !== null) {
                 $item['assignee_uid'] = $beUserId;
-                $userRow = $beUsersConn->executeQuery(
-                    'SELECT username FROM be_users WHERE uid = ?',
-                    [$beUserId],
-                    ['integer']
-                )->fetchAssociative();
-                if ($userRow && isset($userRow['username'])) {
+                $beUsersQueryBuilder = $this->connectionPool->getQueryBuilderForTable('be_users');
+                $userRow = $beUsersQueryBuilder
+                    ->select('username')
+                    ->from('be_users')
+                    ->where(
+                        $beUsersQueryBuilder->expr()->eq(
+                            'uid',
+                            $beUsersQueryBuilder->createNamedParameter($beUserId, ParameterType::INTEGER)
+                        )
+                    )
+                    ->setMaxResults(1)
+                    ->executeQuery()
+                    ->fetchAssociative();
+                if ($userRow !== false && isset($userRow['username'])) {
                     $item['assignee_username'] = $userRow['username'];
                 }
                 $item['assignee_avatar_url'] = $this->getAvatarUrlForBeUser($beUserId);

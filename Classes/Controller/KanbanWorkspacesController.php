@@ -7,6 +7,7 @@ namespace WebVision\KanbanWorkspaces\Controller;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
+use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
@@ -15,7 +16,6 @@ use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Page\PageRenderer;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
@@ -40,6 +40,7 @@ class KanbanWorkspacesController extends ActionController
         protected readonly EmConfiguration $emSettings,
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
         protected readonly ConnectionPool $connectionPool,
+        protected readonly UriBuilder $backendUriBuilder,
     ) {
     }
 
@@ -110,11 +111,10 @@ class KanbanWorkspacesController extends ActionController
             'label' => 'Infinite',
         ];
 
-        $backendUriBuilder = GeneralUtility::makeInstance(\TYPO3\CMS\Backend\Routing\UriBuilder::class);
-        $this->pageRenderer->addInlineSetting('FormEngine', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('record_edit'));
+        $this->pageRenderer->addInlineSetting('FormEngine', 'moduleUrl', (string)$this->backendUriBuilder->buildUriFromRoute('record_edit'));
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
-        $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$backendUriBuilder->buildUriFromRoute('web_layout'));
-        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
+        $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$this->backendUriBuilder->buildUriFromRoute('web_layout'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
 
         // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([
@@ -234,8 +234,7 @@ class KanbanWorkspacesController extends ActionController
      */
     protected function getBackendUsersList(): array
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getQueryBuilderForTable('be_users');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('be_users');
         $result = $queryBuilder
             ->select('uid', 'username')
             ->from('be_users')

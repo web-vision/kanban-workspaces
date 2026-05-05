@@ -6,7 +6,6 @@ namespace WebVision\KanbanWorkspaces\EventListener;
 
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
@@ -30,7 +29,7 @@ final class AssigneeEnrichmentListener
     public function __invoke(AfterDataGeneratedForWorkspaceEvent $event): void
     {
         $data = $event->getData();
-        if (empty($data) || !is_array($data)) {
+        if ($data === []) {
             return;
         }
 
@@ -87,12 +86,12 @@ final class AssigneeEnrichmentListener
             }
             $fileReference = $this->resourceFactory->getFileReferenceObject((int)$refRow['uid']);
             $publicUrl = $fileReference->getPublicUrl();
-            if ($publicUrl === null || $publicUrl === '') {
+            if ($publicUrl === null) {
                 return null;
             }
             $siteUrl = GeneralUtility::getIndpEnv('TYPO3_SITE_URL') ?: '';
             return $siteUrl . ltrim($publicUrl, '/');
-        } catch (ResourceDoesNotExistException|\Throwable $e) {
+        } catch (\Throwable $e) {
             return null;
         }
     }

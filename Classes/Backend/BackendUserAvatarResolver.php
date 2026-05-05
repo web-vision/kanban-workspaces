@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\Backend;
 
-use Doctrine\DBAL\ParameterType;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -54,10 +54,10 @@ final class BackendUserAvatarResolver
             ->select('uid')
             ->from('sys_file_reference')
             ->where(
-                $queryBuilder->expr()->eq('uid_foreign', $queryBuilder->createNamedParameter($beUserId, ParameterType::INTEGER)),
+                $queryBuilder->expr()->eq('uid_foreign', $queryBuilder->createNamedParameter($beUserId, Connection::PARAM_INT)),
                 $queryBuilder->expr()->eq('tablenames', $queryBuilder->createNamedParameter('be_users')),
                 $queryBuilder->expr()->eq('fieldname', $queryBuilder->createNamedParameter('avatar')),
-                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(0, ParameterType::INTEGER))
+                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
             )
             ->setMaxResults(1)
             ->executeQuery()

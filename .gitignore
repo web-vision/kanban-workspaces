@@ -1,0 +1,14 @@
+.idea
+.vscode/
+.Build
+!.Build/Web/.gitkeep
+composer.lock
+composer.json.testing
+composer.json.orig
+composer.json.pretty
+*.cache
+var
+.cache/
+.php-cs-fixer.cache
+.DS_Store
+/vendor

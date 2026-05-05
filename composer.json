@@ -1,7 +1,6 @@
 {
     "name": "webvision/kanban-workspaces",
     "type": "typo3-cms-extension",
-    "version": "1.0.0",
     "description": "Kanban Board Extension for TYPO3",
     "license": "GPL-2.0-or-later",
     "authors": [
@@ -12,15 +11,17 @@
     ],
     "require": {
         "php": "^8.2.0",
-        "typo3/cms-core": "^13.4 || ^14.3",
-        "typo3/cms-extbase": "^13.4 || ^14.3",
-        "typo3/cms-fluid": "^13.4 || ^14.3",
-        "typo3/cms-workspaces": "^13.4 || ^14.3",
-        "typo3/cms-backend": "^13.4 || ^14.3",
-        "cweagans/composer-patches": "^1.7"
+        "cweagans/composer-patches": "^1.7",
+        "typo3/cms-backend": "~13.4.0@dev || ~14.3.0@dev",
+        "typo3/cms-core": "~13.4.0@dev || ~14.3.0@dev",
+        "typo3/cms-extbase": "~13.4.0@dev || ~14.3.0@dev",
+        "typo3/cms-fluid": "~13.4.0@dev || ~14.3.0@dev",
+        "typo3/cms-workspaces": "~13.4.0@dev || ~14.3.0@dev"
     },
     "require-dev": {
-        "typo3/testing-framework": "^8.0"
+        "typo3/cms-install": "~13.4.0@dev || ~14.3.0@dev",
+        "typo3/cms-setup": "~13.4.0@dev || ~14.3.0@dev",
+        "typo3/testing-framework": "^9.5"
     },
     "autoload": {
         "psr-4": {
@@ -35,7 +36,11 @@
     "extra": {
         "typo3/cms": {
             "extension-key": "kanban_workspaces",
-            "web-dir": ".Build/public"
+            "web-dir": ".Build/Web",
+            "version": "1.0.0-dev",
+            "Package": {
+                "providesPackages": []
+            }
         },
         "patches": {
             "typo3/cms-workspaces": {
@@ -45,12 +50,16 @@
     },
     "config": {
         "vendor-dir": ".Build/vendor",
-        "bin-dir": ".Build/bin"
+        "bin-dir": ".Build/bin",
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "lock": false,
+        "allow-plugins": {
+            "typo3/class-alias-loader": true,
+            "typo3/cms-composer-installers": true,
+            "cweagans/composer-patches": true
+        }
     },
-    "scripts": {
-        "post-autoload-dump": [
-            "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
-        ]
-    },
-    "minimum-stability": "stable"
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

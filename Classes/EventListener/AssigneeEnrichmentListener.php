@@ -9,6 +9,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent;
+use WebVision\KanbanWorkspaces\Service\AssigneeMappingService;
 
 /**
  * Enriches workspace data with assignee from sys_workspaces_assignee so cards can display assignee.
@@ -19,6 +20,7 @@ final class AssigneeEnrichmentListener
     public function __construct(
         private readonly ConnectionPool $connectionPool,
         private readonly ResourceFactory $resourceFactory,
+        private readonly AssigneeMappingService $assigneeMappingService,
     ) {
     }
 
@@ -33,7 +35,6 @@ final class AssigneeEnrichmentListener
             return;
         }
 
-        $assigneeConn = $this->connectionPool->getConnectionForTable('sys_workspaces_assignee');
         $beUsersConn = $this->connectionPool->getConnectionForTable('be_users');
 
         foreach ($data as &$item) {
@@ -46,13 +47,8 @@ final class AssigneeEnrichmentListener
             if ($tableName === '' || $uid <= 0 || $workspaceId <= 0) {
                 continue;
             }
-            $row = $assigneeConn->executeQuery(
-                'SELECT be_user FROM sys_workspaces_assignee WHERE table_name = ? AND record_uid = ? AND workspace_id = ? ORDER BY tstamp DESC LIMIT 1',
-                [$tableName, $uid, $workspaceId],
-                ['string', 'integer', 'integer']
-            )->fetchAssociative();
-            if ($row && !empty($row['be_user'])) {
-                $beUserId = (int)$row['be_user'];
+            $beUserId = $this->assigneeMappingService->findLatestAssigneeBeUserIdForRecord($workspaceId, $tableName, $uid);
+            if ($beUserId !== null) {
                 $item['assignee_uid'] = $beUserId;
                 $userRow = $beUsersConn->executeQuery(
                     'SELECT username FROM be_users WHERE uid = ?',

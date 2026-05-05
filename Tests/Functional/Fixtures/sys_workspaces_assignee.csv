@@ -1,0 +1,6 @@
+"sys_workspaces_assignee"
+,"uid","pid","tstamp","crdate","title","description","be_user","table_name","record_uid","workspace_id","stage_id"
+,1,0,1700000000,1700000000,"Older mapping","",10,"tt_content",42,1,0
+,2,0,1700000100,1700000100,"Newer mapping","",11,"tt_content",42,1,0
+,3,0,1700000050,1700000050,"Other workspace","",12,"tt_content",42,2,0
+,4,0,1700000060,1700000060,"Other record","",13,"tt_content",99,1,0

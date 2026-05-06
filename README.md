@@ -50,14 +50,6 @@ composer require devzspace/kanban-workspaces
 
 Include the static template **“Kanban Workspaces Backend Module”** (`Configuration/TypoScript` via `ext_tables.php`) in the Install Tool or Template module.
 
-### Patches
-
-The extension (or root project) applies `patches/griddata-language-fallback.patch` to `typo3/cms-workspaces` via `cweagans/composer-patches`. Ensure patches are applied:
-
-```bash
-composer install
-```
-
 ### DDEV
 
 If the project uses [DDEV](https://ddev.com/), run Composer and TYPO3 CLI commands inside the DDEV container (e.g. `ddev composer install`, `ddev exec typo3 …`).
@@ -135,7 +127,7 @@ flowchart LR
 
 - **getWorkspaceInfos**: Request fields include `id`, `depth`, `language`, `stage`, etc.; response in `result.data`.
 - **sendToSpecificStageExecute**: Payload with `affects.elements` (table, uid, t3ver_oid) and `nextStage`.
-- **Language fallback**: The applied patch fixes `GridDataService` when the language title is null (avoids `fixed_lgd_cs` TypeError).
+- **Language fallback**: A PSR-14 `WorkspaceLanguageFallbackListener` substitutes `"all"` for any empty/null `language.title` in the workspace grid, so records whose `sys_language_uid` is no longer present in the site configuration still render with a label.
 
 ---
 
@@ -177,8 +169,6 @@ Configuration/
 Resources/
 ├── Private/   (Templates, Layouts, Language)
 └── Public/    (JavaScript, Css, Icons, Documentation)
-patches/
-└── griddata-language-fallback.patch
 ext_emconf.php, ext_localconf.php, ext_tables.php, ext_conf_template.txt
 ```
 
@@ -190,7 +180,6 @@ ext_emconf.php, ext_localconf.php, ext_tables.php, ext_conf_template.txt
 |-------|----------------|
 | “You’re on live workspace” / “Please select workspace” | Switch to a non-Live workspace in the backend. |
 | Board empty or no data | Ensure a page is selected in the page tree (`id` is set). |
-| `fixed_lgd_cs` / language TypeError | The `griddata-language-fallback` patch must be applied to `typo3/cms-workspaces`. Run `composer install` and confirm the patch in `composer.json` / `composer.lock`. |
 | Module not visible | Include the “Kanban Workspaces Backend Module” TypoScript template. Check user/group permissions and `workspaces` access. |
 | JS errors / API failures | Verify `workspace_dispatch` (and related) AJAX URLs. Check browser console and network tab; ensure `EXT:workspaces` is installed and workspace APIs are available. |
 

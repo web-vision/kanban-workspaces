@@ -86,6 +86,10 @@ class KanbanWorkspacesController extends ActionController
             ];
         }
 
+        $showNoCustomStagesWarning = $workspaceIsAccessible
+            && $this->emSettings->getDisableDefaultStage()
+            && $stageConfig === [];
+
         $selectedLanguage = (string)($moduleData?->get('language', 'all') ?? 'all');
         $selectedDepth = (int)($moduleData?->get('depth', '0') ?? 0);
         $selectedStage = (int)($moduleData?->get('stage', '-99') ?? -99);
@@ -94,6 +98,7 @@ class KanbanWorkspacesController extends ActionController
         $this->moduleTemplate->assignMultiple([
             'moduleTitle' => 'Kanban Workspaces',
             'workspaceIsAccessible' => !$workspaceIsAccessible,
+            'showNoCustomStagesWarning' => $showNoCustomStagesWarning,
         ]);
 
         $depth = [];

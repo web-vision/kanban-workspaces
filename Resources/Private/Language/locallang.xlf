@@ -42,6 +42,12 @@
 			<trans-unit id="stage_checklist_item">
 				<source>Checklist item</source>
 			</trans-unit>
+			<trans-unit id="warning.noCustomStages.title">
+				<source>No Custom Workspace Stages Configured</source>
+			</trans-unit>
+			<trans-unit id="warning.noCustomStages.message">
+				<source>Default stages are disabled for this module, but no custom stages exist in the selected workspace. Please create at least one custom workspace stage or disable the "Disable Default Stage" setting.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

@@ -40,6 +40,14 @@
                 <f:be.infobox title="Wait!">You're on live workspace, Please select workspace.</f:be.infobox>
             </div>
         </f:if>
+        <f:if condition="{showNoCustomStagesWarning}">
+            <div class="container mt-3">
+                <f:be.infobox
+                    title="{f:translate(key: 'warning.noCustomStages.title', extensionName: 'kanban_workspaces')}">
+                    <f:translate key="warning.noCustomStages.message" extensionName="kanban_workspaces" />
+                </f:be.infobox>
+            </div>
+        </f:if>
         <!-- Filter Sidebar -->
         <aside class="filter-sidebar" id="filterSidebar">
             <div class="sidebar-header">

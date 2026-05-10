@@ -4,4 +4,4 @@
 disableDefaultStage = 1
 
 # cat=config/enable/101; type=int; label=Default Stages Id
-defaultStageId = 1
+defaultStageId = 0

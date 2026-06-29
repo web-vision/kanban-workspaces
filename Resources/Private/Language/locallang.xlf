@@ -30,6 +30,24 @@
 			<trans-unit id="t3ver_assignee">
 				<source>Workspace assignee</source>
 			</trans-unit>
+			<trans-unit id="sys_workspaces_assignee">
+				<source>Workspace assignee mapping</source>
+			</trans-unit>
+			<trans-unit id="sys_workspaces_assignee.be_user">
+				<source>Assignee (backend user)</source>
+			</trans-unit>
+			<trans-unit id="sys_workspaces_assignee.table_name">
+				<source>Table</source>
+			</trans-unit>
+			<trans-unit id="sys_workspaces_assignee.record_uid">
+				<source>Record UID</source>
+			</trans-unit>
+			<trans-unit id="sys_workspaces_assignee.workspace_id">
+				<source>Workspace</source>
+			</trans-unit>
+			<trans-unit id="sys_workspaces_assignee.stage_id">
+				<source>Stage</source>
+			</trans-unit>
 			<trans-unit id="stage_checklist">
 				<source>Stage checklist</source>
 			</trans-unit>

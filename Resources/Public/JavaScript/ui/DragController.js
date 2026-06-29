@@ -16,9 +16,6 @@ export class DragController {
     const cards = document.querySelectorAll(".kanban-card")
     const columns = document.querySelectorAll(".column-content")
 
-    // Create drag placeholder
-    this.createDragPlaceholder()
-
     // Setup card drag events and card menu (context menu) for each card
     cards.forEach((cardEl) => {
       const cardId = cardEl.dataset.cardId
@@ -156,21 +153,6 @@ export class DragController {
   }
 
   // Drag placeholder methods
-  createDragPlaceholder() {
-    if (!document.getElementById("dragPlaceholder")) {
-      const placeholder = document.createElement("div")
-      placeholder.id = "dragPlaceholder"
-      placeholder.className = "drag-placeholder"
-      placeholder.innerHTML = `
-         <div class="placeholder-content">
-           <i class="fas fa-plus-circle"></i>
-           <span>Drop here</span>
-         </div>
-       `
-      document.body.appendChild(placeholder)
-    }
-  }
-
   showDragPlaceholders(draggedCard) {
     const columns = document.querySelectorAll(".column-content")
     columns.forEach((column) => {

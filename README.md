@@ -190,19 +190,24 @@ ext_emconf.php, ext_localconf.php, ext_tables.php, ext_conf_template.txt
 The following companies have already pledged funding for the Kanban Workspace module for TYPO3.
 
 
-<img src="Resources/Public/Images/Partners/wv-logo-final-star-black_on_white.svg" alt="Web Vision" width="120" /><br/>
-<hr/><br/>
-<img src="Resources/Public/Images/Partners/dkd-Logo_schwarz_mit_Umraum.svg" alt="dkd" width="120" />
-<hr/><br/>
-<img src="Resources/Public/Images/Partners/eCentral_Logo.svg" alt="eCentral" width="120" />
-<hr/><br/><br/>
-<img src="Resources/Public/Images/Partners/logo-light.svg" alt="Webconsulting" width="250" /><br/><br/>
-<hr/>
-<img src="Resources/Public/Images/Partners/Logo-Wortbildmarke-RGB-Dunkelgrau.svg" alt="KM2" width="250" />
-<hr/><br/>
-<img src="Resources/Public/Images/Partners/sutor-bank-logo-black.svg" alt="Sutor Bank" width="250" />
-<hr/><br/>
-<img src="Resources/Public/Images/Partners/devzspace-official.svg" alt="Devzspace" width="250" /> <br/>
+<table border="0" cellspacing="0" cellpadding="8">
+  <tr>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/wv.card.svg" alt="Web Vision" width="240" /></td>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/dkd.card.svg" alt="dkd" width="240" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/ecentral.card.svg" alt="eCentral" width="240" /></td>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/webconsulting.card.svg" alt="Webconsulting" width="240" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/km2.card.svg" alt="KM2" width="240" /></td>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/sutor.card.svg" alt="Sutor Bank" width="240" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="Resources/Public/Images/Partners/readme/devzspace.card.svg" alt="Devzspace" width="240" /></td>
+    <td></td>
+  </tr>
+</table>
 
 ---
 <br/>

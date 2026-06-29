@@ -614,7 +614,12 @@ export class ModalController {
         if (executeResult && executeResult[0]?.result?.success !== false) {
           // Success
           if (targetStage) {
-            this.board.cardActions.moveCard(cardIds, targetStage.id, true)
+            // The transition was already persisted above via
+            // sendToNextStageExecute/sendToPrevStageExecute (incl. the comment
+            // and recipient data). Reconcile the board locally only; passing
+            // persist=false avoids a second, comment-less
+            // sendToSpecificStageExecute request that would crash in the Core.
+            this.board.cardActions.moveCard(cardIds, targetStage.id, true, false)
             Notification.success(
               TYPO3.lang['actionSendToStage'] || 'Send to stage',
               `Content moved to ${targetStage.label} and notifications sent`

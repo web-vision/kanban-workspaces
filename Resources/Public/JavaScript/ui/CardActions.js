@@ -392,7 +392,7 @@ export class CardActions {
   }
 
   // Card operations
-  moveCard(cardId, targetStageId, addToHistory = true) {
+  moveCard(cardId, targetStageId, addToHistory = true, persist = true) {
     // Handle both single cardId (string) and array of cardIds
     const cardIds = Array.isArray(cardId) ? cardId : [cardId];
 
@@ -414,7 +414,15 @@ export class CardActions {
 
     this.board.renderer.renderBoard();
 
-    this.board.emit("card:moved", cards, targetStageId, oldStages);
+    // "card:moved" is the signal to persist the move to the server. Callers that
+    // already persisted the transition themselves (e.g. the Send to Stage modal,
+    // which posts sendToNextStageExecute/sendToPrevStageExecute with the comment
+    // and recipient data) pass persist=false so the move is only reconciled
+    // locally. Emitting here would otherwise trigger a second, redundant
+    // sendToSpecificStageExecute request that lacks the comment payload.
+    if (persist) {
+      this.board.emit("card:moved", cards, targetStageId, oldStages);
+    }
   }
 
   // Revert card move - called by App.js if save fails

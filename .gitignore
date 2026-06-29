@@ -21,3 +21,4 @@ Build/node_modules/
 /tailor-version-artefact/
 /tailor-version-upload/
 /.refs/
+/packages/

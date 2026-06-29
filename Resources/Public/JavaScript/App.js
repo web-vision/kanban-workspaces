@@ -45,10 +45,17 @@ function initWorkspaceApp() {
       "t3ver_oid": card.t3ver_oid
     }));
     
+    // sendToSpecificStageExecute reads $parameters->comments without a null
+    // guard (unlike recipients/additional, which use ??). A bare move carries
+    // no stage comment, so send explicit empty values to keep the request
+    // well-formed and avoid Core exception #1476107295.
     const payload = {
       action: "Actions",
       method: "sendToSpecificStageExecute",
       data: [{
+        "comments": "",
+        "recipients": [],
+        "additional": "",
         "affects": {
           "elements": payloadData,
           "nextStage": targetStage

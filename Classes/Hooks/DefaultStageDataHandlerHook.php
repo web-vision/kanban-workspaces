@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WebVision\KanbanWorkspaces\Hooks;
 
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\DataHandling\History\RecordHistoryStore;
@@ -16,6 +17,7 @@ use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
  *       the aftermath and adjust it.
  * @todo This class nees rework and harding; also test coverage is missing.
  */
+#[Autoconfigure(public: true)]
 final class DefaultStageDataHandlerHook
 {
     public function __construct(

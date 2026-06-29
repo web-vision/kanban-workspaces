@@ -1,9 +1,13 @@
 // Import the WorkspaceBoard class
-import { WorkspaceBoard } from "./Workspace.js" // Corrected import path
+import { WorkspaceBoard } from "@webvision/kanban-workspaces/WorkspaceBoard.js"
+import { initHorizontalScroll } from "@webvision/kanban-workspaces/core/HorizontalScroll.js"
 import Notification from '@typo3/backend/notification.js';
 
 // Initialize the TYPO3 Workspace Board Application
 function initWorkspaceApp() {
+  // Enable drag-to-scroll on the horizontal board
+  initHorizontalScroll()
+
   // Initialize the workspace board
   const workspaceBoard = new WorkspaceBoard("#kanbanBoard", {
     apiUrl: "/typo3/ajax/workspace",

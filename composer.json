@@ -1,7 +1,7 @@
 {
     "name": "web-vision/kanban-workspaces",
     "type": "typo3-cms-extension",
-    "description": "Kanban Board Extension for TYPO3",
+    "description": "Kanban Workspaces - Kanban Board Extension for TYPO3: Manage tasks and projects with an intuitive kanban interface",
     "license": "GPL-2.0-or-later",
     "authors": [
         {

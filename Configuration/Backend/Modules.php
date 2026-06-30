@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use TYPO3\CMS\Core\Information\Typo3Version;
 use WebVision\KanbanWorkspaces\Controller\KanbanWorkspacesController;
 
 /**
@@ -14,7 +15,9 @@ return [
         'inheritNavigationComponentFromMainModule' => true,
         'access' => 'user', // admin, systemMaintainer
         'workspaces' => '*',
-        'icon' => 'EXT:kanban_workspaces/Resources/Public/Icons/Extension.png',
+        'icon' => ((new Typo3Version())->getMajorVersion()) === 13
+            ? 'EXT:kanban_workspaces/Resources/Public/Icons/module-singletone.svg'
+            : 'EXT:kanban_workspaces/Resources/Public/Icons/module-dualtone.svg',
         'path' => '/module/web/kanbanworkspaces',
         'labels' => 'LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang_mod.xlf',
         'extensionName' => 'KanbanWorkspaces',

@@ -1,4 +1,4 @@
-import { escapeHtml, getTypeIcon, formatDate, renderT3Icon } from '@webvision/kanban-workspaces/core/utils.js';
+import { escapeHtml, getTypeIcon, formatDate, renderT3Icon } from '@web-vision/kanban-workspaces/core/utils.js';
 
 /**
  * Renders the board: columns, cards and the filter sidebar. Owns all markup

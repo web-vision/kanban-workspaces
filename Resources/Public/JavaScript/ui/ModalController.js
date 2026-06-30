@@ -1,6 +1,6 @@
 import Notification from '@typo3/backend/notification.js';
 import Icons from '@typo3/backend/icons.js';
-import { escapeHtml, getInitials, formatDate, showToast, showLoading, hideLoading } from '@webvision/kanban-workspaces/core/utils.js';
+import { escapeHtml, getInitials, formatDate, showToast, showLoading, hideLoading } from '@web-vision/kanban-workspaces/core/utils.js';
 
 /**
  * Owns every modal on the board: the card preview modal (summary / comments /

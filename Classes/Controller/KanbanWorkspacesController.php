@@ -172,7 +172,7 @@ class KanbanWorkspacesController extends ActionController
     {
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
-        $this->pageRenderer->loadJavaScriptModule('@webvision/kanban-workspaces/App.js');
+        $this->pageRenderer->loadJavaScriptModule('@web-vision/kanban-workspaces/App.js');
 
         // Load workspaces send-to-stage-form Web Component
         $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');

@@ -1,12 +1,12 @@
-import { EventEmitter } from '@webvision/kanban-workspaces/core/EventEmitter.js';
-import { showLoading, hideLoading, showToast, debounce } from '@webvision/kanban-workspaces/core/utils.js';
-import { DataTransformer } from '@webvision/kanban-workspaces/data/DataTransformer.js';
-import { WorkspaceApi } from '@webvision/kanban-workspaces/data/WorkspaceApi.js';
-import { BoardRenderer } from '@webvision/kanban-workspaces/ui/BoardRenderer.js';
-import { DragController } from '@webvision/kanban-workspaces/ui/DragController.js';
-import { ModalController } from '@webvision/kanban-workspaces/ui/ModalController.js';
-import { FilterController } from '@webvision/kanban-workspaces/ui/FilterController.js';
-import { CardActions } from '@webvision/kanban-workspaces/ui/CardActions.js';
+import { EventEmitter } from '@web-vision/kanban-workspaces/core/EventEmitter.js';
+import { showLoading, hideLoading, showToast, debounce } from '@web-vision/kanban-workspaces/core/utils.js';
+import { DataTransformer } from '@web-vision/kanban-workspaces/data/DataTransformer.js';
+import { WorkspaceApi } from '@web-vision/kanban-workspaces/data/WorkspaceApi.js';
+import { BoardRenderer } from '@web-vision/kanban-workspaces/ui/BoardRenderer.js';
+import { DragController } from '@web-vision/kanban-workspaces/ui/DragController.js';
+import { ModalController } from '@web-vision/kanban-workspaces/ui/ModalController.js';
+import { FilterController } from '@web-vision/kanban-workspaces/ui/FilterController.js';
+import { CardActions } from '@web-vision/kanban-workspaces/ui/CardActions.js';
 
 /**
  * TYPO3 Workspace Board

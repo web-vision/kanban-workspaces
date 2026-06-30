@@ -1,4 +1,4 @@
-.. include:: /Includes.rst.txt
+..  _administrator-assignuser:
 
 =======================
 Assign User to Content

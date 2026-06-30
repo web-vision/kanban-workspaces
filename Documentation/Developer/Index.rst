@@ -1,4 +1,4 @@
-.. include:: /Includes.rst.txt
+..  _developer:
 
 =========
 Developer
@@ -56,7 +56,7 @@ Key Methods:
    
    * ``Resources/Public/Css/Styles.css`` - Kanban board styles
    * ``Resources/Public/Css/Fontawesome.min.css`` - Icon fonts
-   * ``@webvision/kanban-workspaces/App.js`` - Main JavaScript application
+   * ``@web-vision/kanban-workspaces/App.js`` - Main JavaScript application
    * ``@typo3/workspaces/renderable/send-to-stage-form.js`` - Workspace form component
 
 .. php:method:: configureKanban(array $stageConfig): void
@@ -183,6 +183,79 @@ AfterDataGeneratedForWorkspaceEventListener
 
    Entry point for event processing (implements Invokable interface).
 
+Frontend JavaScript Architecture
+================================
+
+The frontend is delivered as ES6 modules under ``Resources/Public/JavaScript/``, import-mapped to
+``@web-vision/kanban-workspaces/`` (see ``Configuration/JavaScriptModules.php``). What used to be a single
+``Workspace.js`` file is now a central orchestrator with focused, single-responsibility collaborators.
+
+Entry point and orchestrator
+----------------------------
+
+* ``App.js`` – entry point loaded as the module trigger. It enables horizontal drag-to-scroll
+  (``core/HorizontalScroll.js``), instantiates ``WorkspaceBoard`` with the runtime options (API URLs,
+  feature flags such as ``enableDragDrop`` / ``enableFilters`` / ``enableSearch``, ``mockData``), and
+  registers the application-level event handlers — most importantly ``card:moved``, which POSTs the move
+  to the workspace dispatch endpoint.
+* ``WorkspaceBoard.js`` – the ``WorkspaceBoard`` class. It owns the shared state (cards, stages, filters,
+  selection, undo/redo history, current workspace, search query) and the lifecycle wiring, and delegates
+  the real work to its collaborators. Collaborators are constructed with a back-reference to the board and
+  reach shared state and each other through it (e.g. ``this.board.data``, ``this.board.renderer.renderBoard()``).
+
+Collaborators
+-------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 28 50
+
+   * - Collaborator
+     - File
+     - Responsibility
+   * - ``WorkspaceApi``
+     - ``data/WorkspaceApi.js``
+     - Thin AJAX transport over the workspace dispatch endpoint; hands raw responses to the transformer. Does not touch the DOM.
+   * - ``DataTransformer``
+     - ``data/DataTransformer.js``
+     - Stateless conversion of raw TYPO3 workspace payloads into the card / comment / history / diff shapes consumed by the UI.
+   * - ``BoardRenderer``
+     - ``ui/BoardRenderer.js``
+     - Generates all board markup (columns, cards, filter sidebar) and re-attaches drag-and-drop after a render.
+   * - ``DragController``
+     - ``ui/DragController.js``
+     - Card drag-and-drop and column drop targets, drop placeholders, and starting the stage-transition workflow on drop.
+   * - ``ModalController``
+     - ``ui/ModalController.js``
+     - Preview modal (summary / comments / history tabs) and the custom Send-to-Stage modal, including the revert / approve workflow. Holds the transient send-to-stage form state.
+   * - ``FilterController``
+     - ``ui/FilterController.js``
+     - Search and filter interaction: keeps active filters and search query in sync, persists selections and triggers reloads / re-renders.
+   * - ``CardActions``
+     - ``ui/CardActions.js``
+     - Per-card context-menu actions: preview, edit, open page version, assign a backend user, discard the version, and the move / revert primitives.
+   * - ``EventEmitter``
+     - ``core/EventEmitter.js``
+     - Minimal pub/sub used for the board's custom events.
+   * - ``initHorizontalScroll``
+     - ``core/HorizontalScroll.js``
+     - Drag-to-scroll panning of the horizontal board (ignores drags starting on a card or column).
+   * - utilities
+     - ``core/utils.js``
+     - Stateless helpers shared across components (HTML escaping, initials, date/icon formatting, toasts, loading indicators, ``debounce``).
+
+Events
+------
+
+``WorkspaceBoard`` exposes ``on(event, handler)`` / ``off(event, handler)`` / ``emit(event, …)`` through its
+``EventEmitter``. Subscribe to observe and extend behaviour. Notable events:
+
+* ``board:initialized``, ``board:rendered``, ``board:destroyed`` – board lifecycle.
+* ``data:loaded`` – workspace records fetched and transformed.
+* ``card:moved``, ``card:drop``, ``card:dragstart``, ``card:dragend``, ``card:click`` – card interactions.
+* ``filter:change``, ``filter:clear``, ``search:change``, ``search:clear`` – filter / search changes.
+* ``comment:added`` – a comment was added in the preview modal.
+
 Stage Checklist Feature (Implementation)
 =========================================
 
@@ -210,7 +283,7 @@ Frontend (Template, JavaScript, CSS)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * **Template:** Send to Stage modal (``#sendToStageModal``) body order: ``#stageInfoBanner``, then ``#stageChecklistSection`` / ``#stageChecklistList``, then recipients, additional recipients, comments.
-* **JavaScript:** ``openSendToStageModal(formData, context)`` in ``Workspace.js`` reads ``context.targetStage?.checklist``, deduplicates by ``id``/``title``, renders ``<ul>`` of ``<li class="stage-checklist-item">`` with ``<span class="stage-checklist-item-icon"></span>`` and title; injects icon via ``Icons.getIcon('kanban-workspaces-stage-checklist', Icons.sizes.small)`` into each icon span. When modal is opened via Approve/Revert, ``handleNextStage`` / ``handleRevertStage`` compute target stage and pass ``targetStage`` in context.
+* **JavaScript:** ``openSendToStageModal(formData, context)`` in ``ui/ModalController.js`` reads ``context.targetStage?.checklist``, deduplicates by ``id``/``title``, renders ``<ul>`` of ``<li class="stage-checklist-item">`` with ``<span class="stage-checklist-item-icon"></span>`` and title; injects icon via ``Icons.getIcon('kanban-workspaces-stage-checklist', Icons.sizes.small)`` into each icon span. When modal is opened via Approve/Revert, ``handleNextStage`` / ``handleRevertStage`` (also in ``ui/ModalController.js``) compute target stage and pass ``targetStage`` in context.
 * **CSS:** ``Resources/Public/Css/Styles.css`` – ``.stage-checklist-section``, ``.stage-checklist-list`` (max-height, overflow, scrollable), ``.stage-checklist-ul``, ``.stage-checklist-item``, ``.stage-checklist-item-icon``.
 
 Assign Feature (Implementation)
@@ -399,13 +472,13 @@ Defines and configures JavaScript modules needed for the module:
            'workspaces',
        ],
        'triggers' => [
-           '@webvision/kanban-workspaces/App.js',
+           '@web-vision/kanban-workspaces/App.js',
        ],
    ];
 
 **Available Modules:**
 
-* ``@webvision/kanban-workspaces/App.js`` - Main kanban board application
+* ``@web-vision/kanban-workspaces/App.js`` - Main kanban board application
 * ``@typo3/workspaces/renderable/send-to-stage-form.js`` - Stage transition form
 
 Extending the Extension

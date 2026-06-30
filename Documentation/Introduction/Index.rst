@@ -1,4 +1,4 @@
-.. include:: /Includes.rst.txt
+..  _introduction:
 
 ============
 Introduction
@@ -7,7 +7,9 @@ Introduction
 What does this extension do?
 ============================
 
-The Kanban Workspaces extension brings a modern, intuitive Kanban board interface to TYPO3's workspace management system. It provides content editors and managers with a visual, drag-and-drop workflow for managing content through different publishing stages.
+The Kanban Workspaces extension brings a modern, intuitive Kanban board interface to TYPO3's workspace management
+system. It provides content editors and managers with a visual, drag-and-drop workflow for managing content through
+different publishing stages.
 
 Key Features
 ============
@@ -20,13 +22,15 @@ Key Features
 * **Backend Module Integration** - Seamlessly integrated into TYPO3's web module navigation
 * **Workspace Integration** - Full integration with TYPO3's native workspace functionality
 * **Dynamic Stage Configuration** - Configure custom stages and disable default stages as needed
-* **Assign User to Card** - Assign a backend user to a workspace record (card) with optional title/description; assignee is shown on the card (with avatar); email notification is sent to the assignee when applicable
+* **Assign User to Card** - Assign a backend user to a workspace record (card) with optional title/description;
+  assignee is shown on the card (with avatar); email notification is sent to the assignee when applicable
 * **Responsive Design** - Works on desktop and tablet interfaces
 
 What is Kanban Workflow?
 ========================
 
-Kanban is a lean workflow management methodology that visualizes work as cards moving across different stages. In TYPO3 context:
+Kanban is a lean workflow management methodology that visualizes work as cards moving across different stages.
+In TYPO3 context:
 
 * **Stages** - Different states in your publishing workflow (e.g., "Draft", "Review", "Approved", "Published")
 * **Cards** - Individual content items (pages, content elements) that move through stages
@@ -62,8 +66,8 @@ Use Cases
 System Requirements
 ===================
 
-* **TYPO3 v13.4.0 or higher** - Requires TYPO3 v13.4 LTS or compatible versions
-* **PHP 8.2.0 or higher** - PHP 8.2 or 8.3 with standard TYPO3 extensions
+* **TYPO3 v13.4.0 or higher or v14.3.0 and higher** - Requires TYPO3 v13.4 LTS, v14.3 LTS or compatible versions
+* **PHP 8.2.0 or higher** - PHP 8.2 up to 8.5 with standard TYPO3 extensions
 * **Backend Workspace Access** - Users must have workspace access enabled
 * **Workspaces Extension** - Requires core TYPO3 workspaces functionality (included by default)
 

@@ -1,4 +1,4 @@
-.. include:: /Includes.rst.txt
+..  _configuration:
 
 =============
 Configuration
@@ -7,7 +7,10 @@ Configuration
 Overview
 ========
 
-The Kanban Workspaces extension is a **backend-only** module for TYPO3 that provides a kanban board interface for managing workspace stages. It is designed to work with minimal configuration. Most settings are handled automatically through TYPO3's core workspace functionality. However, administrators can customize behavior through Extension Manager settings.
+The Kanban Workspaces extension is a **backend-only** module for TYPO3 that provides a kanban board interface
+for managing workspace stages. It is designed to work with minimal configuration. Most settings are handled
+automatically through TYPO3's core workspace functionality. However, administrators can customize behavior
+through Extension Manager settings.
 
 Extension Manager Configuration
 ================================
@@ -271,7 +274,7 @@ The extension loads backend JavaScript modules for the kanban board interface:
 .. code-block:: php
 
    // Main kanban board application
-   $this->pageRenderer->loadJavaScriptModule('@webvision/kanban-workspaces/App.js');
+   $this->pageRenderer->loadJavaScriptModule('@web-vision/kanban-workspaces/App.js');
 
    // TYPO3 workspaces send-to-stage form component
    $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');
@@ -407,7 +410,7 @@ Assets are loaded automatically in the backend module controller:
    $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
 
    // Load JavaScript modules
-   $this->pageRenderer->loadJavaScriptModule('@webvision/kanban-workspaces/App.js');
+   $this->pageRenderer->loadJavaScriptModule('@web-vision/kanban-workspaces/App.js');
 
 **Location:** ``Resources/Public/Css/`` and ``Resources/Public/JavaScript/``
 

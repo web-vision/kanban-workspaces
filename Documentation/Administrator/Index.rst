@@ -1,4 +1,4 @@
-.. include:: /Includes.rst.txt
+..  _administrator:
 
 =============
 Administrator
@@ -14,7 +14,7 @@ Composer Installation
 
 .. code-block:: bash
 
-   composer require webvision/kanban-workspaces
+   composer require web-vision/kanban-workspaces
 
 After installation, activate the extension in the Extension Manager or verify it's enabled in your configuration.
 
@@ -35,7 +35,7 @@ Installation Steps
 
    .. code-block:: bash
 
-      composer require webvision/kanban-workspaces
+      composer require web-vision/kanban-workspaces
 
 2. **Activate the Extension**
 
@@ -258,13 +258,13 @@ If upgrading from an earlier version:
 
    .. code-block:: bash
 
-      composer update webvision/kanban-workspaces
+      composer update web-vision/kanban-workspaces
 
 2. Run database migrations (if any):
 
    .. code-block:: bash
 
-      vendor/bin/typo3 database:updateschema
+      vendor/bin/typo3 extension:setup
 
 3. Clear caches:
 
@@ -281,6 +281,6 @@ To uninstall the extension:
 
 1. Go to **Admin Tools** > **Extensions**
 2. Find "kanban_workspaces" in the list
-3. Click **Uninstall** (or use Composer: `composer remove webvision/kanban-workspaces`)
+3. Click **Uninstall** (or use Composer: `composer remove web-vision/kanban-workspaces`)
 4. Clear caches
 5. Database tables remain (optional: manually clean up if needed)

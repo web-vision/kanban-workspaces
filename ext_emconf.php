@@ -2,7 +2,7 @@
 
 $EM_CONF[$_EXTKEY] = [
     'title' => 'Kanban Workspaces',
-    'description' => 'Kanban Board Extension for TYPO3 - Manage tasks and projects with an intuitive kanban interface',
+    'description' => 'Kanban Board Extension for TYPO3: Manage tasks and projects with an intuitive kanban interface',
     'category' => 'plugin',
     'author' => 'WebVision',
     'author_email' => 'info@devzspace.com',

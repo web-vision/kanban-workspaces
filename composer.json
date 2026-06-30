@@ -5,10 +5,25 @@
     "license": "GPL-2.0-or-later",
     "authors": [
         {
+            "name": "web-vision GmbH",
+            "email": "hello@web-vision.de",
+            "role": "Maintainer"
+        },
+        {
+            "name": "Stefan Bürk",
+            "role": "Maintainer",
+            "email": "stefan@buerk.tech"
+        },
+        {
             "name": "WebVision",
-            "email": "info@devzspace.com"
+            "email": "info@devzspace.com",
+            "role": "developer"
         }
     ],
+    "support": {
+        "issues": "https://github.com/web-vision/kanban-workspaces/issues",
+        "source": "https://github.com/web-vision/kanban-workspaces"
+    },
     "require": {
         "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
         "typo3/cms-backend": "~13.4.25@dev || ~14.3.0@dev",
@@ -41,7 +56,7 @@
         "typo3/cms": {
             "extension-key": "kanban_workspaces",
             "web-dir": ".Build/Web",
-            "version": "1.0.0-dev",
+            "version": "0.0.1-dev",
             "Package": {
                 "providesPackages": []
             },

@@ -1,6 +1,6 @@
 // Import the WorkspaceBoard class
-import { WorkspaceBoard } from "@webvision/kanban-workspaces/WorkspaceBoard.js"
-import { initHorizontalScroll } from "@webvision/kanban-workspaces/core/HorizontalScroll.js"
+import { WorkspaceBoard } from "@web-vision/kanban-workspaces/WorkspaceBoard.js"
+import { initHorizontalScroll } from "@web-vision/kanban-workspaces/core/HorizontalScroll.js"
 import Notification from '@typo3/backend/notification.js';
 
 // Initialize the TYPO3 Workspace Board Application

@@ -1,4 +1,4 @@
-import { convertWorkspaceDate, extractPageNameFromPath } from '@webvision/kanban-workspaces/core/utils.js';
+import { convertWorkspaceDate, extractPageNameFromPath } from '@web-vision/kanban-workspaces/core/utils.js';
 
 /**
  * Converts raw TYPO3 workspace API payloads into the card / comment / history /

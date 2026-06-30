@@ -7,6 +7,6 @@ return [
     'imports' => [
         // recursive definiton, all *.js files in this folder are import-mapped
         // trailing slash is required per importmap-specification
-        '@webvision/kanban-workspaces/' => 'EXT:kanban_workspaces/Resources/Public/JavaScript/',
+        '@web-vision/kanban-workspaces/' => 'EXT:kanban_workspaces/Resources/Public/JavaScript/',
     ],
 ];

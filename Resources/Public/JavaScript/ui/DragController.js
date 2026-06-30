@@ -1,4 +1,4 @@
-import { showToast } from '@webvision/kanban-workspaces/core/utils.js';
+import { showToast } from '@web-vision/kanban-workspaces/core/utils.js';
 
 /**
  * Wires up card drag-and-drop and column drop targets, manages drop

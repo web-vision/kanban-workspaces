@@ -3,7 +3,7 @@ import Modal from '@typo3/backend/modal.js';
 import { SeverityEnum } from '@typo3/backend/enum/severity.js';
 import DeferredAction from '@typo3/backend/action-button/deferred-action.js';
 import Utility from '@typo3/backend/utility.js';
-import { escapeHtml, showToast } from '@webvision/kanban-workspaces/core/utils.js';
+import { escapeHtml, showToast } from '@web-vision/kanban-workspaces/core/utils.js';
 
 /**
  * Per-card actions reachable from the card context menu: preview, edit, open

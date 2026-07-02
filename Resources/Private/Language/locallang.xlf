@@ -69,6 +69,15 @@
 			<trans-unit id="extConf.disableResetToEditingStage">
 				<source>Disable reset to editing stage: When enabled, the DataHandler is prevented from resetting a workspace record's stage back to the editing stage (stage 0) after a field update.</source>
 			</trans-unit>
+			<trans-unit id="extConf.customStageEditTitle">
+				<source>Custom "Editing" stage title: Overrides the title of the default "Editing" stage (stage 0). Accepts a plain string or a LLL:EXT:... translation reference; leave empty to keep the TYPO3 default.</source>
+			</trans-unit>
+			<trans-unit id="extConf.customStageReadyToPublishTitle">
+				<source>Custom "Ready to publish" stage title: Overrides the title of the default "Ready to publish" stage. Accepts a plain string or a LLL:EXT:... translation reference; leave empty to keep the TYPO3 default.</source>
+			</trans-unit>
+			<trans-unit id="extConf.customStagePublishTitle">
+				<source>Custom "Publish" stage title: Overrides the title of the default "Publish" stage. Accepts a plain string or a LLL:EXT:... translation reference; leave empty to keep the TYPO3 default.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

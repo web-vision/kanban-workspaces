@@ -15,8 +15,8 @@ through Extension Manager settings.
 Extension Manager Configuration
 ================================
 
-The extension provides a single configuration option in the TYPO3 Extension
-Manager (**Admin Tools > Settings > Extension Configuration > kanban_workspaces**).
+The extension provides configuration options in the TYPO3 Extension Manager
+(**Admin Tools > Settings > Extension Configuration > kanban_workspaces**).
 By default the kanban board displays the workspace's default "Editing" stage
 (stage 0) together with all custom stages.
 
@@ -38,6 +38,47 @@ behavior applies and an edited record may fall back to the "Editing" stage.
 The option is read via the ``EmConfiguration`` accessor and evaluated by the
 ``PreventResetToEditingStageDataHandlerHook`` DataHandler hook, which adjusts the
 stage before the record is persisted.
+
+Custom titles for default stages
+--------------------------------
+
+**Setting names:** ``customStageEditTitle``, ``customStageReadyToPublishTitle``,
+``customStagePublishTitle``
+
+**Type:** String
+
+**Default:** Empty (TYPO3 default titles are used)
+
+**Description:**
+These options override the titles of the three default TYPO3 workspace stages on
+the kanban board and in the workspace module:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 22 44
+
+   * - Setting
+     - Stage (id)
+     - Overrides
+   * - ``customStageEditTitle``
+     - Editing (``0``)
+     - Title of the default "Editing" stage
+   * - ``customStageReadyToPublishTitle``
+     - Ready to publish (``-10``)
+     - Title of the default "Ready to publish" stage
+   * - ``customStagePublishTitle``
+     - Publish (``-20``)
+     - Title of the default "Publish" stage
+
+Each value accepts either a hard-coded string (e.g. ``In review``) or a
+translation reference using the ``LLL:EXT:...`` syntax (e.g.
+``LLL:EXT:my_ext/Resources/Private/Language/locallang.xlf:stage.review``). When a
+value is empty (default), the original TYPO3 stage title is kept.
+
+The titles are applied by extending TYPO3's
+``\TYPO3\CMS\Workspaces\Service\StagesService`` and overriding ``getStageTitle()``;
+the extended service is registered in place of the core one via Symfony
+dependency injection.
 
 Backend Module Configuration Details
 =======================================

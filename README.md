@@ -73,9 +73,14 @@ If the project uses [DDEV](https://ddev.com/), run Composer and TYPO3 CLI comman
 
 Configure in **Admin Tools → Extension Manager → kanban_workspaces** (or `ext_conf_template.txt`):
 
-| Setting                      | Type    | Default | Description                                                                                                                                                                 |
-|------------------------------|---------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `disableResetToEditingStage` | boolean | `0`     | When enabled, prevents TYPO3's DataHandler from resetting a workspace record's stage back to the editing stage (stage 0) after a field update, keeping its current stage. |
+| Setting                          | Type    | Default   | Description                                                                                                                                                              |
+|----------------------------------|---------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `disableResetToEditingStage`     | boolean | `0`       | When enabled, prevents TYPO3's DataHandler from resetting a workspace record's stage back to the editing stage (stage 0) after a field update, keeping its current stage. |
+| `customStageEditTitle`           | string  | *(empty)* | Custom title for the default "Editing" stage (stage `0`). Plain string or `LLL:EXT:...` reference; empty keeps the TYPO3 default.                                        |
+| `customStageReadyToPublishTitle` | string  | *(empty)* | Custom title for the default "Ready to publish" stage (stage `-10`). Plain string or `LLL:EXT:...` reference; empty keeps the TYPO3 default.                             |
+| `customStagePublishTitle`        | string  | *(empty)* | Custom title for the default "Publish" stage (stage `-20`). Plain string or `LLL:EXT:...` reference; empty keeps the TYPO3 default.                                      |
+
+Custom stage titles are applied by extending TYPO3's `StagesService::getStageTitle()`; an empty value falls back to the core title.
 
 ### TypoScript
 

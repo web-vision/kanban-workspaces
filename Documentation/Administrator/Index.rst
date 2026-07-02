@@ -84,12 +84,18 @@ You can configure the extension under **Admin Tools** > **Settings** >
   default disabled. When enabled, it prevents TYPO3's DataHandler from resetting
   a workspace record's stage back to the editing stage (stage 0) after a field
   update, so the record keeps its current workflow stage.
+* **Custom titles for default stages** (``customStageEditTitle``,
+  ``customStageReadyToPublishTitle``, ``customStagePublishTitle``) - Optional
+  custom titles for the default "Editing" (stage ``0``), "Ready to publish"
+  (stage ``-10``) and "Publish" (stage ``-20``) stages. Each accepts a plain
+  string or a ``LLL:EXT:...`` translation reference; an empty value keeps the
+  original TYPO3 title.
 
-To access this setting:
+To access these settings:
 
 1. Go to **Admin Tools** > **Settings** in the backend
 2. Open **Extension Configuration** and select "kanban_workspaces"
-3. Adjust the setting as needed and save
+3. Adjust the settings as needed and save
 
 Stage Checklist (Workspace Stages)
 ----------------------------------

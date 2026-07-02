@@ -19,6 +19,7 @@ use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
+use TYPO3\CMS\Workspaces\Service\StagesService;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
 use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
 
@@ -37,6 +38,7 @@ class KanbanWorkspacesController extends ActionController
         protected readonly PageRenderer $pageRenderer,
         protected readonly WorkspaceStageRepository $workspaceStageRepository,
         protected readonly WorkspaceRepository $workspaceRepository,
+        protected readonly StagesService $stagesService,
         protected readonly EmConfiguration $emSettings,
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
         protected readonly ConnectionPool $connectionPool,
@@ -73,7 +75,7 @@ class KanbanWorkspacesController extends ActionController
             $checklist = $this->getChecklistForStage((int)$stage->uid);
             $stageConfig[] = [
                 'id' => $stage->uid,
-                'label' => $stage->title,
+                'label' => $this->stagesService->getStageTitle((int)$stage->uid),
                 'color' => '#FF5733',
                 'allowEdit' => $stage->isEditStage,
                 'allowDelete' => $stage->isAllowed,

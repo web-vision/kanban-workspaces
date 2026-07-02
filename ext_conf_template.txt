@@ -1,2 +1,4 @@
 # Kanban Workspaces
 ###########################
+# cat=config/enable/100; type=boolean; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.disableResetToEditingStage
+disableResetToEditingStage = 0

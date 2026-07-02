@@ -69,7 +69,13 @@ If the project uses [DDEV](https://ddev.com/), run Composer and TYPO3 CLI comman
 
 ## Configuration
 
-The extension works out of the box and provides no Extension Manager settings.
+### Extension Manager
+
+Configure in **Admin Tools → Extension Manager → kanban_workspaces** (or `ext_conf_template.txt`):
+
+| Setting                      | Type    | Default | Description                                                                                                                                                                 |
+|------------------------------|---------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `disableResetToEditingStage` | boolean | `0`     | When enabled, prevents TYPO3's DataHandler from resetting a workspace record's stage back to the editing stage (stage 0) after a field update, keeping its current stage. |
 
 ### TypoScript
 

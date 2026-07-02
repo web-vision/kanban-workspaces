@@ -66,6 +66,9 @@
 			<trans-unit id="warning.noCustomStages.message">
 				<source>Default stages are disabled for this module, but no custom stages exist in the selected workspace. Please create at least one custom workspace stage or disable the "Disable Default Stage" setting.</source>
 			</trans-unit>
+			<trans-unit id="extConf.disableResetToEditingStage">
+				<source>Disable reset to editing stage: When enabled, the DataHandler is prevented from resetting a workspace record's stage back to the editing stage (stage 0) after a field update.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

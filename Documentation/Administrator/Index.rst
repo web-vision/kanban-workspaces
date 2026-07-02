@@ -70,10 +70,26 @@ To access the Kanban Workspaces module:
 Configuration
 =============
 
-The extension works out of the box with sensible defaults and requires no
-configuration. It provides no Extension Manager settings; the kanban board
-always shows the workspace's default "Editing" stage (stage 0) alongside all
-custom stages.
+The extension works out of the box with sensible defaults. It provides a single
+Extension Manager option; the kanban board always shows the workspace's default
+"Editing" stage (stage 0) alongside all custom stages.
+
+Extension Manager Settings
+---------------------------
+
+You can configure the extension under **Admin Tools** > **Settings** >
+**Extension Configuration** > **kanban_workspaces**:
+
+* **Disable reset to editing stage** (``disableResetToEditingStage``) - By
+  default disabled. When enabled, it prevents TYPO3's DataHandler from resetting
+  a workspace record's stage back to the editing stage (stage 0) after a field
+  update, so the record keeps its current workflow stage.
+
+To access this setting:
+
+1. Go to **Admin Tools** > **Settings** in the backend
+2. Open **Extension Configuration** and select "kanban_workspaces"
+3. Adjust the setting as needed and save
 
 Stage Checklist (Workspace Stages)
 ----------------------------------

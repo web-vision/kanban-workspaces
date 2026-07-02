@@ -15,10 +15,29 @@ through Extension Manager settings.
 Extension Manager Configuration
 ================================
 
-The extension does not provide any Extension Manager settings. All behavior is
-derived automatically from TYPO3's core workspace functionality; the kanban
-board always displays the workspace's default "Editing" stage (stage 0) together
-with all custom stages.
+The extension provides a single configuration option in the TYPO3 Extension
+Manager (**Admin Tools > Settings > Extension Configuration > kanban_workspaces**).
+By default the kanban board displays the workspace's default "Editing" stage
+(stage 0) together with all custom stages.
+
+Disable reset to editing stage
+------------------------------
+
+**Setting name:** ``disableResetToEditingStage``
+
+**Type:** Boolean (checkbox)
+
+**Default:** Disabled (``0``)
+
+**Description:**
+When enabled, this option prevents TYPO3's DataHandler from resetting a
+workspace record's stage back to the editing stage (stage 0) after one of the
+record's fields is updated. With the option disabled (default), TYPO3's standard
+behavior applies and an edited record may fall back to the "Editing" stage.
+
+The option is read via the ``EmConfiguration`` accessor and evaluated by the
+``PreventResetToEditingStageDataHandlerHook`` DataHandler hook, which adjusts the
+stage before the record is persisted.
 
 Backend Module Configuration Details
 =======================================

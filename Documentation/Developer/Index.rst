@@ -106,6 +106,47 @@ Key Methods:
           ['id' => '1', 'label' => 'Deutsch', 'flag' => 'de'],
       ]
 
+Extension Configuration
+=======================
+
+Extension Manager settings are read through the
+``WebVision\KanbanWorkspaces\Configuration\EmConfiguration`` accessor. It is
+instantiated by the static ``create()`` factory, wired via the
+``#[Autoconfigure(constructor: 'create')]`` attribute. The factory receives the
+``ExtensionConfiguration`` service, reads the raw values and type-casts them, so
+the immutable value object only exposes properly typed settings:
+
+.. code-block:: php
+
+   #[Autoconfigure(constructor: 'create')]
+   final readonly class EmConfiguration
+   {
+       public function __construct(
+           private bool $disableResetToEditingStage = false,
+       ) {}
+
+       public static function create(ExtensionConfiguration $extensionConfiguration): self
+       {
+           // read + cast the raw extension configuration values here
+       }
+   }
+
+.. php:method:: getDisableResetToEditingStage(): bool
+
+   Returns whether resetting a workspace record to the editing stage (stage 0)
+   after a field update should be prevented.
+
+DataHandler Hook
+================
+
+``WebVision\KanbanWorkspaces\Hooks\PreventResetToEditingStageDataHandlerHook`` is
+registered on the ``processDatamapClass`` hook in ``ext_localconf.php`` and
+implements ``processDatamap_postProcessFieldArray``. It only acts when the
+operation is an ``update``, the affected table has a workspace-aware TCA schema
+(checked via ``TcaSchemaFactory``), and ``disableResetToEditingStage`` is enabled.
+It then removes ``t3ver_stage`` from the field array so TYPO3 does not reset the
+record to the editing stage when the record is persisted.
+
 Event Listeners
 ===============
 

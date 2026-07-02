@@ -7,6 +7,24 @@ ChangeLog
 Version [UNRELEASED]
 ====================
 
+New Features
+------------
+
+* **Disable reset to editing stage** – New extension configuration option ``disableResetToEditingStage``; when enabled
+  it prevents TYPO3's DataHandler from resetting a workspace record's stage back to the editing stage (stage 0) after
+  a field update.
+
+Breaking / Removed
+------------------
+
+* **Disable default stage and Default StageId** - Disabling default stage (`editing`) and configure a default custom
+  stage id to use has been removed; Removing default stage `editing` is not reasonable and the `Default Custom Stage Id`
+  needs to be done on workspace level because multiple workspaces does not have the same custom stage at all. Removed
+  for now and postponed to be added in more workable stage at a later point.
+
+Version 0.0.1
+=============
+
 **Initial Release**
 
 This is the first stable release of the Kanban Workspaces extension for TYPO3 as preview/experimental alpha version.

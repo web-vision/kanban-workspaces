@@ -70,10 +70,6 @@ class KanbanWorkspacesController extends ActionController
         // Build stage config. If disabling default stages, include only custom stages (uid >= 1).
         $order = 0;
         foreach ($stages as $stage) {
-            // If disableDefaultStage is true, skip stages that don't look like custom stages.
-            if ($this->emSettings->getDisableDefaultStage() && (int)$stage->uid < 1) {
-                continue;
-            }
             $checklist = $this->getChecklistForStage((int)$stage->uid);
             $stageConfig[] = [
                 'id' => $stage->uid,
@@ -87,7 +83,6 @@ class KanbanWorkspacesController extends ActionController
         }
 
         $showNoCustomStagesWarning = $workspaceIsAccessible
-            && $this->emSettings->getDisableDefaultStage()
             && $stageConfig === [];
 
         $selectedLanguage = (string)($moduleData?->get('language', 'all') ?? 'all');

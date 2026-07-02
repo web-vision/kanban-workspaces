@@ -70,32 +70,10 @@ To access the Kanban Workspaces module:
 Configuration
 =============
 
-The extension works out of the box with sensible defaults. Basic setup requires no configuration.
-
-Extension Manager Settings
----------------------------
-
-You can configure the extension in the Extension Manager under "Configure":
-
-* **Disable Default Stages** - By default, enabled (checkmark). Disables the "Editing" stage (stage 0) from appearing on the kanban board.
-* **Default Stage ID** - Set a custom default stage ID that records default to when created. Default: 1
-
-To access these settings:
-
-1. Go to **Admin Tools** > **Extensions** in the backend
-2. Search for "kanban_workspaces"
-3. Click the **Configure** icon (wrench) next to the extension name
-4. Adjust settings as needed and save
-
-Example Configuration
-~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: plaintext
-
-   Disable Default Stages: checked (✓)
-   Default Stage ID: 1
-
-This configuration removes the default "Editing" stage and sets stage 1 as the initial stage for new records.
+The extension works out of the box with sensible defaults and requires no
+configuration. It provides no Extension Manager settings; the kanban board
+always shows the workspace's default "Editing" stage (stage 0) alongside all
+custom stages.
 
 Stage Checklist (Workspace Stages)
 ----------------------------------

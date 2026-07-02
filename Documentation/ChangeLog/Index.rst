@@ -34,9 +34,6 @@ New Features
 * **Stage-based Filtering** - Show items from specific workflow stages
 * **Backend Module Integration** - Integrated into TYPO3 Web module with proper navigation
 * **Dynamic Stage Configuration** - Auto-configuration from workspace settings
-* **Configurable Default Stages** - Option to disable default TYPO3 stages (stage 0)
-* **Custom Default Stage** - Set which stage new records are assigned to
-* **Event Listener Support** - AfterDataGeneratedForWorkspaceEvent listener for stage management
 * **TYPO3 v13 Compatibility** - Full support for TYPO3 v13.4.0+ LTS
 * **Persistent Filter State Per User** - User filter preferences are automatically saved and restored on subsequent visits
 * **Bulk Stage Transitions** - Drag-and-drop functionality for moving multiple items between workflow stages simultaneously

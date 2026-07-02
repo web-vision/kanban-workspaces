@@ -21,7 +21,7 @@ Key Features
 * **TYPO3 v13 Compatibility** - Built with modern TYPO3 v13 architecture and best practices
 * **Backend Module Integration** - Seamlessly integrated into TYPO3's web module navigation
 * **Workspace Integration** - Full integration with TYPO3's native workspace functionality
-* **Dynamic Stage Configuration** - Configure custom stages and disable default stages as needed
+* **Dynamic Stage Configuration** - Automatically builds the board from the workspace's custom stages
 * **Assign User to Card** - Assign a backend user to a workspace record (card) with optional title/description;
   assignee is shown on the card (with avatar); email notification is sent to the assignee when applicable
 * **Responsive Design** - Works on desktop and tablet interfaces

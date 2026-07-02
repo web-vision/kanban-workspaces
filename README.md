@@ -69,14 +69,7 @@ If the project uses [DDEV](https://ddev.com/), run Composer and TYPO3 CLI comman
 
 ## Configuration
 
-### Extension Manager
-
-Configure in **Admin Tools → Extension Manager → kanban_workspaces** (or `ext_conf_template.txt`):
-
-| Setting               | Type    | Description                                                                                        |
-|-----------------------|---------|----------------------------------------------------------------------------------------------------|
-| `disableDefaultStage` | boolean | Exclude default stages from the Kanban board; only custom stages (uid ≥ 1) are shown when enabled. |
-| `defaultStageId`      | int     | Used by `DefaultStageDataHandlerHook` when overriding the stage for new workspace data.            |
+The extension works out of the box and provides no Extension Manager settings.
 
 ### TypoScript
 
@@ -101,7 +94,7 @@ Optional overrides for template/partial/layout paths and `storagePid` are availa
 ### Backend
 
 - [KanbanWorkspacesController](Classes/Controller/KanbanWorkspacesController.php) `index` action renders the module.
-- It builds stage config from `WorkspaceStageRepository` (and the “disable default stages” EM setting), system languages, and depth options.
+- It builds stage config from `WorkspaceStageRepository`, system languages, and depth options.
 - It injects `WorkspaceConfig` (JSON) and loads `@web-vision/kanban-workspaces/App.js`, the workspace send-to-stage form, and CSS.
 
 ### Frontend
@@ -185,8 +178,8 @@ Set the `mockData` option (in [App.js](Resources/Public/JavaScript/App.js)) to `
 ```
 Classes/
 ├── Controller/KanbanWorkspacesController.php
-├── Domain/Model/Dto/EmConfiguration.php
-└── EventListener/AfterDataGeneratedForWorkspaceEventListener.php
+├── Configuration/EmConfiguration.php
+└── EventListener/   (AfterDataGeneratedForWorkspaceEvent, publish cleanup, language fallback)
 Configuration/
 ├── Backend/Modules.php
 ├── JavaScriptModules.php

@@ -4,8 +4,8 @@
 ChangeLog
 =========
 
-Version [UNRELEASED]
-====================
+Version 0.0.2
+=============
 
 New Features
 ------------

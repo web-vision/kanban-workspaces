@@ -13,6 +13,10 @@ New Features
 * **Disable reset to editing stage** – New extension configuration option ``disableResetToEditingStage``; when enabled
   it prevents TYPO3's DataHandler from resetting a workspace record's stage back to the editing stage (stage 0) after
   a field update.
+* **Custom titles for default stages** – New extension configuration options ``customStageEditTitle``,
+  ``customStageReadyToPublishTitle`` and ``customStagePublishTitle`` to override the titles of the default TYPO3
+  workspace stages (Editing, Ready to publish, Publish). Each accepts a plain string or a ``LLL:EXT:...`` translation
+  reference; empty keeps the TYPO3 default. Implemented by extending ``StagesService::getStageTitle()``.
 
 Breaking / Removed
 ------------------

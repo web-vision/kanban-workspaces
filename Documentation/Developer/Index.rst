@@ -136,6 +136,44 @@ the immutable value object only exposes properly typed settings:
    Returns whether resetting a workspace record to the editing stage (stage 0)
    after a field update should be prevented.
 
+.. php:method:: getCustomStageEditTitle(): string
+                getCustomStageReadyToPublishTitle(): string
+                getCustomStagePublishTitle(): string
+
+   Return the configured custom titles for the default "Editing", "Ready to
+   publish" and "Publish" stages. Each value is either a plain string, a
+   ``LLL:EXT:...`` reference, or empty (use the TYPO3 default).
+
+Custom Stage Titles (StagesService override)
+============================================
+
+``WebVision\KanbanWorkspaces\Service\StagesService`` extends the core
+``TYPO3\CMS\Workspaces\Service\StagesService`` and overrides ``getStageTitle()``
+to apply the ``customStage*Title`` options for the three default stages
+(``STAGE_EDIT_ID``, ``STAGE_PUBLISH_ID``, ``STAGE_PUBLISH_EXECUTE_ID``). When the
+matching option is empty, the parent implementation is called; a ``LLL:EXT:...``
+value is resolved through the language service, any other non-empty value is used
+verbatim.
+
+The core service is replaced through Symfony DI using the ``#[AsAlias]``
+attribute, so all consumers (and ``GeneralUtility::makeInstance()``) receive the
+extended service. The constructor is intentionally not overridden, so the parent
+dependencies keep being autowired through the inherited constructor. The
+``EmConfiguration`` value object (a public service) is fetched on demand via
+``GeneralUtility::makeInstance()`` inside ``getStageTitle()``:
+
+.. code-block:: php
+
+   #[AsAlias(id: \TYPO3\CMS\Workspaces\Service\StagesService::class, public: true)]
+   final readonly class StagesService extends \TYPO3\CMS\Workspaces\Service\StagesService
+   {
+       public function getStageTitle(int $stageId): string
+       {
+           $emConfiguration = GeneralUtility::makeInstance(EmConfiguration::class);
+           // return the configured title (resolving LLL:) or fall back to parent
+       }
+   }
+
 DataHandler Hook
 ================
 

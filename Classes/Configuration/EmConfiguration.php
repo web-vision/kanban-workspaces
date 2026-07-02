@@ -23,11 +23,14 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
  * wired via the `#[Autoconfigure(constructor: ...)]` attribute so the raw
  * extension configuration values are parsed and type-cast before construction.
  */
-#[Autoconfigure(constructor: 'create')]
+#[Autoconfigure(constructor: 'create', public: true)]
 final readonly class EmConfiguration
 {
     public function __construct(
         private bool $disableResetToEditingStage = false,
+        private string $customStageEditTitle = '',
+        private string $customStageReadyToPublishTitle = '',
+        private string $customStagePublishTitle = '',
     ) {
     }
 
@@ -58,6 +61,9 @@ final readonly class EmConfiguration
 
         return new self(
             disableResetToEditingStage: (bool)($configuration['disableResetToEditingStage'] ?? false),
+            customStageEditTitle: (string)($configuration['customStageEditTitle'] ?? ''),
+            customStageReadyToPublishTitle: (string)($configuration['customStageReadyToPublishTitle'] ?? ''),
+            customStagePublishTitle: (string)($configuration['customStagePublishTitle'] ?? ''),
         );
     }
 
@@ -72,5 +78,38 @@ final readonly class EmConfiguration
     public function getDisableResetToEditingStage(): bool
     {
         return $this->disableResetToEditingStage;
+    }
+
+    /**
+     * Custom title for the default "Editing" stage (``StagesService::STAGE_EDIT_ID``).
+     *
+     * Either a hard-coded string or a ``LLL:EXT:...`` translation reference. An
+     * empty value (default) keeps TYPO3's original stage title.
+     */
+    public function getCustomStageEditTitle(): string
+    {
+        return $this->customStageEditTitle;
+    }
+
+    /**
+     * Custom title for the default "Ready to publish" stage (``StagesService::STAGE_PUBLISH_ID``).
+     *
+     * Either a hard-coded string or a ``LLL:EXT:...`` translation reference. An
+     * empty value (default) keeps TYPO3's original stage title.
+     */
+    public function getCustomStageReadyToPublishTitle(): string
+    {
+        return $this->customStageReadyToPublishTitle;
+    }
+
+    /**
+     * Custom title for the default "Publish" stage (``StagesService::STAGE_PUBLISH_EXECUTE_ID``).
+     *
+     * Either a hard-coded string or a ``LLL:EXT:...`` translation reference. An
+     * empty value (default) keeps TYPO3's original stage title.
+     */
+    public function getCustomStagePublishTitle(): string
+    {
+        return $this->customStagePublishTitle;
     }
 }

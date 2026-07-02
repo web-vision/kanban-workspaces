@@ -2,3 +2,12 @@
 ###########################
 # cat=config/enable/100; type=boolean; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.disableResetToEditingStage
 disableResetToEditingStage = 0
+
+# cat=config/stages/100; type=string; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.customStageEditTitle
+customStageEditTitle =
+
+# cat=config/stages/110; type=string; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.customStageReadyToPublishTitle
+customStageReadyToPublishTitle =
+
+# cat=config/stages/120; type=string; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.customStagePublishTitle
+customStagePublishTitle =

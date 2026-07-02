@@ -342,13 +342,12 @@ Stage Configuration Problems
 
 ---
 
-**Issue:** Only default stage appears; custom stages missing.
+**Issue:** Only the default stage appears; custom stages missing.
 
 **Check:**
 
-1. Is "Disable Default Stages" enabled in Extension Manager?
-2. Are custom stages actually configured in the workspace?
-3. Do you have view permissions for custom stages?
+1. Are custom stages actually configured in the workspace?
+2. Do you have view permissions for custom stages?
 
 ---
 

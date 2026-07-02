@@ -106,82 +106,19 @@ Key Methods:
           ['id' => '1', 'label' => 'Deutsch', 'flag' => 'de'],
       ]
 
-Domain Models and DTOs
-----------------------
-
-**EmConfiguration**
-
-*Namespace:* ``WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration``
-
-*Responsibility:* Provides typed access to Extension Manager configuration.
-
-Methods:
-
-.. php:method:: getDisableDefaultStage(): bool
-
-   Returns whether default stages should be disabled.
-
-.. php:method:: getDefaultStageId(): int
-
-   Returns the default stage ID for new records.
-
-**Usage Example:**
-
-.. code-block:: php
-
-   $emSettings = GeneralUtility::makeInstance(EmConfiguration::class);
-   
-   if ($emSettings->getDisableDefaultStage()) {
-       // Only show custom stages
-   }
-   
-   $defaultStage = $emSettings->getDefaultStageId();
-
 Event Listeners
 ===============
 
-AfterDataGeneratedForWorkspaceEventListener
---------------------------------------------
+The extension registers its event listeners via PHP attributes
+(``#[AsEventListener]``) in ``Classes/EventListener/``:
 
-*Namespace:* ``WebVision\KanbanWorkspaces\EventListener\AfterDataGeneratedForWorkspaceEventListener``
-
-*Event:* ``TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent``
-
-*Responsibility:* Processes workspace data after generation, applies default stage configuration.
-
-**What it does:**
-
-1. Listens for workspace data generation events
-2. Checks if default stages should be disabled (via EmConfiguration)
-3. For custom default stage ID, updates record stages accordingly
-4. Persists stage changes to the database
-
-**Code Example:**
-
-.. code-block:: php
-
-   #[AsEventListener(
-       identifier: 'kanban-workspaces/after-data-generated-for-workspace',
-   )]
-   final class AfterDataGeneratedForWorkspaceEventListener
-   {
-       public function __invoke(AfterDataGeneratedForWorkspaceEvent $event): void
-       {
-           $emSettings = GeneralUtility::makeInstance(EmConfiguration::class);
-           
-           if (empty($emSettings->getDisableDefaultStage())) {
-               return;
-           }
-           
-           // Process event data...
-       }
-   }
-
-**Key Methods:**
-
-.. php:method:: __invoke(AfterDataGeneratedForWorkspaceEvent $event): void
-
-   Entry point for event processing (implements Invokable interface).
+* **AssigneeEnrichmentListener** – listens to
+  ``TYPO3\CMS\Workspaces\Event\AfterDataGeneratedForWorkspaceEvent`` and enriches
+  the generated workspace records with their assignment information.
+* **AssigneeCleanupAfterPublishListener** – removes assignment rows for a record
+  and workspace after the record is published.
+* **WorkspaceLanguageFallbackListener** – applies language fallback handling for
+  workspace records.
 
 Frontend JavaScript Architecture
 ================================

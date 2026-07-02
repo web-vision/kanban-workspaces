@@ -15,92 +15,10 @@ through Extension Manager settings.
 Extension Manager Configuration
 ================================
 
-The extension provides configuration options in the TYPO3 Extension Manager.
-
-Accessing Extension Settings
-----------------------------
-
-1. Log in as an administrator
-2. Go to **Admin Tools** > **Extensions**
-3. Search for "kanban_workspaces"
-4. Click the **Configure** icon (wrench) next to the extension name
-5. Modify settings as needed
-6. Click **Save** to apply changes
-
-Available Settings
-------------------
-
-Disable Default Stages
-~~~~~~~~~~~~~~~~~~~~~~
-
-**Setting Name:** ``disableDefaultStage``
-
-**Type:** Boolean (Checkbox)
-
-**Default Value:** Checked/Enabled (true)
-
-**Description:**
-When enabled, removes the default "Editing" stage (stage 0) from the kanban board. This is useful if your workflow doesn't use the standard TYPO3 workspace default stages and only uses custom stages.
-
-**Use Cases:**
-
-* Custom workflows that don't need the default editing stage
-* Simplified kanban boards with only custom stages
-* Workflows where all content starts in a non-default stage
-
-**Example Effect:**
-
-* **Enabled** - Only custom stages (stage ID >= 1) appear on the kanban board
-* **Disabled** - Default stage 0 ("Editing") appears alongside custom stages
-
-Default Stage ID
-~~~~~~~~~~~~~~~~
-
-**Setting Name:** ``defaultStageId``
-
-**Type:** Integer
-
-**Default Value:** 1
-
-**Description:**
-Sets the default stage that new records will be assigned to when created. When a record is created in the workspace, it will be automatically assigned to the specified stage instead of the default stage.
-
-**Valid Values:**
-
-* Any positive integer representing a valid workspace stage ID
-* 0 - Use TYPO3's default editing stage
-* 1+ - Use custom stages defined in the workspace
-
-**Use Cases:**
-
-* Force new content into review stage instead of draft
-* Automatically assign new items to the first custom workflow stage
-* Ensure new records start at a specific point in your workflow
-
-**Example Configuration:**
-
-.. code-block:: plaintext
-
-   Default Stage ID: 2
-
-This setting means all new records created will start in stage 2 (not stage 0 or 1).
-
-Configuration File (Extension Configuration)
-=============================================
-
-The extension configuration is also stored in ``ext_conf_template.txt``:
-
-.. code-block:: plaintext
-
-   # Kanban Workspaces
-   ###########################
-   # cat=config/enable/100; type=boolean; label=Disable Default Stages
-   disableDefaultStage = 1
-
-   # cat=config/enable/101; type=int; label=Default Stages Id
-   defaultStageId = 1
-
-These settings correspond to the Extension Manager interface.
+The extension does not provide any Extension Manager settings. All behavior is
+derived automatically from TYPO3's core workspace functionality; the kanban
+board always displays the workspace's default "Editing" stage (stage 0) together
+with all custom stages.
 
 Backend Module Configuration Details
 =======================================
@@ -190,7 +108,7 @@ The extension uses TYPO3's service container for dependency injection. Services 
          - name: 'backend.controller'
            identifier: 'KanbanWorkspaces'
 
-     WebVision\KanbanWorkspaces\Domain\Model\Dto\EmConfiguration:
+     WebVision\KanbanWorkspaces\Configuration\EmConfiguration:
        public: true
 
      WebVision\KanbanWorkspaces\Service\AssigneeMappingService:
@@ -346,7 +264,7 @@ Accessing Content at Different Stages
 
 The kanban board shows all content items at different stages in the workspace:
 
-* **Stage 0 (Editing)** - Default editing stage (unless disabled)
+* **Stage 0 (Editing)** - Default editing stage
 * **Custom Stages** - Any custom stages created for your workflow
 * **Published** - Items ready for publication
 
@@ -358,16 +276,17 @@ Event Listener Configuration
 AfterDataGeneratedForWorkspaceEvent
 -----------------------------------
 
-The extension includes an event listener for workspace data generation. This is automatically configured in ``Services.yaml``:
+The extension includes an event listener for workspace data generation. It is
+registered via a PHP attribute (no manual ``Services.yaml`` entry required):
 
 .. code-block:: php
 
    #[AsEventListener(
-       identifier: 'kanban-workspaces/after-data-generated-for-workspace',
+       identifier: 'kanban-workspaces/assignee-enrichment',
    )]
-   final class AfterDataGeneratedForWorkspaceEventListener
+   final class AssigneeEnrichmentListener
 
-**Purpose:** Processes workspace data when generated, applies default stage configuration, and updates record stages as needed.
+**Purpose:** Processes workspace data when it is generated (for example, enriching records with assignment information).
 
 **Configuration:** No manual configuration needed—automatically registered by TYPO3's service container.
 
@@ -467,16 +386,6 @@ If configuration changes don't appear:
 2. Clear browser cache: Ctrl+Shift+Del
 3. Verify settings were actually saved in Extension Manager
 4. Restart your web server if running locally
-
-Default Stage Not Working
---------------------------
-
-If the default stage ID setting doesn't work:
-
-1. Verify the stage ID exists in your workspace configuration
-2. Check workspace permissions for the stage
-3. Ensure the stage accepts new records
-4. Check event listener is registered properly
 
 Module Position Wrong
 ---------------------

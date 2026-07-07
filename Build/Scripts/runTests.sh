@@ -144,6 +144,8 @@ Usage: $0 [options] [file]
 Options:
     -s <...>
         Specifies which test suite to run
+            - buildCss: compile SCSS sources and publish Font Awesome into Resources/Public/Css
+            - buildJavascript: compile TypeScript sources into Resources/Public/JavaScript
             - cgl: cgl test and fix all php files
             - checkBom: check UTF-8 files do not contain BOM
             - checkExceptionCodes: Check for duplicate exception codes
@@ -257,6 +259,10 @@ Options:
         Show this help.
 
 Examples:
+    # Compile the TypeScript and SCSS/Font Awesome assets into Resources/Public
+    ./Build/Scripts/runTests.sh -s buildJavascript
+    ./Build/Scripts/runTests.sh -s buildCss
+
     # Run all core unit tests using PHP 8.1
     ./Build/Scripts/runTests.sh
     ./Build/Scripts/runTests.sh -s unit
@@ -400,8 +406,9 @@ cd "$THIS_SCRIPT_DIR" || exit 1
 cd ../../ || exit 1
 ROOT_DIR="${PWD}"
 
-# Create .cache dir: composer need this.
+# Create .cache dir: composer and the node/npm build jobs need this as HOME.
 mkdir -p .Build/.cache
+mkdir -p .cache
 mkdir -p .Build/Web/typo3temp/var/tests
 
 
@@ -423,6 +430,7 @@ if [[ -z "${CONTAINER_BIN}" ]]; then
 fi
 
 IMAGE_PHP="ghcr.io/typo3/core-testing-$(echo "php${PHP_VERSION}" | sed -e 's/\.//'):latest"
+IMAGE_NODEJS="ghcr.io/typo3/core-testing-nodejs24:1.1"
 IMAGE_RSTRENDERING="ghcr.io/typo3-documentation/render-guides:latest"
 IMAGE_MARIADB="docker.io/mariadb:${DBMS_VERSION}"
 IMAGE_MYSQL="docker.io/mysql:${DBMS_VERSION}"
@@ -458,6 +466,18 @@ fi
 
 # Suite execution
 case ${TEST_SUITE} in
+    buildCss)
+        # Compile SCSS -> Resources/Public/Css and publish the Font Awesome artifacts.
+        COMMAND="cd Build && npm ci && npm run build:css"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name build-css-${SUFFIX} -e HOME=${ROOT_DIR}/.cache ${IMAGE_NODEJS} /bin/sh -c "${COMMAND}"
+        SUITE_EXIT_CODE=$?
+        ;;
+    buildJavascript)
+        # Compile the TypeScript sources -> Resources/Public/JavaScript ES modules.
+        COMMAND="cd Build && npm ci && npm run build:js"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name build-javascript-${SUFFIX} -e HOME=${ROOT_DIR}/.cache ${IMAGE_NODEJS} /bin/sh -c "${COMMAND}"
+        SUITE_EXIT_CODE=$?
+        ;;
     cgl)
         if [ "${CGLCHECK_DRY_RUN}" -eq 1 ]; then
             COMMAND="php -dxdebug.mode=off .Build/bin/php-cs-fixer fix --config Build/php-cs-fixer/php-cs-rules.php -v --dry-run --using-cache no --diff"

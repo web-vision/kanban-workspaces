@@ -1,0 +1,26 @@
+{
+  "name": "kanban-workspaces-build",
+  "description": "Build toolchain (TypeScript, SCSS, Font Awesome) for the web-vision/kanban_workspaces TYPO3 extension.",
+  "private": true,
+  "license": "GPL-2.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "node build/build-js.mjs",
+    "build:css": "node build/build-css.mjs && node build/build-fontawesome.mjs",
+    "build:fontawesome": "node build/build-fontawesome.mjs"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "cssnano": "^7.0.6",
+    "postcss": "^8.4.49",
+    "sass": "^1.83.0",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.4.0"
+  }
+}

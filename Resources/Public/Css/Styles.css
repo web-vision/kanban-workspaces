@@ -2261,3 +2261,17 @@ body{
   font-size:12px;
   margin-top:4px;
 }
+
+typo3-kanban-assign-modal,typo3-kanban-board,typo3-kanban-card,typo3-kanban-column,typo3-kanban-filter-sidebar,typo3-kanban-preview-modal,typo3-kanban-send-to-stage-modal{
+  display:contents;
+}
+
+.modal-overlay{
+  -webkit-user-select:text;
+     -moz-user-select:text;
+          user-select:text;
+}
+
+.modal-overlay .nav-tabs{
+  flex:0 0 auto;
+}

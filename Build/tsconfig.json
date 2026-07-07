@@ -19,6 +19,8 @@
         "noImplicitAny": false,
         "noImplicitThis": true,
         "noImplicitOverride": true,
+        "experimentalDecorators": true,
+        "useDefineForClassFields": false,
         "forceConsistentCasingInFileNames": true,
         "skipLibCheck": true,
         "pretty": true,

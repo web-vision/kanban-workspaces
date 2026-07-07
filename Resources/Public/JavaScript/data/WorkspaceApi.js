@@ -8,102 +8,62 @@
  * Generated from Build/Sources/TypeScript/ - do not edit directly, change the
  * TypeScript source and re-run "npm run build:js" instead.
  */
+import { DataTransformer } from '@web-vision/kanban-workspaces/data/DataTransformer.js';
 /**
- * Thin transport layer over the TYPO3 workspace AJAX dispatch endpoint.
- *
- * Responsible only for issuing requests and handing the raw response to the
- * board's {@link DataTransformer}; it does not touch the DOM. Reads its
- * endpoints and request payload from the owning board.
+ * Transport layer over the TYPO3 workspace AJAX dispatch endpoint. Stateless
+ * apart from its configured endpoints and the pure {@link DataTransformer};
+ * it issues requests and returns normalised view models, it does not touch the
+ * DOM or hold board state.
  */
 export class WorkspaceApi {
-    board;
-    constructor(board) {
-        this.board = board;
+    constructor(dataUrl, processUrl) {
+        this.dataUrl = dataUrl;
+        this.processUrl = processUrl;
+        this.transformer = new DataTransformer();
     }
-    // Fetch the workspace records for the current filter payload and map them to cards.
-    fetchData() {
-        const url = this.board.options.getDataApiUrl || this.board.options.apiUrl;
-        if (!url) {
-            console.error('No API URL configured');
-            return Promise.reject(new Error('No API URL configured'));
-        }
+    postJson(url, payload) {
         return fetch(url, {
-            method: "POST",
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
             },
-            body: JSON.stringify(this.board.apiPayload),
-        })
-            .then((response) => response.json())
-            .then((apiResponse) => {
-            // Convert the TYPO3 workspace data to kanban cards
-            const cards = this.board.transformer.convertWorkspaceDataToCards(apiResponse);
-            return {
-                cards: cards,
-                total: apiResponse[0]?.result?.total || cards.length
-            };
+            body: JSON.stringify(payload),
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+            return response.json();
         });
     }
-    // Fetch comments / history / diff details for a single card and cache them on the board.
-    fetchCardDetails(card) {
-        const url = this.board.options.getDataApiUrl || this.board.options.apiUrl;
-        if (!url) {
-            console.error('No API URL configured');
-            return Promise.reject(new Error('No API URL configured'));
-        }
+    // Fetch the workspace records for the given dispatch payload and map to cards.
+    async fetchData(apiPayload) {
+        const apiResponse = await this.postJson(this.dataUrl, apiPayload);
+        const cards = this.transformer.convertWorkspaceDataToCards(apiResponse);
+        return { cards, total: apiResponse[0]?.result?.total || cards.length };
+    }
+    // Fetch comments / history / diff details for a single card.
+    async fetchCardDetails(card) {
         const apiPayload = {
-            action: "RemoteServer",
-            method: "getRowDetails",
-            data: [{
-                    stage: card.stage,
-                    t3ver_oid: card.t3ver_oid,
-                    table: card.table,
-                    uid: card.uid,
-                    filterFields: true
-                }]
+            action: 'RemoteServer',
+            method: 'getRowDetails',
+            data: [{ stage: card.stage, t3ver_oid: card.t3ver_oid, table: card.table, uid: card.uid, filterFields: true }],
         };
-        return fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(apiPayload),
-        })
-            .then((response) => response.json())
-            .then((apiResponse) => {
-            // Convert the TYPO3 workspace row data to kanban cards history and comments
-            const details = this.board.transformer.convertCardDetailsToFormat(apiResponse, card.id);
-            if (!this.board.data.comments) {
-                this.board.data.comments = {};
-            }
-            if (!this.board.data.history) {
-                this.board.data.history = {};
-            }
-            if (!this.board.data.diffs) {
-                this.board.data.diffs = {};
-            }
-            this.board.data.comments[card.id] = details.comments;
-            this.board.data.history[card.id] = details.history;
-            this.board.data.diffs[card.id] = details.diff;
-            return details;
-        });
+        const apiResponse = await this.postJson(this.dataUrl, apiPayload);
+        return this.transformer.convertCardDetailsToFormat(apiResponse, card.id);
+    }
+    // Generic "Actions" dispatch call (view/delete/send-to-stage/add-comment).
+    dispatch(payload) {
+        return this.postJson(this.dataUrl, payload);
     }
     // Persist a module-data value (filter selection) via the user settings endpoint.
     processData(action, filterType, filterValue) {
-        const url = this.board.options.getProcessApiUrl || this.board.options.apiUrl;
-        if (!url) {
-            console.error('No API URL configured');
-            return Promise.reject(new Error('No API URL configured'));
-        }
         const formData = new FormData();
         formData.append('action', action);
         formData.append('key', `moduleData.web_kanbanworkspaces.${filterType}`);
         formData.append('value', filterValue);
-        return fetch(url, {
-            method: "POST",
-            body: formData,
-        })
+        return fetch(this.processUrl, { method: 'POST', body: formData })
             .then((response) => response.json())
-            .then(() => { });
+            .then(() => undefined);
     }
 }

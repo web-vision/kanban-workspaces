@@ -2437,3 +2437,31 @@ textarea:focus {
   color: var(--text-muted);
   margin-top: 4px;
 }
+// Kanban Workspaces web components render into light DOM; the custom-element
+// hosts must stay invisible to layout so the existing structural styles apply
+// to the `.kanban-*` / `.modal-*` markup they wrap.
+typo3-kanban-board,
+typo3-kanban-filter-sidebar,
+typo3-kanban-column,
+typo3-kanban-card,
+typo3-kanban-preview-modal,
+typo3-kanban-send-to-stage-modal,
+typo3-kanban-assign-modal {
+  display: contents;
+}
+
+// The board web component renders its modals inside `.workspace-main`, which
+// sets `user-select: none` as a drag-to-scroll guard. That inherits into the
+// modal form fields and, in Firefox, prevents clicking to place the caret. The
+// modals are fixed overlays, so re-enable text selection for their subtree.
+.modal-overlay {
+  user-select: text;
+}
+
+// TYPO3 backend gives `.nav-tabs` a flex-grow so its own tab bars fill space.
+// Inside the modal (a flex column) that made the tab-header <ul> grow to half
+// the modal height, pushing the tab content into the lower half. Pin the tab
+// header to its natural height so only the modal body grows.
+.modal-overlay .nav-tabs {
+  flex: 0 0 auto;
+}

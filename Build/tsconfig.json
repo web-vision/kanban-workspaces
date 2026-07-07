@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "target": "es2023",
+        "lib": [
+            "es2023",
+            "dom",
+            "dom.iterable"
+        ],
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "baseUrl": ".",
+        "rootDir": "./Sources/TypeScript/kanban-workspaces",
+        "outDir": "../Resources/Public/JavaScript",
+        "sourceMap": false,
+        "removeComments": false,
+        "declaration": false,
+        "alwaysStrict": true,
+        "strict": false,
+        "noImplicitAny": false,
+        "noImplicitThis": true,
+        "noImplicitOverride": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "pretty": true,
+        "paths": {
+            "@web-vision/kanban-workspaces/*": [
+                "./Sources/TypeScript/kanban-workspaces/*"
+            ]
+        }
+    },
+    "include": [
+        "Sources/TypeScript/kanban-workspaces/**/*.ts",
+        "Sources/TypeScript/types/**/*.d.ts"
+    ]
+}

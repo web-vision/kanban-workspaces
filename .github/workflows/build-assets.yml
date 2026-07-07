@@ -1,0 +1,34 @@
+name: build assets
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-assets:
+    name: "compiled assets are up to date"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v6
+
+      - name: "Compile JavaScript (TypeScript -> Resources/Public/JavaScript)"
+        run: "Build/Scripts/runTests.sh -s buildJavascript"
+
+      - name: "Compile CSS and publish Font Awesome (-> Resources/Public/Css, Resources/Public/webfonts)"
+        run: "Build/Scripts/runTests.sh -s buildCss"
+
+      - name: "Verify compiled assets match the committed sources"
+        run: |
+          if [ -n "$(git status --porcelain -- Resources/Public)" ]; then
+            echo "::error::Compiled assets are out of date. The build produced changes that are not committed."
+            echo "Re-run the build locally and commit the result:"
+            echo "  Build/Scripts/runTests.sh -s buildJavascript"
+            echo "  Build/Scripts/runTests.sh -s buildCss"
+            echo "Changed files:"
+            git status --porcelain -- Resources/Public
+            echo "Diff (text assets only):"
+            git diff -- Resources/Public ':(exclude)Resources/Public/webfonts/*'
+            exit 1
+          fi
+          echo "Compiled assets are up to date with the sources."

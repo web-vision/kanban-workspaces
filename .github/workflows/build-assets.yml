@@ -20,15 +20,18 @@ jobs:
 
       - name: "Verify compiled assets match the committed sources"
         run: |
-          if [ -n "$(git status --porcelain -- Resources/Public)" ]; then
+          # Only the directories the build actually generates are verified;
+          # other public assets (icons, images) are hand-maintained sources.
+          ASSET_PATHS="Resources/Public/JavaScript Resources/Public/Css Resources/Public/webfonts"
+          if [ -n "$(git status --porcelain -- ${ASSET_PATHS})" ]; then
             echo "::error::Compiled assets are out of date. The build produced changes that are not committed."
             echo "Re-run the build locally and commit the result:"
             echo "  Build/Scripts/runTests.sh -s buildJavascript"
             echo "  Build/Scripts/runTests.sh -s buildCss"
             echo "Changed files:"
-            git status --porcelain -- Resources/Public
+            git status --porcelain -- ${ASSET_PATHS}
             echo "Diff (text assets only):"
-            git diff -- Resources/Public ':(exclude)Resources/Public/webfonts/*'
+            git diff -- Resources/Public/JavaScript Resources/Public/Css
             exit 1
           fi
           echo "Compiled assets are up to date with the sources."

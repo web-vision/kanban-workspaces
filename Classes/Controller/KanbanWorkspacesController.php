@@ -15,6 +15,7 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Imaging\IconFactory;
+use TYPO3\CMS\Core\Imaging\IconSize;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
@@ -257,7 +258,7 @@ class KanbanWorkspacesController extends ActionController
     /**
      * Gets all available system languages.
      *
-     * @return list<array{id: string, label: string, flag: string}>
+     * @return list<array{id: string, label: string, flagHtml: string}>
      */
     protected function getSystemLanguages(int $pageId, string $selectedLanguage = ''): array
     {
@@ -274,7 +275,9 @@ class KanbanWorkspacesController extends ActionController
             $languagesNew[] = [
                 'id' => (string)$language['uid'],
                 'label' => $language['title'],
-                'flag' => $language['flagIcon'],
+                // Pre-rendered core icon markup shown in the language filter's
+                // input-group prefix (flags cannot be rendered inside <option>).
+                'flagHtml' => $this->iconFactory->getIcon($language['flagIcon'], IconSize::SMALL)->render(),
             ];
         }
         return $languagesNew;

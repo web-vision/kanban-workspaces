@@ -57,7 +57,8 @@ export interface Stage {
 export interface FilterOption {
   id: string | number;
   label: string;
-  flag?: string;
+  /** Pre-rendered TYPO3 core icon HTML for the language filter prefix. */
+  flagHtml?: string;
   icon?: string;
 }
 

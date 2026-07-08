@@ -16,6 +16,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import { html, nothing, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 const SELECT_FILTERS = ['depth', 'language', 'stage'];
 /**
  * Filter sidebar. Renders the configured filter groups (selects for
@@ -45,27 +46,40 @@ let KanbanFilterSidebarElement = class KanbanFilterSidebarElement extends LitEle
         }
         return filterType === 'depth' ? '0' : filterType === 'language' ? 'all' : '-99';
     }
+    onSelectChange(filterType, e) {
+        e.stopPropagation();
+        this.emit('filter-change', { filterType, value: e.target.value, active: true, single: true });
+    }
     renderSelectGroup(filterType, config) {
         const selected = this.selectedValue(filterType);
+        const select = html `
+      <select id="filter-${filterType}" class="filter-select" tabindex="0"
+        @click=${(e) => e.stopPropagation()}
+        @mousedown=${(e) => e.stopPropagation()}
+        @change=${(e) => this.onSelectChange(filterType, e)}>
+        ${filterType === 'stage' ? html `<option value="-99">All Stages</option>` : nothing}
+        ${config.options.map((option) => html `
+          <option value=${option.id} ?selected=${String(option.id) === selected}>
+            ${option.label}
+          </option>`)}
+      </select>`;
+        // Language flags cannot live inside <option> text; show the selected
+        // language's pre-rendered core icon in the input-group prefix instead.
+        const languageFlagHtml = filterType === 'language'
+            ? config.options.find((option) => String(option.id) === selected)?.flagHtml
+            : undefined;
         return html `
       <div class="filter-group">
         <h3 class="filter-group-title">${config.label}</h3>
         <div class="filter-options">
           <div class="filter-option" style="pointer-events: auto;">
-            <select id="filter-${filterType}" class="filter-select" tabindex="0"
-              @click=${(e) => e.stopPropagation()}
-              @mousedown=${(e) => e.stopPropagation()}
-              @change=${(e) => {
-            e.stopPropagation();
-            this.emit('filter-change', { filterType, value: e.target.value, active: true, single: true });
-        }}>
-              ${filterType === 'language' ? html `<option value="all">All Languages</option>` : nothing}
-              ${filterType === 'stage' ? html `<option value="-99">All Stages</option>` : nothing}
-              ${config.options.map((option) => html `
-                <option value=${option.id} ?selected=${String(option.id) === selected}>
-                  ${option.flag ? option.flag + ' ' : ''}${option.label}
-                </option>`)}
-            </select>
+            ${filterType === 'language'
+            ? html `
+                <div class="input-group filter-language-input-group">
+                  <span class="input-group-text input-group-icon">${languageFlagHtml ? unsafeHTML(languageFlagHtml) : nothing}</span>
+                  ${select}
+                </div>`
+            : select}
           </div>
         </div>
       </div>`;
@@ -86,7 +100,6 @@ let KanbanFilterSidebarElement = class KanbanFilterSidebarElement extends LitEle
         })}>
               <label for="filter-${filterType}-${option.id}">
                 ${option.icon ? html `<i class=${option.icon}></i>` : nothing}
-                ${option.flag ? option.flag : ''}
                 ${option.label}
               </label>
             </div>`)}

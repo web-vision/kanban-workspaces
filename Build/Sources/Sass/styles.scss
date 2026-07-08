@@ -737,6 +737,31 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 135, 0, 0.1);
 }
 
+.filter-language-input-group {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.filter-language-input-group .input-group-text.input-group-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-right: 0;
+  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.filter-language-input-group select.filter-select {
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  flex: 1;
+  width: auto;
+}
+
 /* Kanban Board */
 .kanban-container {
   flex: 1;

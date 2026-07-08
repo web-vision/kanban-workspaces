@@ -1,0 +1,3 @@
+"be_users"
+,"uid","pid","username","password","admin","disable","deleted"
+,1,0,"admin","$2y$10$functionaltestplaceholderhashxxxxxxxxxxxxxxxxxxx",1,0,0

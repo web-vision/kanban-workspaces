@@ -700,6 +700,31 @@ body{
   border-color:var(--typo3-orange);
   box-shadow:0 0 0 3px rgba(255,135,0,.1);
 }
+
+.filter-language-input-group{
+  align-items:stretch;
+  display:flex;
+  width:100%;
+}
+
+.filter-language-input-group .input-group-text.input-group-icon{
+  align-items:center;
+  background-color:var(--bg-secondary);
+  border:1px solid var(--border-color);
+  border-radius:var(--border-radius-sm) 0 0 var(--border-radius-sm);
+  border-right:0;
+  color:var(--text-primary);
+  display:flex;
+  flex-shrink:0;
+  justify-content:center;
+  padding:var(--spacing-sm);
+}
+
+.filter-language-input-group select.filter-select{
+  border-radius:0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  flex:1;
+  width:auto;
+}
 .kanban-container{
   display:flex;
   flex:1;

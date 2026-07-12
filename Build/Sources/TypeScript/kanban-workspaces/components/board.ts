@@ -341,11 +341,46 @@ export class KanbanBoardElement extends LitElement {
     try {
       const response = await this.api.dispatch({ action: 'Actions', method, data });
       const formData = response?.[0]?.result;
-      if (!formData) { throw new Error('Invalid stage form response'); }
+      if (!formData || formData.success === false) { throw new Error('Invalid stage form response'); }
       this.sendFormData = formData;
       this.sendContext = {
         url: '', executeMethod, cardIds, targetStage,
         isDragDrop: false,
+      };
+      this.sendOpen = true;
+      document.body.style.overflow = 'hidden';
+    } catch (error) {
+      console.error(error);
+      showToast('Failed to load stage form', 'error');
+    }
+  }
+
+  /**
+   * Open the send-to-stage modal for a drag-drop onto an arbitrary column.
+   * Uses sendToSpecificStageWindow/Execute so cards can jump directly to the
+   * dropped column instead of only advancing one stage at a time.
+   */
+  private async openSpecificStageWindow(
+    targetStage: Stage,
+    cardIds: (string | number)[],
+    sourceStage: Stage | null,
+  ): Promise<void> {
+    try {
+      const response = await this.api.dispatch({
+        action: 'Actions',
+        method: 'sendToSpecificStageWindow',
+        data: [Number(targetStage.id)],
+      });
+      const formData = response?.[0]?.result;
+      if (!formData || formData.success === false) { throw new Error('Invalid stage form response'); }
+      this.sendFormData = formData;
+      this.sendContext = {
+        url: '',
+        executeMethod: 'sendToSpecificStageExecute',
+        cardIds,
+        targetStage,
+        sourceStage,
+        isDragDrop: true,
       };
       this.sendOpen = true;
       document.body.style.overflow = 'hidden';
@@ -376,9 +411,15 @@ export class KanbanBoardElement extends LitElement {
     const targetStage = this.stages.find((s) => s.id == stageId);
     const sourceStage = this.stages.find((s) => s.id == dragged.stage);
     if (!targetStage || !sourceStage || targetStage.id == sourceStage.id) { return; }
-    const cardIds = this.selectedCards.size > 0 ? Array.from(this.selectedCards) : [cardId];
-    const direction = this.stageIndex(targetStage.id) > this.stageIndex(sourceStage.id) ? 'next' : 'prev';
-    this.openStageWindow(dragged, direction, cardIds, targetStage);
+    // Only forward cards not already in the drop target: a multi-selection may
+    // span stages or include cards already sitting in the target column.
+    const cardIds = (this.selectedCards.size > 0 ? Array.from(this.selectedCards) : [cardId])
+      .filter((id) => {
+        const card = this.getCardById(id);
+        return card != null && card.stage != targetStage.id;
+      });
+    if (cardIds.length === 0) { return; }
+    this.openSpecificStageWindow(targetStage, cardIds, sourceStage);
   }
 
   private async handleSendSubmit(comments: string, additional: string, recipients: string[]): Promise<void> {
@@ -386,9 +427,26 @@ export class KanbanBoardElement extends LitElement {
     const { executeMethod, cardIds, targetStage } = this.sendContext;
     this.sendPending = true;
     try {
+      // sendToSpecificStageExecute needs nextStage + all selected elements;
+      // adjacent next/prev window responses already carry the correct affects.
+      let affects = this.sendFormData.affects;
+      if (executeMethod === 'sendToSpecificStageExecute') {
+        const elements = cardIds
+          .map((id) => this.getCardById(id))
+          .filter(Boolean)
+          .map((card) => ({
+            table: card!.table,
+            uid: card!.uid,
+            t3ver_oid: card!.t3ver_oid,
+          }));
+        affects = {
+          elements,
+          nextStage: targetStage?.id ?? this.sendFormData.affects?.nextStage,
+        };
+      }
       const result = await this.api.dispatch({
         action: 'Actions', method: executeMethod,
-        data: [{ comments, recipients, additional, affects: this.sendFormData.affects }],
+        data: [{ comments, recipients, additional, affects }],
       });
       if (result?.[0]?.result?.success === false) {
         throw new Error(result[0].result.message || 'Stage transition failed');

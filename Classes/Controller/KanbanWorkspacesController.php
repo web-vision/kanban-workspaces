@@ -183,14 +183,33 @@ class KanbanWorkspacesController extends ActionController
         $moduleTemplate->setTitle($moduleTitle, $pageTitle);
 
         $docHeader = $moduleTemplate->getDocHeaderComponent();
+        // setPageBreadcrumb / setShortcutContext are v14 APIs; fall back on v13.
         if ($pageRecord !== []) {
-            $docHeader->setPageBreadcrumb($pageRecord);
+            if (!$this->callOptionalDocHeaderMethod($docHeader, 'setPageBreadcrumb', $pageRecord)) {
+                $docHeader->setMetaInformation($pageRecord);
+            }
         }
-        $docHeader->setShortcutContext(
+        $this->callOptionalDocHeaderMethod(
+            $docHeader,
+            'setShortcutContext',
             'web_kanbanworkspaces',
             sprintf('%s: %s [%d]', $moduleTitle, $pageTitle !== '' ? $pageTitle : '/', $pageUid),
             ['id' => $pageUid]
         );
+    }
+
+    /**
+     * Invoke a DocHeader method when it exists (v14 APIs on dual-version code).
+     *
+     * Typed as object so Core14 phpstan cannot mark the existence check as always-true.
+     */
+    private function callOptionalDocHeaderMethod(object $docHeader, string $method, mixed ...$arguments): bool
+    {
+        if (!\is_callable([$docHeader, $method])) {
+            return false;
+        }
+        $docHeader->{$method}(...$arguments);
+        return true;
     }
 
     /**

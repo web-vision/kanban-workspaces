@@ -11,11 +11,13 @@ use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Imaging\IconSize;
+use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceRepository;
@@ -69,6 +71,10 @@ class KanbanWorkspacesController extends ActionController
         }
 
         $this->moduleTemplate = $this->moduleTemplateFactory->create($this->request);
+
+        $pageRecord = $pageUid > 0 ? (BackendUtility::getRecord('pages', $pageUid) ?? []) : [];
+        $pageTitle = $pageRecord !== [] ? BackendUtility::getRecordTitle('pages', $pageRecord) : '';
+        $this->configureDocHeader($this->moduleTemplate, $pageUid, $pageRecord, $pageTitle);
 
         // Build stage config. If disabling default stages, include only custom stages (uid >= 1).
         $order = 0;
@@ -164,6 +170,30 @@ class KanbanWorkspacesController extends ActionController
     }
 
     /**
+     * Configure module title, page breadcrumb and shortcut (EXT:viewpage pattern).
+     *
+     * @param array<string, mixed> $pageRecord
+     * @see https://github.com/web-vision/kanban-workspaces/issues/43
+     */
+    private function configureDocHeader(ModuleTemplate $moduleTemplate, int $pageUid, array $pageRecord, string $pageTitle): void
+    {
+        $moduleTitle = $this->getLanguageService()->sL(
+            'LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang_mod.xlf:mlang_tabs_tab'
+        );
+        $moduleTemplate->setTitle($moduleTitle, $pageTitle);
+
+        $docHeader = $moduleTemplate->getDocHeaderComponent();
+        if ($pageRecord !== []) {
+            $docHeader->setPageBreadcrumb($pageRecord);
+        }
+        $docHeader->setShortcutContext(
+            'web_kanbanworkspaces',
+            sprintf('%s: %s [%d]', $moduleTitle, $pageTitle !== '' ? $pageTitle : '/', $pageUid),
+            ['id' => $pageUid]
+        );
+    }
+
+    /**
      * Add CSS and JS assets
      */
     protected function addAssets(): void
@@ -229,6 +259,11 @@ class KanbanWorkspacesController extends ActionController
     protected function getBackendUser(): BackendUserAuthentication
     {
         return $GLOBALS['BE_USER'];
+    }
+
+    protected function getLanguageService(): LanguageService
+    {
+        return $GLOBALS['LANG'];
     }
 
     /**

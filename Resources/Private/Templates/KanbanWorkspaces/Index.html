@@ -1,8 +1,9 @@
 <html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+
 <f:layout name="Module" />
 
-<f:section name="Header">
-    <!-- Top Navigation Bar -->
+<f:section name="Content">
+    <!-- Board toolbar (search / filters) under the core DocHeader -->
     <header class="workspace-header">
         <div class="header-content">
             <div class="header-left">
@@ -30,11 +31,13 @@
             </div>
         </div>
     </header>
-</f:section>
 
-<f:section name="Content">
-    <!-- Main Content Area -->
-    <main class="workspace-main">
+    <!-- data-islive: Lit board skips API load when live workspace (inaccessible) -->
+    <main
+        class="workspace-main"
+        data-islive="{f:if(condition: workspaceIsAccessible, then: 'true', else: 'false')}"
+        data-avatar="{f:uri.image(src:'EXT:kanban_workspaces/Resources/Public/Icons/user.png')}"
+    >
         <f:if condition="{workspaceIsAccessible}">
             <div class="container mt-5">
                 <f:be.infobox title="Wait!">You're on live workspace, Please select workspace.</f:be.infobox>

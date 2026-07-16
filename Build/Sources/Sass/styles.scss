@@ -374,16 +374,13 @@ body {
   overflow-x: hidden;
 }
 
-/* Header Styles */
+/* Header: in-flow under TYPO3 DocHeader */
 .workspace-header {
   background-color: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
   height: var(--header-height);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+  position: relative;
+  z-index: 1;
   box-shadow: var(--shadow);
 }
 
@@ -518,14 +515,14 @@ body {
   border-color: var(--typo3-orange);
 }
 
-/* Main Content */
+/* Main: flex fill under DocHeader + board toolbar (6rem ≈ DocHeader) */
 .workspace-main {
-  margin-top: var(--header-height);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height));
+  flex: 1 1 auto;
+  min-height: 0;
+  height: calc(100vh - var(--header-height) - 6rem);
   overflow-y: auto;
-  /* Enable vertical scroll for main if many stages/cards */
   overflow-x: hidden;
   position: relative;
   /* Prevent accidental text selection while dragging to scroll */

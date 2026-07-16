@@ -344,11 +344,8 @@ body{
   border-bottom:1px solid var(--border-color);
   box-shadow:var(--shadow);
   height:var(--header-height);
-  left:0;
-  position:fixed;
-  right:0;
-  top:0;
-  z-index:1000;
+  position:relative;
+  z-index:1;
 }
 
 .header-content{
@@ -480,9 +477,10 @@ body{
 }
 .workspace-main{
   display:flex;
+  flex:1 1 auto;
   flex-direction:column;
-  height:calc(100vh - var(--header-height));
-  margin-top:var(--header-height);
+  height:calc(100vh - var(--header-height) - 6rem);
+  min-height:0;
   overflow-x:hidden;
   overflow-y:auto;
   position:relative;

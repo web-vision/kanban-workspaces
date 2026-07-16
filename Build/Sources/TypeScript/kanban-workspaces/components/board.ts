@@ -171,7 +171,7 @@ export class KanbanBoardElement extends LitElement {
   // --- Data ------------------------------------------------------------------
 
   private loadData(): void {
-    if (document.querySelector('.module')?.getAttribute('data-islive') === 'true') {
+    if (document.querySelector('[data-islive="true"]')) {
       this.cards = [];
       return;
     }

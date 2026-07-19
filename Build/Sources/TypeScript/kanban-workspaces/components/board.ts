@@ -9,7 +9,7 @@ import { WorkspaceApi } from '@web-vision/kanban-workspaces/data/WorkspaceApi.js
 import { showToast, showLoading, hideLoading, debounce } from '@web-vision/kanban-workspaces/core/utils.js';
 import { initHorizontalScroll } from '@web-vision/kanban-workspaces/core/HorizontalScroll.js';
 import '@web-vision/kanban-workspaces/components/column.js';
-import '@web-vision/kanban-workspaces/components/filter-sidebar.js';
+import '@web-vision/kanban-workspaces/components/filter-bar.js';
 import '@web-vision/kanban-workspaces/components/preview-modal.js';
 import '@web-vision/kanban-workspaces/components/send-to-stage-modal.js';
 import '@web-vision/kanban-workspaces/components/assign-modal.js';
@@ -21,8 +21,8 @@ declare const TYPO3: any;
 /**
  * Root Kanban board component. Owns the reactive state (cards, stages, filters,
  * selection, modal state), loads data through {@link WorkspaceApi} and
- * coordinates the child components (columns, filter sidebar and the three
- * modals). Renders into light DOM so the extension's global CSS applies.
+ * coordinates the child components (columns, the inline filter bar and the
+ * three modals). Renders into light DOM so the extension's global CSS applies.
  */
 @customElement('typo3-kanban-board')
 export class KanbanBoardElement extends LitElement {
@@ -32,7 +32,6 @@ export class KanbanBoardElement extends LitElement {
   @state() private activeFilters: Record<string, string[]> = {};
   @state() private searchQuery = '';
   @state() private selectedCards = new Set<string | number>();
-  @state() private filtersOpen = false;
 
   // Preview modal state
   @state() private previewOpen = false;
@@ -79,7 +78,9 @@ export class KanbanBoardElement extends LitElement {
   };
   private headerSearch: HTMLInputElement | null = null;
   private headerClearSearch: HTMLElement | null = null;
-  private headerFilterToggle: HTMLElement | null = null;
+  // The inline filter bar lives in the Fluid-rendered board toolbar
+  // (`.workspace-header`), outside this component's render root.
+  private filterBarRoot: HTMLElement | null = null;
   // The modals are portalled to <body> so they escape `.workspace-main`
   // (which sets `user-select: none` and is a scroll container).
   private modalRoot: HTMLElement | null = null;
@@ -121,6 +122,10 @@ export class KanbanBoardElement extends LitElement {
     document.removeEventListener('mousedown', this.boundContextClose, true);
     this.modalRoot?.remove();
     this.modalRoot = null;
+    if (this.filterBarRoot) {
+      render(nothing, this.filterBarRoot);
+      this.filterBarRoot = null;
+    }
   }
 
   protected override firstUpdated(): void {
@@ -128,9 +133,13 @@ export class KanbanBoardElement extends LitElement {
   }
 
   protected override updated(): void {
-    // Keep the portalled modals in sync with the board state.
+    // Keep the portalled modals and the header filter bar in sync with the
+    // board state.
     if (this.modalRoot) {
       render(this.renderModals(), this.modalRoot);
+    }
+    if (this.filterBarRoot) {
+      render(this.renderFilterBar(), this.filterBarRoot);
     }
   }
 
@@ -157,7 +166,7 @@ export class KanbanBoardElement extends LitElement {
   private wireHeaderControls(): void {
     this.headerSearch = document.getElementById('globalSearch') as HTMLInputElement | null;
     this.headerClearSearch = document.getElementById('clearSearch');
-    this.headerFilterToggle = document.getElementById('filterToggle');
+    this.filterBarRoot = document.getElementById('headerFilters');
     this.headerSearch?.addEventListener('input', debounce((e: Event) => {
       this.handleSearch((e.target as HTMLInputElement).value);
     }, 300));
@@ -165,13 +174,13 @@ export class KanbanBoardElement extends LitElement {
       if (this.headerSearch) { this.headerSearch.value = ''; }
       this.handleSearch('');
     });
-    this.headerFilterToggle?.addEventListener('click', () => this.toggleFilters());
+    document.getElementById('clearAllFilters')?.addEventListener('click', () => this.handleFilterClear());
   }
 
   // --- Data ------------------------------------------------------------------
 
   private loadData(): void {
-    if (document.querySelector('.module')?.getAttribute('data-islive') === 'true') {
+    if (document.querySelector('[data-islive="true"]')) {
       this.cards = [];
       return;
     }
@@ -225,7 +234,6 @@ export class KanbanBoardElement extends LitElement {
     const ctrl = e.ctrlKey || e.metaKey;
     if (e.key === 'Escape') { this.closeAllModals(); this.clearSelection(); }
     if (ctrl && e.key === 'f') { e.preventDefault(); this.headerSearch?.focus(); this.headerSearch?.select(); }
-    if (ctrl && e.shiftKey && e.key === 'F') { e.preventDefault(); this.toggleFilters(); }
     if (ctrl && e.key === 'r') { e.preventDefault(); this.loadData(); showToast('Board refreshed', 'info'); }
     if (ctrl && !this.multiSelectMode) { this.multiSelectMode = true; document.body.classList.add('multi-select-mode'); }
   }
@@ -244,11 +252,6 @@ export class KanbanBoardElement extends LitElement {
     if (this.headerClearSearch) { this.headerClearSearch.style.display = query ? 'block' : 'none'; }
     this.apiPayload.data[0].filterTxt = query;
     this.loadData();
-  }
-
-  private toggleFilters(): void {
-    this.filtersOpen = !this.filtersOpen;
-    this.headerFilterToggle?.classList.toggle('active', this.filtersOpen);
   }
 
   private handleFilterChange(filterType: string, value: string, active: boolean, single: boolean): void {
@@ -611,18 +614,19 @@ export class KanbanBoardElement extends LitElement {
       </div>`;
   }
 
+  private renderFilterBar(): TemplateResult {
+    return html`
+      <typo3-kanban-filter-bar
+        .filters=${this.filters}
+        .activeFilters=${this.activeFilters}
+        @filter-change=${(e: CustomEvent) => this.handleFilterChange(e.detail.filterType, e.detail.value, e.detail.active, !!e.detail.single)}
+        @filter-clear=${() => this.handleFilterClear()}></typo3-kanban-filter-bar>`;
+  }
+
   protected override render(): TemplateResult {
     const sortedStages = [...this.stages].sort((a, b) => (a.order || 0) - (b.order || 0));
     return html`
-      <typo3-kanban-filter-sidebar
-        .filters=${this.filters}
-        .activeFilters=${this.activeFilters}
-        ?open=${this.filtersOpen}
-        @filter-change=${(e: CustomEvent) => this.handleFilterChange(e.detail.filterType, e.detail.value, e.detail.active, !!e.detail.single)}
-        @filter-clear=${() => this.handleFilterClear()}
-        @sidebar-close=${() => this.toggleFilters()}></typo3-kanban-filter-sidebar>
-
-      <section class="kanban-container ${this.filtersOpen ? 'sidebar-open' : ''}">
+      <section class="kanban-container">
         <div class="kanban-board" id="kanbanBoard"
           @card-click=${(e: CustomEvent) => this.handleCardClick(e.detail.card)}
           @card-menu=${(e: CustomEvent) => this.openContextMenu(e.detail.card, e.detail.anchor)}

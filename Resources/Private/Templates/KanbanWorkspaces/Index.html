@@ -1,18 +1,15 @@
 <html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+
 <f:layout name="Module" />
 
-<f:section name="Header">
-    <!-- Top Navigation Bar -->
+<f:section name="Content">
+    <!-- Board toolbar under the core DocHeader: inline filters (left, rendered
+         into #headerFilters by the board component) and search (right) -->
     <header class="workspace-header">
         <div class="header-content">
-            <div class="header-left">
-                <div class="typo3-logo">
-                    <span class="logo-icon">T3</span>
-                </div>
-                <h1 class="header-title">Workspace Board</h1>
-            </div>
+            <div class="header-filters" id="headerFilters"></div>
 
-            <div class="header-center">
+            <div class="header-search">
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="globalSearch" placeholder="Search records..." class="search-input">
@@ -22,19 +19,19 @@
                 </div>
             </div>
 
-            <div class="header-right">
-                <button class="filter-toggle" id="filterToggle">
-                    <i class="fas fa-filter"></i>
-                    <span>Filters</span>
-                </button>
-            </div>
+            <button type="button" class="clear-filters-btn" id="clearAllFilters"
+                title="Clear all filters" aria-label="Clear all filters">
+                <i class="fas fa-filter-circle-xmark"></i>
+            </button>
         </div>
     </header>
-</f:section>
 
-<f:section name="Content">
-    <!-- Main Content Area -->
-    <main class="workspace-main">
+    <!-- data-islive: Lit board skips API load when live workspace (inaccessible) -->
+    <main
+        class="workspace-main"
+        data-islive="{f:if(condition: workspaceIsAccessible, then: 'true', else: 'false')}"
+        data-avatar="{f:uri.image(src:'EXT:kanban_workspaces/Resources/Public/Icons/user.png')}"
+    >
         <f:if condition="{workspaceIsAccessible}">
             <div class="container mt-5">
                 <f:be.infobox title="Wait!">You're on live workspace, Please select workspace.</f:be.infobox>

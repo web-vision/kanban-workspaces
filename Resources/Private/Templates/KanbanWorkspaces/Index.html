@@ -3,17 +3,13 @@
 <f:layout name="Module" />
 
 <f:section name="Content">
-    <!-- Board toolbar (search / filters) under the core DocHeader -->
+    <!-- Board toolbar under the core DocHeader: inline filters (left, rendered
+         into #headerFilters by the board component) and search (right) -->
     <header class="workspace-header">
         <div class="header-content">
-            <div class="header-left">
-                <div class="typo3-logo">
-                    <span class="logo-icon">T3</span>
-                </div>
-                <h1 class="header-title">Workspace Board</h1>
-            </div>
+            <div class="header-filters" id="headerFilters"></div>
 
-            <div class="header-center">
+            <div class="header-search">
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="globalSearch" placeholder="Search records..." class="search-input">
@@ -23,12 +19,10 @@
                 </div>
             </div>
 
-            <div class="header-right">
-                <button class="filter-toggle" id="filterToggle">
-                    <i class="fas fa-filter"></i>
-                    <span>Filters</span>
-                </button>
-            </div>
+            <button type="button" class="clear-filters-btn" id="clearAllFilters"
+                title="Clear all filters" aria-label="Clear all filters">
+                <i class="fas fa-filter-circle-xmark"></i>
+            </button>
         </div>
     </header>
 

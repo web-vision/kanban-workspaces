@@ -12,6 +12,38 @@ export function escapeHtml(text) {
   return div.innerHTML
 }
 
+/**
+ * Extract the workspace/current side of a TYPO3 DiffUtility HTML string.
+ * Removes <del> (live/old) and unwraps <ins> (version/new). Plain content
+ * without diff tags is returned unchanged.
+ */
+export function extractCurrentValueFromDiffHtml(html: string): string {
+  const trimmed = (html || '').trim();
+  if (!trimmed) {
+    return '';
+  }
+  if (!/<del[\s>]|<ins[\s>]/i.test(trimmed)) {
+    return trimmed;
+  }
+  const doc = new DOMParser().parseFromString(`<div id="root">${trimmed}</div>`, 'text/html');
+  const root = doc.getElementById('root');
+  if (!root) {
+    return trimmed;
+  }
+  root.querySelectorAll('del').forEach((el) => el.remove());
+  root.querySelectorAll('ins').forEach((el) => {
+    const parent = el.parentNode;
+    if (!parent) {
+      return;
+    }
+    while (el.firstChild) {
+      parent.insertBefore(el.firstChild, el);
+    }
+    el.remove();
+  });
+  return (root.innerHTML || '').trim();
+}
+
 // Build up-to-two-letter uppercase initials from a name.
 export function getInitials(name) {
   return name
@@ -22,9 +54,12 @@ export function getInitials(name) {
     .substring(0, 2)
 }
 
-// Format a date value as "YYYY-MM-DD HH:mm".
+// Format a date value as "DD-MM-YYYY, HH:MM".
 export function formatDate(dateString) {
   const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) {
+    return String(dateString || '')
+  }
   const pad = (n) => String(n).padStart(2, '0');
   const day = pad(date.getDate());
   const month = pad(date.getMonth() + 1);
@@ -32,7 +67,7 @@ export function formatDate(dateString) {
   const hours = pad(date.getHours());
   const minutes = pad(date.getMinutes());
 
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  return `${day}-${month}-${year}, ${hours}:${minutes}`;
 }
 
 // Map a card type to its Font Awesome icon class.

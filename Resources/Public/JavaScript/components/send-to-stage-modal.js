@@ -17,6 +17,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { html, nothing, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import '@typo3/backend/element/icon-element.js';
+import { destroyCommentRte, mountCommentRte } from '@web-vision/kanban-workspaces/rte/CommentRte.js';
+import { extractMentionsFromHtml } from '@web-vision/kanban-workspaces/mention/MentionFeed.js';
 /**
  * "Send to stage" modal. Presents the recipients / checklist / comments form
  * built from the TYPO3 window response and emits `send-submit` with the
@@ -29,23 +31,33 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
         this.formData = null;
         this.context = null;
         this.pending = false;
+        this.commentRte = null;
     }
     createRenderRoot() {
         return this;
     }
-    // Prefill the (uncontrolled) textareas once when the modal opens, so a later
-    // re-render (e.g. the pending flag toggling) does not wipe user input.
     updated(changed) {
         if (changed.has('open') && this.open) {
-            const comments = this.querySelector('#stageComments');
-            if (comments) {
-                comments.value = this.formData?.comments?.value || '';
-            }
             const additional = this.querySelector('#stageAdditionalRecipients');
             if (additional) {
                 additional.value = this.formData?.additional?.value || '';
             }
+            void this.ensureCommentRte(this.formData?.comments?.value || '');
         }
+        if (changed.has('open') && !this.open) {
+            this.teardownCommentRte();
+        }
+    }
+    async ensureCommentRte(initialHtml) {
+        this.teardownCommentRte();
+        await this.updateComplete;
+        requestAnimationFrame(async () => {
+            this.commentRte = await mountCommentRte('stageComments', initialHtml);
+        });
+    }
+    teardownCommentRte() {
+        destroyCommentRte('stageComments');
+        this.commentRte = null;
     }
     emit(type, detail = {}) {
         this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
@@ -56,10 +68,53 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
         }
     }
     submit() {
-        const comments = this.querySelector('#stageComments')?.value || '';
-        const additional = this.querySelector('#stageAdditionalRecipients')?.value || '';
+        const comments = this.commentRte?.getData()
+            || this.querySelector('#stageComments')?.value
+            || '';
+        let additional = this.querySelector('#stageAdditionalRecipients')?.value || '';
         const recipients = Array.from(this.querySelectorAll('.t3js-workspace-recipient:checked')).map((cb) => cb.value);
-        this.emit('send-submit', { comments, additional, recipients });
+        // Auto-check recipients / append emails from @mentions.
+        const { userIds, emails } = extractMentionsFromHtml(comments);
+        const recipientSet = new Set(recipients);
+        this.querySelectorAll('.t3js-workspace-recipient').forEach((cb) => {
+            if (userIds.includes(Number(cb.value)) && !cb.disabled) {
+                cb.checked = true;
+                recipientSet.add(cb.value);
+            }
+        });
+        const existingAdditional = additional
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
+        const mergedEmails = Array.from(new Set([...existingAdditional, ...emails]));
+        // Only put emails into additional when the user was not already a checkbox recipient.
+        const checkboxEmails = new Set();
+        this.querySelectorAll('.t3js-workspace-recipient').forEach((cb) => {
+            // label often contains email; we rely on mention directory emails for additional only.
+            if (recipientSet.has(cb.value)) {
+                checkboxEmails.add(cb.value);
+            }
+        });
+        const additionalOnly = mergedEmails.filter((email) => {
+            // If this email belongs to a checked recipient uid we already notify via core path.
+            const matchedUser = (window.WorkspaceConfig?.mentionDirectory?.users || [])
+                .find((u) => u.email === email);
+            if (matchedUser && recipientSet.has(String(matchedUser.uid))) {
+                return false;
+            }
+            return true;
+        });
+        additional = additionalOnly.join('\n');
+        const willNotify = [
+            ...Array.from(recipientSet),
+            ...additionalOnly,
+        ];
+        this.emit('send-submit', {
+            comments,
+            additional,
+            recipients: Array.from(recipientSet),
+            willNotifyCount: willNotify.length,
+        });
     }
     checklistItems() {
         const raw = this.context?.targetStage?.checklist || [];
@@ -130,13 +185,13 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
                 <div class="form-group" id="additionalRecipientsGroup">
                   <label for="stageAdditionalRecipients" class="form-label">Additional recipients</label>
                   <textarea class="form-control" id="stageAdditionalRecipients" rows="2"
-                    placeholder="One recipient per line"></textarea>
-                  <div class="form-text">One recipient per line</div>
+                    placeholder="One recipient per line (or @mention coworkers in the comment)"></textarea>
+                  <div class="form-text">One recipient per line — prefer @mentions in the comment</div>
                 </div>` : nothing}
 
               <div class="form-group">
-                <label for="stageComments" class="form-label">Comments</label>
-                <textarea class="form-control" id="stageComments" rows="4" placeholder="Add a comment..."></textarea>
+                <label class="form-label" id="stageCommentsLabel">Comments</label>
+                <div class="kanban-rte-host" data-rte-for="stageComments" aria-labelledby="stageCommentsLabel"></div>
               </div>
             </div>
 

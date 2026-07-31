@@ -41,8 +41,8 @@ final class CommentRteConfigurationService
         }
 
         $options = $editorConfig;
-        $options['customConfig'] = $options['customConfig'] ?? '';
-        $options['height'] = $options['height'] ?? 160;
+        $options['customConfig'] ??= '';
+        $options['height'] ??= 160;
 
         $userLang = (string)(($this->getBackendUser()->user['lang'] ?? '') ?: 'en');
         if ($userLang === 'default') {
@@ -78,7 +78,7 @@ final class CommentRteConfigurationService
     }
 
     /**
-     * @param string|list<string> $paths
+     * @param string|array<int, string> $paths
      * @return list<string>
      */
     private function resolveResourcePaths(string|array $paths): array
@@ -86,7 +86,7 @@ final class CommentRteConfigurationService
         $list = is_array($paths) ? $paths : [$paths];
         $resolved = [];
         foreach ($list as $path) {
-            if (!is_string($path) || $path === '') {
+            if ($path === '') {
                 continue;
             }
             if (PathUtility::isExtensionPath($path)) {

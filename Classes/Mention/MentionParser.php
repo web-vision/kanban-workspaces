@@ -95,7 +95,8 @@ final class MentionParser
         }
         $type = strtolower($matches[1]);
         $uid = (int)$matches[2];
-        if ($uid < 1 || ($type !== MentionReference::TYPE_USER && $type !== MentionReference::TYPE_GROUP)) {
+        // Type is already constrained by ID_PATTERN to user|group.
+        if ($uid < 1) {
             return null;
         }
         $key = $type . ':' . $uid;

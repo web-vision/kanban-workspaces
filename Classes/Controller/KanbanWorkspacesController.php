@@ -157,8 +157,8 @@ class KanbanWorkspacesController extends ActionController
             'selectedStage' => $selectedStage,
             'beUsers' => $this->getBackendUsersList(),
             'mentionDirectory' => [
-                'users' => array_map(static fn($item) => $item->toArray(), $mentionDirectory['users']),
-                'groups' => array_map(static fn($item) => $item->toArray(), $mentionDirectory['groups']),
+                'users' => array_map(static fn ($item) => $item->toArray(), $mentionDirectory['users']),
+                'groups' => array_map(static fn ($item) => $item->toArray(), $mentionDirectory['groups']),
             ],
             'rte' => [
                 'editor' => $this->commentRteConfigurationService->getEditorOptions($pageUid),

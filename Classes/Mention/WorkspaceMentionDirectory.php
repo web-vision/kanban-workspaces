@@ -43,11 +43,11 @@ class WorkspaceMentionDirectory
             $needle = mb_strtolower($query);
             $users = array_values(array_filter(
                 $users,
-                static fn(MentionSuggestion $item): bool => self::matchesNeedle($item, $needle)
+                static fn (MentionSuggestion $item): bool => self::matchesNeedle($item, $needle)
             ));
             $groups = array_values(array_filter(
                 $groups,
-                static fn(MentionSuggestion $item): bool => self::matchesNeedle($item, $needle)
+                static fn (MentionSuggestion $item): bool => self::matchesNeedle($item, $needle)
             ));
         }
 
@@ -127,13 +127,13 @@ class WorkspaceMentionDirectory
                 avatarUrl: $this->avatarResolver->resolveAvatarUrl($uid, $request),
             );
         }
-        usort($users, static fn(MentionSuggestion $a, MentionSuggestion $b): int => strcasecmp($a->text, $b->text));
+        usort($users, static fn (MentionSuggestion $a, MentionSuggestion $b): int => strcasecmp($a->text, $b->text));
 
         $groups = [];
         foreach ($this->loadGroups($groupIds) as $group) {
             $uid = (int)$group['uid'];
             $title = (string)($group['title'] ?? ('Group ' . $uid));
-            $memberUserIds = $this->stagesService->resolveBackendUserIds('be_groups_' . $uid);
+            $memberUserIds = array_values($this->stagesService->resolveBackendUserIds('be_groups_' . $uid));
             // Skip groups with no assigned backend users.
             if ($memberUserIds === []) {
                 continue;
@@ -148,7 +148,7 @@ class WorkspaceMentionDirectory
                 memberUserIds: $memberUserIds,
             );
         }
-        usort($groups, static fn(MentionSuggestion $a, MentionSuggestion $b): int => strcasecmp($a->text, $b->text));
+        usort($groups, static fn (MentionSuggestion $a, MentionSuggestion $b): int => strcasecmp($a->text, $b->text));
 
         return ['users' => $users, 'groups' => $groups];
     }
@@ -175,7 +175,7 @@ class WorkspaceMentionDirectory
         }
         $userIds = array_values(array_unique(array_filter(
             $userIds,
-            static fn(int $id): bool => $id > 0 && $id !== $excludeUserId
+            static fn (int $id): bool => $id > 0 && $id !== $excludeUserId
         )));
         if ($userIds === []) {
             return [];
@@ -328,20 +328,20 @@ class WorkspaceMentionDirectory
             ->fetchAllAssociative();
 
         return $this->uniquePositiveIds(array_map(
-            static fn(array $row): int => (int)($row['uid'] ?? 0),
+            static fn (array $row): int => (int)($row['uid'] ?? 0),
             $rows
         ));
     }
 
     /**
-     * @param list<int> $ids
+     * @param array<int> $ids
      * @return list<int>
      */
     private function uniquePositiveIds(array $ids): array
     {
         return array_values(array_unique(array_filter(
             $ids,
-            static fn(int $id): bool => $id > 0
+            static fn (int $id): bool => $id > 0
         )));
     }
 }

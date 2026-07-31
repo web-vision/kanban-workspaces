@@ -1,0 +1,32 @@
+<f:layout name="SystemEmail" />
+<f:section name="Subject">You were mentioned in workspace "{workspace.title}"</f:section>
+<f:section name="Title">Mention in workspace "{workspace.title}"</f:section>
+<f:section name="Main">
+    <p>
+        At the TYPO3 site "{typo3.sitename}" in workspace "{workspace.title}" ({workspace.uid})
+        <strong>{currentUser.realName}</strong> ({currentUser.username}) mentioned you
+        (or a backend user group you belong to) in a comment on:
+    </p>
+
+    <p>
+        <strong>{recordTitle}</strong> ({tableName}:{recordUid})
+    </p>
+
+    <p>
+        Location in the page tree: <code>"{rootLine}"</code>
+    </p>
+
+    <p>
+        Stage: <strong>{stageTitle}</strong>
+    </p>
+
+    <f:if condition="{commentText}">
+        <p>&nbsp;</p>
+        <h3>Comment</h3>
+        <p><f:format.nl2br>{commentText}</f:format.nl2br></p>
+    </f:if>
+
+    <f:if condition="{previewLink}">
+        <p><a href="{previewLink}" rel="noopener">See a preview of the page.</a></p>
+    </f:if>
+</f:section>

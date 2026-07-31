@@ -124,8 +124,11 @@ export class DataTransformer {
 
       // Build content: show user comment if exists, otherwise show stage movement
       let content = '';
-      if (comment.user_comment && comment.user_comment.trim() !== '') {
+      let isHtml = false;
+      const hasUserComment = !!(comment.user_comment && comment.user_comment.trim() !== '');
+      if (hasUserComment) {
         content = comment.user_comment;
+        isHtml = /<[a-z][\s\S]*>/i.test(content);
       } else {
         // Show stage movement without comment
         content = `Moved from "${comment.previous_stage_title}" to "${comment.stage_title}"`;
@@ -136,6 +139,8 @@ export class DataTransformer {
         author: comment.user_username || 'Unknown User',
         timestamp: convertWorkspaceDate(comment.tstamp),
         content: content,
+        isHtml,
+        isUserComment: hasUserComment,
         avatar: avatarUrl,
         stageTitle: comment.stage_title,
         previousStageTitle: comment.previous_stage_title

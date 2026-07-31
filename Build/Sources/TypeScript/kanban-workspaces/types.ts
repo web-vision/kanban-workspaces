@@ -46,11 +46,17 @@ export interface Card {
   [key: string]: unknown;
 }
 
+export interface StageChecklistItem {
+  id: string | number;
+  title: string;
+}
+
 export interface Stage {
   id: string | number;
   label: string;
   color?: string;
   order?: number;
+  checklist?: StageChecklistItem[];
   [key: string]: unknown;
 }
 

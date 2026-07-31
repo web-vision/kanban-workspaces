@@ -23,6 +23,8 @@ use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\StagesService;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
 use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
+use WebVision\KanbanWorkspaces\Mention\CommentRteConfigurationService;
+use WebVision\KanbanWorkspaces\Mention\WorkspaceMentionDirectory;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -44,6 +46,8 @@ class KanbanWorkspacesController extends ActionController
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
         protected readonly ConnectionPool $connectionPool,
         protected readonly UriBuilder $backendUriBuilder,
+        protected readonly CommentRteConfigurationService $commentRteConfigurationService,
+        protected readonly WorkspaceMentionDirectory $workspaceMentionDirectory,
     ) {
     }
 
@@ -115,6 +119,8 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$this->backendUriBuilder->buildUriFromRoute('web_layout'));
         $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_mention_suggest', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_suggest'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_mention_notify', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_notify'));
 
         // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([
@@ -137,6 +143,11 @@ class KanbanWorkspacesController extends ActionController
 
         // Add CSS and JS
         $this->addAssets();
+
+        $mentionDirectory = $workspaceIsAccessible
+            ? $this->workspaceMentionDirectory->getDirectory($activeWorkspace, $this->request)
+            : ['users' => [], 'groups' => []];
+
         $this->configureKanban([
             'pageUid' => $pageUid,
             'workspaceId' => $activeWorkspace,
@@ -145,6 +156,17 @@ class KanbanWorkspacesController extends ActionController
             'selectedDepth' => $selectedDepth,
             'selectedStage' => $selectedStage,
             'beUsers' => $this->getBackendUsersList(),
+            'mentionDirectory' => [
+                'users' => array_map(static fn($item) => $item->toArray(), $mentionDirectory['users']),
+                'groups' => array_map(static fn($item) => $item->toArray(), $mentionDirectory['groups']),
+            ],
+            'rte' => [
+                'editor' => $this->commentRteConfigurationService->getEditorOptions($pageUid),
+            ],
+            'ajaxUrls' => [
+                'mentionSuggest' => (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_suggest'),
+                'mentionNotify' => (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_notify'),
+            ],
             'filters' => [
                 'depth' => [
                     'label' => 'Depth',
@@ -170,7 +192,10 @@ class KanbanWorkspacesController extends ActionController
     {
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
+        $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/RteMentions.css');
+        $this->pageRenderer->addCssFile('EXT:rte_ckeditor/Resources/Public/Css/editor.css');
         $this->pageRenderer->loadJavaScriptModule('@web-vision/kanban-workspaces/App.js');
+        $this->pageRenderer->loadJavaScriptModule('@typo3/rte-ckeditor/ckeditor5.js');
 
         // Load workspaces send-to-stage-form Web Component
         $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');

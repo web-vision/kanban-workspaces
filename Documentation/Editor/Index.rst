@@ -250,6 +250,12 @@ You can assign a backend user to a content element (card) and optionally add a t
 
 For a full description of the flow, email notification, and how to test it, see :doc:`AssignUser`.
 
+@ Mentions in comments
+======================
+
+Comments on the Activity tab and in the Send-to-stage modal use TYPO3 CKEditor 5.
+Type ``@`` to mention workspace users or groups. See :doc:`Mentions` for details.
+
 Getting Help
 ============
 

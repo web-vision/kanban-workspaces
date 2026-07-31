@@ -311,11 +311,11 @@ export class KanbanBoardElement extends LitElement {
     this.api.dispatch({
       action: 'Actions', method: 'sendToSpecificStageExecute',
       data: [{ comments: text, affects: { elements: [{ table: card.table, uid: card.uid, t3ver_oid: card.t3ver_oid }], nextStage: card.stage } }],
-    }).then((result) => {
+    }).then(async (result) => {
       if (result && result.success !== false) {
-        const textarea = this.modalRoot?.querySelector<HTMLTextAreaElement>('#newComment');
-        if (textarea) { textarea.value = ''; }
+        (this.modalRoot?.querySelector('typo3-kanban-preview-modal') as any)?.clearCommentField?.();
         showToast('Comment added', 'success');
+        await this.notifyMentions(text, card);
         return this.api.fetchCardDetails(card).then((details) => {
           this.comments[card.id] = details.comments;
           this.history[card.id] = details.history;
@@ -326,6 +326,37 @@ export class KanbanBoardElement extends LitElement {
       throw new Error((result && result.message) || 'Failed to add comment');
     }).catch((error) => { console.error(error); showToast('Failed to add comment', 'error'); })
       .finally(() => { this.commentPending = false; });
+  }
+
+  private async notifyMentions(commentHtml: string, card: Card): Promise<void> {
+    const url = window.WorkspaceConfig?.ajaxUrls?.mentionNotify
+      || window.TYPO3?.settings?.ajaxUrls?.kanban_workspace_mention_notify;
+    if (!url || !commentHtml.includes('data-mention')) {
+      return;
+    }
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          comment: commentHtml,
+          table: card.table,
+          record_uid: card.uid,
+          workspace_id: window.WorkspaceConfig?.workspaceId || 0,
+          stage_id: card.stage,
+        }),
+      });
+      const payload = await response.json();
+      if (payload?.success && payload.notified > 0) {
+        showToast(`Notified ${payload.notified} mentioned user(s)`, 'success');
+      }
+    } catch (error) {
+      console.warn('Mention notification failed', error);
+    }
   }
 
   // --- Stage transitions -----------------------------------------------------
@@ -451,6 +482,13 @@ export class KanbanBoardElement extends LitElement {
       if (result?.[0]?.result?.success === false) {
         throw new Error(result[0].result.message || 'Stage transition failed');
       }
+
+      // Notify @mentioned users/groups (server expands groups to all members).
+      const mentionCard = cardIds.map((id) => this.getCardById(id)).find(Boolean) || this.previewCard;
+      if (mentionCard && comments.includes('data-mention')) {
+        await this.notifyMentions(comments, mentionCard);
+      }
+
       if (targetStage) {
         this.moveCards(cardIds, targetStage.id);
         Notification.success(TYPO3?.lang?.actionSendToStage || 'Send to stage', `Content moved to ${targetStage.label} and notifications sent`);

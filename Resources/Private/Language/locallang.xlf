@@ -54,11 +54,56 @@
 			<trans-unit id="stage_checklist.stage">
 				<source>Stage</source>
 			</trans-unit>
+			<trans-unit id="stage_checklist.workspace_id">
+				<source>Workspace</source>
+			</trans-unit>
 			<trans-unit id="stage_checklist_items">
 				<source>Checklist items</source>
 			</trans-unit>
 			<trans-unit id="stage_checklist_item">
 				<source>Checklist item</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items_edit">
+				<source>Checklist items (Editing stage)</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items_edit.description">
+				<source>Optional checklist shown when moving cards to the default Editing stage.</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items_publish">
+				<source>Checklist items (Ready to publish)</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items_publish.description">
+				<source>Optional checklist shown when moving cards to the default Ready to publish stage.</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items_execute">
+				<source>Checklist items (Publish / execute)</source>
+			</trans-unit>
+			<trans-unit id="stage_checklist_items_execute.description">
+				<source>Optional checklist shown when moving cards to the default Publish execute stage.</source>
+			</trans-unit>
+			<trans-unit id="checklist_state">
+				<source>Checklist state</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.workspace_id">
+				<source>Workspace</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.table_name">
+				<source>Table</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.record_uid">
+				<source>Record UID</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.stage_id">
+				<source>Stage</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.checklist_item_uid">
+				<source>Checklist item</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.checked">
+				<source>Checked</source>
+			</trans-unit>
+			<trans-unit id="checklist_state.cruser_id">
+				<source>User</source>
 			</trans-unit>
 			<trans-unit id="warning.noCustomStages.title">
 				<source>No Custom Workspace Stages Configured</source>

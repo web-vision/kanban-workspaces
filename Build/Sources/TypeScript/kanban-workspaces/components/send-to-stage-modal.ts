@@ -1,13 +1,19 @@
 import { html, nothing, LitElement, type PropertyValues, type TemplateResult } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import '@typo3/backend/element/icon-element.js';
 import type { Stage } from '@web-vision/kanban-workspaces/types.js';
+
+export interface ChecklistItemView {
+  id: number;
+  title: string;
+  checked?: boolean;
+}
 
 export interface SendToStageContext {
   url: string;
   executeMethod: string;
   cardIds: (string | number)[];
-  targetStage: (Stage & { checklist?: any[] }) | null;
+  targetStage: (Stage & { checklist?: ChecklistItemView[] }) | null;
   sourceStage?: Stage | null;
   isDragDrop: boolean;
 }
@@ -24,6 +30,8 @@ export class KanbanSendToStageModalElement extends LitElement {
   @property({ attribute: false }) context: SendToStageContext | null = null;
   @property({ type: Boolean }) pending = false;
 
+  @state() private checklistState: Record<number, boolean> = {};
+
   protected override createRenderRoot(): HTMLElement {
     return this;
   }
@@ -36,7 +44,19 @@ export class KanbanSendToStageModalElement extends LitElement {
       if (comments) { comments.value = this.formData?.comments?.value || ''; }
       const additional = this.querySelector<HTMLTextAreaElement>('#stageAdditionalRecipients');
       if (additional) { additional.value = this.formData?.additional?.value || ''; }
+      this.seedChecklistState();
     }
+    if (changed.has('context') && this.open) {
+      this.seedChecklistState();
+    }
+  }
+
+  private seedChecklistState(): void {
+    const next: Record<number, boolean> = {};
+    for (const item of this.checklistItems()) {
+      next[item.id] = !!item.checked;
+    }
+    this.checklistState = next;
   }
 
   private emit(type: string, detail: Record<string, unknown> = {}): void {
@@ -53,20 +73,33 @@ export class KanbanSendToStageModalElement extends LitElement {
     const comments = this.querySelector<HTMLTextAreaElement>('#stageComments')?.value || '';
     const additional = this.querySelector<HTMLTextAreaElement>('#stageAdditionalRecipients')?.value || '';
     const recipients = Array.from(this.querySelectorAll<HTMLInputElement>('.t3js-workspace-recipient:checked')).map((cb) => cb.value);
-    this.emit('send-submit', { comments, additional, recipients });
+    const checklist = this.checklistItems().map((item) => ({
+      id: item.id,
+      checked: !!this.checklistState[item.id],
+    }));
+    this.emit('send-submit', { comments, additional, recipients, checklist });
   }
 
-  private checklistItems(): any[] {
+  private checklistItems(): ChecklistItemView[] {
     const raw = this.context?.targetStage?.checklist || [];
     const seen = new Set<string>();
     return raw.filter((item: any) => {
-      const key = String(item.id ?? item.uid ?? item.title ?? '');
-      if (!item.title || seen.has(key)) {
+      const id = Number(item.id ?? item.uid ?? 0);
+      const key = String(id || item.title || '');
+      if (!item.title || id <= 0 || seen.has(key)) {
         return false;
       }
       seen.add(key);
       return true;
-    });
+    }).map((item: any) => ({
+      id: Number(item.id ?? item.uid),
+      title: String(item.title),
+      checked: !!item.checked,
+    }));
+  }
+
+  private onChecklistChange(itemId: number, checked: boolean): void {
+    this.checklistState = { ...this.checklistState, [itemId]: checked };
   }
 
   protected override render(): TemplateResult {
@@ -98,14 +131,20 @@ export class KanbanSendToStageModalElement extends LitElement {
                 </div>` : nothing}
 
               ${checklist.length > 0 ? html`
-                <div class="form-group stage-checklist-section" style="display: block;">
+                <div class="form-group stage-checklist-section stage-checklist-list" style="display: block;">
                   <label class="form-label">Checklist</label>
-                  <ul class="stage-checklist-ul">
-                    ${checklist.map((item: any) => html`
+                  <p class="form-text">Checking items is optional</p>
+                  <ul class="stage-checklist-ul" role="list">
+                    ${checklist.map((item) => html`
                       <li class="stage-checklist-item">
-                        <span class="stage-checklist-item-icon">
-                          <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
-                        </span>${item.title}
+                        <label class="stage-checklist-item-label" for=${`stageChecklist-${item.id}`}>
+                          <input type="checkbox"
+                            class="stage-checklist-checkbox"
+                            id=${`stageChecklist-${item.id}`}
+                            .checked=${!!this.checklistState[item.id]}
+                            @change=${(e: Event) => this.onChecklistChange(item.id, (e.target as HTMLInputElement).checked)}>
+                          <span class="stage-checklist-item-title">${item.title}</span>
+                        </label>
                       </li>`)}
                   </ul>
                 </div>` : nothing}

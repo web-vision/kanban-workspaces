@@ -34,7 +34,7 @@ final class MentionSuggestAjaxController
         }
 
         $suggestions = $this->mentionDirectory->suggest($workspaceId, $query, $request);
-        $items = array_map(static fn($item) => $item->toArray(), $suggestions);
+        $items = array_map(static fn ($item) => $item->toArray(), $suggestions);
 
         return new JsonResponse([
             'success' => true,

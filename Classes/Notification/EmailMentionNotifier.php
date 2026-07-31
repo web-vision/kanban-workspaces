@@ -50,11 +50,11 @@ final class EmailMentionNotifier implements MentionNotifierInterface
             return;
         }
 
-        $tableName = (string)($context['tableName'] ?? '');
-        $recordUid = (int)($context['recordUid'] ?? 0);
-        $workspaceId = (int)($context['workspaceId'] ?? 0);
-        $stageId = (int)($context['stageId'] ?? 0);
-        $commentHtml = (string)($context['commentHtml'] ?? '');
+        $tableName = (string)$context['tableName'];
+        $recordUid = (int)$context['recordUid'];
+        $workspaceId = (int)$context['workspaceId'];
+        $stageId = (int)$context['stageId'];
+        $commentHtml = (string)$context['commentHtml'];
 
         $workspace = BackendUtility::getRecord('sys_workspace', $workspaceId);
         if (!is_array($workspace)) {

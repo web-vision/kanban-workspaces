@@ -8,14 +8,17 @@ import {
   sanitizeCommentHtml,
   type MentionFeedItem,
 } from '@web-vision/kanban-workspaces/mention/MentionFeed.js';
-import type { Card, Stage, StageChecklistItem } from '@web-vision/kanban-workspaces/types.js';
+import type { Card, Stage } from '@web-vision/kanban-workspaces/types.js';
+import type { ChecklistStageGroup } from '@web-vision/kanban-workspaces/data/WorkspaceApi.js';
 
 type PreviewTab = 'comments' | 'activity' | 'history' | 'changes';
 
 /**
  * Card preview modal (Jira-style two-column layout).
  * Data is supplied by the board; user actions are emitted as events
- * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`).
+ * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`,
+ * `checklist-toggle`). Checklist is shown inline on the Comment panel
+ * (after Description, before the comment editor); checks appear in Activity.
  */
 @customElement('typo3-kanban-preview-modal')
 export class KanbanPreviewModalElement extends LitElement {
@@ -25,8 +28,10 @@ export class KanbanPreviewModalElement extends LitElement {
   @property({ attribute: false }) comments: any[] = [];
   @property({ attribute: false }) history: any[] = [];
   @property({ attribute: false }) diffs: any[] = [];
+  @property({ attribute: false }) checklistStages: ChecklistStageGroup[] = [];
   @property({ type: Boolean }) loading = false;
   @property({ type: Boolean }) commentPending = false;
+  @property({ type: Boolean }) checklistPending = false;
 
   @state() private activeTab: PreviewTab = 'comments';
   @state() private detailsOpen = true;
@@ -104,18 +109,10 @@ export class KanbanPreviewModalElement extends LitElement {
     this.emit('preview-add-comment', { text });
   }
 
-  private currentStage(): Stage | undefined {
-    return this.stages.find((s) => s.id == this.card?.stage);
-  }
-
-  private stageLabel(): string {
-    const stage = this.currentStage();
-    return stage ? stage.label : String(this.card?.stage ?? '');
-  }
-
-  private checklistItems(): StageChecklistItem[] {
-    const raw = this.currentStage()?.checklist || [];
-    return Array.isArray(raw) ? raw.filter((item) => item && String(item.title || '').trim() !== '') : [];
+  private stageLabel(stageId?: string | number): string {
+    const id = stageId ?? this.card?.stage;
+    const stage = this.stages.find((s) => s.id == id);
+    return stage ? stage.label : String(id ?? '');
   }
 
   private userComments(): any[] {
@@ -130,9 +127,12 @@ export class KanbanPreviewModalElement extends LitElement {
     if (typeof comment.isUserComment === 'boolean') {
       return comment.isUserComment;
     }
-    // Fallback for stale payloads: stage-move templates are not user comments.
+    // Fallback for stale payloads: stage moves and checklist audits are Activity.
     const content = String(comment.content || '');
-    return !/^Moved from "/.test(content);
+    if (/^Moved from "/.test(content) || /^(Checked|Unchecked):/.test(content)) {
+      return false;
+    }
+    return true;
   }
 
   private collectWatchers(): { users: MentionFeedItem[]; groups: MentionFeedItem[] } {
@@ -165,22 +165,35 @@ export class KanbanPreviewModalElement extends LitElement {
   }
 
   private renderChecklist(): TemplateResult | typeof nothing {
-    const items = this.checklistItems();
-    if (items.length === 0) {
+    const hasStages = this.checklistStages.some((group) => group.items.length > 0);
+    if (!hasStages) {
       return nothing;
     }
     return html`
       <section class="preview-checklist" aria-label="Checklist">
-        <h5 class="preview-section-title">Checklist</h5>
-        <ul class="stage-checklist-ul preview-checklist-list">
-          ${items.map((item) => html`
-            <li class="stage-checklist-item">
-              <span class="stage-checklist-item-icon">
-                <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
-              </span>
-              <span class="stage-checklist-item-title">${item.title}</span>
-            </li>`)}
-        </ul>
+        ${this.checklistStages.map((group) => html`
+          <div class="preview-checklist-group">
+            <h5 class="preview-section-title">${this.stageLabel(group.stage_id)}</h5>
+            <p class="preview-checklist-hint">Checking items is optional</p>
+            <div class="preview-description-body" role="list">
+              ${group.items.map((item) => html`
+                <div class="preview-description-field" role="listitem">
+                  <label class="preview-checklist-item-label" for=${`previewChecklist-${group.stage_id}-${item.id}`}>
+                    <input type="checkbox"
+                      class="stage-checklist-checkbox"
+                      id=${`previewChecklist-${group.stage_id}-${item.id}`}
+                      .checked=${!!item.checked}
+                      ?disabled=${this.checklistPending}
+                      @change=${(e: Event) => this.emit('checklist-toggle', {
+                        stageId: group.stage_id,
+                        itemUid: item.id,
+                        checked: (e.target as HTMLInputElement).checked,
+                      })}>
+                    <span class="preview-description-field-content">${item.title}</span>
+                  </label>
+                </div>`)}
+            </div>
+          </div>`)}
       </section>`;
   }
 
@@ -444,7 +457,6 @@ export class KanbanPreviewModalElement extends LitElement {
                   <h4 class="modal-title preview-issue-title" id="modalTitle">${this.card.title}</h4>
                 </header>
 
-                ${this.renderChecklist()}
                 ${this.renderPillTabs()}
 
                 <div class="preview-main-body modal-body">
@@ -452,6 +464,7 @@ export class KanbanPreviewModalElement extends LitElement {
                     <div class="tab-content preview-tab-content">
                       <div class="tab-pane ${this.activeTab === 'comments' ? 'active' : ''}" role="tabpanel">
                         ${this.renderDescription()}
+                        ${this.renderChecklist()}
                         ${this.renderCommentForm()}
                         <div class="comments-container">${this.renderUserCommentList()}</div>
                       </div>

@@ -15,7 +15,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { html, nothing, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import '@typo3/backend/element/icon-element.js';
 import { destroyCommentRte, mountCommentRte } from '@web-vision/kanban-workspaces/rte/CommentRte.js';
 import { extractMentionsFromHtml } from '@web-vision/kanban-workspaces/mention/MentionFeed.js';
@@ -31,6 +31,7 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
         this.formData = null;
         this.context = null;
         this.pending = false;
+        this.checklistState = {};
         this.commentRte = null;
     }
     createRenderRoot() {
@@ -42,11 +43,22 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
             if (additional) {
                 additional.value = this.formData?.additional?.value || '';
             }
+            this.seedChecklistState();
             void this.ensureCommentRte(this.formData?.comments?.value || '');
+        }
+        if (changed.has('context') && this.open) {
+            this.seedChecklistState();
         }
         if (changed.has('open') && !this.open) {
             this.teardownCommentRte();
         }
+    }
+    seedChecklistState() {
+        const next = {};
+        for (const item of this.checklistItems()) {
+            next[item.id] = !!item.checked;
+        }
+        this.checklistState = next;
     }
     async ensureCommentRte(initialHtml) {
         this.teardownCommentRte();
@@ -87,16 +99,7 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
             .map((line) => line.trim())
             .filter(Boolean);
         const mergedEmails = Array.from(new Set([...existingAdditional, ...emails]));
-        // Only put emails into additional when the user was not already a checkbox recipient.
-        const checkboxEmails = new Set();
-        this.querySelectorAll('.t3js-workspace-recipient').forEach((cb) => {
-            // label often contains email; we rely on mention directory emails for additional only.
-            if (recipientSet.has(cb.value)) {
-                checkboxEmails.add(cb.value);
-            }
-        });
         const additionalOnly = mergedEmails.filter((email) => {
-            // If this email belongs to a checked recipient uid we already notify via core path.
             const matchedUser = (window.WorkspaceConfig?.mentionDirectory?.users || [])
                 .find((u) => u.email === email);
             if (matchedUser && recipientSet.has(String(matchedUser.uid))) {
@@ -109,24 +112,37 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
             ...Array.from(recipientSet),
             ...additionalOnly,
         ];
+        const checklist = this.checklistItems().map((item) => ({
+            id: item.id,
+            checked: !!this.checklistState[item.id],
+        }));
         this.emit('send-submit', {
             comments,
             additional,
             recipients: Array.from(recipientSet),
             willNotifyCount: willNotify.length,
+            checklist,
         });
     }
     checklistItems() {
         const raw = this.context?.targetStage?.checklist || [];
         const seen = new Set();
         return raw.filter((item) => {
-            const key = String(item.id ?? item.uid ?? item.title ?? '');
-            if (!item.title || seen.has(key)) {
+            const id = Number(item.id ?? item.uid ?? 0);
+            const key = String(id || item.title || '');
+            if (!item.title || id <= 0 || seen.has(key)) {
                 return false;
             }
             seen.add(key);
             return true;
-        });
+        }).map((item) => ({
+            id: Number(item.id ?? item.uid),
+            title: String(item.title),
+            checked: !!item.checked,
+        }));
+    }
+    onChecklistChange(itemId, checked) {
+        this.checklistState = { ...this.checklistState, [itemId]: checked };
     }
     render() {
         const formData = this.formData || {};
@@ -156,14 +172,20 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
                 </div>` : nothing}
 
               ${checklist.length > 0 ? html `
-                <div class="form-group stage-checklist-section" style="display: block;">
+                <div class="form-group stage-checklist-section stage-checklist-list" style="display: block;">
                   <label class="form-label">Checklist</label>
-                  <ul class="stage-checklist-ul">
+                  <p class="form-text">Checking items is optional</p>
+                  <ul class="stage-checklist-ul" role="list">
                     ${checklist.map((item) => html `
                       <li class="stage-checklist-item">
-                        <span class="stage-checklist-item-icon">
-                          <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
-                        </span>${item.title}
+                        <label class="stage-checklist-item-label" for=${`stageChecklist-${item.id}`}>
+                          <input type="checkbox"
+                            class="stage-checklist-checkbox"
+                            id=${`stageChecklist-${item.id}`}
+                            .checked=${!!this.checklistState[item.id]}
+                            @change=${(e) => this.onChecklistChange(item.id, e.target.checked)}>
+                          <span class="stage-checklist-item-title">${item.title}</span>
+                        </label>
                       </li>`)}
                   </ul>
                 </div>` : nothing}
@@ -221,6 +243,9 @@ __decorate([
 __decorate([
     property({ type: Boolean })
 ], KanbanSendToStageModalElement.prototype, "pending", void 0);
+__decorate([
+    state()
+], KanbanSendToStageModalElement.prototype, "checklistState", void 0);
 KanbanSendToStageModalElement = __decorate([
     customElement('typo3-kanban-send-to-stage-modal')
 ], KanbanSendToStageModalElement);

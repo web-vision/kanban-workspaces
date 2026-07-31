@@ -14,6 +14,7 @@ import '@web-vision/kanban-workspaces/components/preview-modal.js';
 import '@web-vision/kanban-workspaces/components/send-to-stage-modal.js';
 import '@web-vision/kanban-workspaces/components/assign-modal.js';
 import type { SendToStageContext } from '@web-vision/kanban-workspaces/components/send-to-stage-modal.js';
+import type { ChecklistStageGroup } from '@web-vision/kanban-workspaces/data/WorkspaceApi.js';
 import type { Card, Stage, FilterConfig, CardUser } from '@web-vision/kanban-workspaces/types.js';
 
 declare const TYPO3: any;
@@ -39,6 +40,8 @@ export class KanbanBoardElement extends LitElement {
   @state() private previewCard: Card | null = null;
   @state() private previewLoading = false;
   @state() private commentPending = false;
+  @state() private checklistPending = false;
+  @state() private checklistStages: ChecklistStageGroup[] = [];
 
   // Send-to-stage modal state
   @state() private sendOpen = false;
@@ -280,16 +283,77 @@ export class KanbanBoardElement extends LitElement {
     this.previewCard = card;
     this.previewOpen = true;
     this.previewLoading = true;
+    this.checklistStages = [];
     (this.modalRoot?.querySelector('typo3-kanban-preview-modal') as any)?.resetTab?.();
     document.body.style.overflow = 'hidden';
-    this.api.fetchCardDetails(card)
-      .then((details) => {
+    Promise.all([
+      this.api.fetchCardDetails(card),
+      this.loadChecklistForCard(card),
+    ])
+      .then(([details]) => {
         this.comments[card.id] = details.comments;
         this.history[card.id] = details.history;
         this.diffs[card.id] = details.diff;
       })
       .catch((error) => console.error('Failed to load card details:', error))
       .finally(() => { this.previewLoading = false; this.requestUpdate(); });
+  }
+
+  private resolveWorkspaceId(card: Card): number {
+    return Number((window as any).WorkspaceConfig?.workspaceId || card.t3ver_wsid || 0);
+  }
+
+  private checklistCardPayload(card: Card, extras: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      table: card.table,
+      record_uid: Number(card.uid),
+      workspace_id: this.resolveWorkspaceId(card),
+      ...extras,
+    };
+  }
+
+  private async loadChecklistForCard(card: Card): Promise<void> {
+    try {
+      const response = await this.api.fetchChecklist(this.checklistCardPayload(card, {
+        stage_id: Number(card.stage),
+        include_all_stages: true,
+        stage_ids: this.stages.map((stage) => Number(stage.id)),
+      }));
+      if (response?.success) {
+        this.checklistStages = response.stages?.length
+          ? response.stages
+          : [{ stage_id: Number(card.stage), items: response.items || [] }];
+      }
+    } catch (error) {
+      console.error('Failed to load checklist:', error);
+    }
+  }
+
+  private async enrichTargetStageChecklist(targetStage: Stage | null, card: Card | null): Promise<Stage | null> {
+    if (!targetStage || !card) {
+      return targetStage;
+    }
+    const templates = (targetStage as Stage & { checklist?: any[] }).checklist || [];
+    if (!templates.length) {
+      return targetStage;
+    }
+    try {
+      const response = await this.api.fetchChecklist(this.checklistCardPayload(card, {
+        stage_id: Number(targetStage.id),
+      }));
+      const stateById = new Map((response.items || []).map((item) => [item.id, item.checked]));
+      return {
+        ...targetStage,
+        checklist: templates.map((item: any) => ({
+          id: Number(item.id),
+          title: String(item.title),
+          checked: stateById.get(Number(item.id)) ?? !!item.checked,
+        })),
+      };
+    } catch (error) {
+      console.error('Failed to prefill checklist state:', error);
+      return targetStage;
+    }
   }
 
   private closePreviewModal(): void {
@@ -373,9 +437,10 @@ export class KanbanBoardElement extends LitElement {
       const response = await this.api.dispatch({ action: 'Actions', method, data });
       const formData = response?.[0]?.result;
       if (!formData || formData.success === false) { throw new Error('Invalid stage form response'); }
+      const enrichedTarget = await this.enrichTargetStageChecklist(targetStage, card);
       this.sendFormData = formData;
       this.sendContext = {
-        url: '', executeMethod, cardIds, targetStage,
+        url: '', executeMethod, cardIds, targetStage: enrichedTarget as SendToStageContext['targetStage'],
         isDragDrop: false,
       };
       this.sendOpen = true;
@@ -404,12 +469,14 @@ export class KanbanBoardElement extends LitElement {
       });
       const formData = response?.[0]?.result;
       if (!formData || formData.success === false) { throw new Error('Invalid stage form response'); }
+      const primaryCard = this.getCardById(cardIds[0]);
+      const enrichedTarget = await this.enrichTargetStageChecklist(targetStage, primaryCard || null);
       this.sendFormData = formData;
       this.sendContext = {
         url: '',
         executeMethod: 'sendToSpecificStageExecute',
         cardIds,
-        targetStage,
+        targetStage: enrichedTarget as SendToStageContext['targetStage'],
         sourceStage,
         isDragDrop: true,
       };
@@ -453,7 +520,12 @@ export class KanbanBoardElement extends LitElement {
     this.openSpecificStageWindow(targetStage, cardIds, sourceStage);
   }
 
-  private async handleSendSubmit(comments: string, additional: string, recipients: string[]): Promise<void> {
+  private async handleSendSubmit(
+    comments: string,
+    additional: string,
+    recipients: string[],
+    checklist: Array<{ id: number; checked: boolean }> = [],
+  ): Promise<void> {
     if (!this.sendContext || !this.sendFormData) { return; }
     const { executeMethod, cardIds, targetStage } = this.sendContext;
     this.sendPending = true;
@@ -482,13 +554,15 @@ export class KanbanBoardElement extends LitElement {
       if (result?.[0]?.result?.success === false) {
         throw new Error(result[0].result.message || 'Stage transition failed');
       }
-
       // Notify @mentioned users/groups (server expands groups to all members).
       const mentionCard = cardIds.map((id) => this.getCardById(id)).find(Boolean) || this.previewCard;
       if (mentionCard && comments.includes('data-mention')) {
         await this.notifyMentions(comments, mentionCard);
       }
 
+      if (targetStage && checklist.length > 0) {
+        await this.persistChecklistSnapshot(cardIds, Number(targetStage.id), checklist);
+      }
       if (targetStage) {
         this.moveCards(cardIds, targetStage.id);
         Notification.success(TYPO3?.lang?.actionSendToStage || 'Send to stage', `Content moved to ${targetStage.label} and notifications sent`);
@@ -504,6 +578,66 @@ export class KanbanBoardElement extends LitElement {
       showToast('Failed to execute: ' + (error?.message || error), 'error');
     } finally {
       this.sendPending = false;
+    }
+  }
+
+  private async persistChecklistSnapshot(
+    cardIds: (string | number)[],
+    stageId: number,
+    checklist: Array<{ id: number; checked: boolean }>,
+  ): Promise<void> {
+    for (const id of cardIds) {
+      const card = this.getCardById(id);
+      if (!card?.table || !card.uid) {
+        continue;
+      }
+      try {
+        await this.api.saveChecklist(this.checklistCardPayload(card, {
+          stage_id: stageId,
+          items: checklist,
+        }));
+      } catch (error) {
+        console.error('Failed to persist checklist snapshot:', error);
+      }
+    }
+  }
+
+  private async handleChecklistToggle(stageId: number, itemUid: number, checked: boolean): Promise<void> {
+    const card = this.previewCard;
+    if (!card?.table || !card.uid) {
+      return;
+    }
+    this.checklistPending = true;
+    try {
+      const response = await this.api.toggleChecklistItem(this.checklistCardPayload(card, {
+        stage_id: stageId,
+        checklist_item_uid: itemUid,
+        checked,
+      }));
+      if (response?.success) {
+        this.checklistStages = this.checklistStages.map((group) => (
+          group.stage_id === stageId
+            ? {
+                ...group,
+                items: (response.items && response.items.length > 0)
+                  ? response.items
+                  : group.items.map((item) => (item.id === itemUid ? { ...item, checked } : item)),
+              }
+            : group
+        ));
+        // Refresh Activity (stage-change comments) so checklist entries appear there.
+        const details = await this.api.fetchCardDetails(card);
+        this.comments[card.id] = details.comments;
+        this.history[card.id] = details.history;
+        this.diffs[card.id] = details.diff;
+        this.requestUpdate();
+      }
+    } catch (error: any) {
+      showToast('Failed to update checklist: ' + (error?.message || error), 'error');
+      await this.loadChecklistForCard(card);
+      this.requestUpdate();
+    } finally {
+      this.checklistPending = false;
     }
   }
 
@@ -687,12 +821,15 @@ export class KanbanBoardElement extends LitElement {
         .comments=${this.previewCard ? (this.comments[this.previewCard.id] || []) : []}
         .history=${this.previewCard ? (this.history[this.previewCard.id] || []) : []}
         .diffs=${this.previewCard ? (this.diffs[this.previewCard.id] || []) : []}
+        .checklistStages=${this.checklistStages}
         ?loading=${this.previewLoading}
         ?commentPending=${this.commentPending}
+        ?checklistPending=${this.checklistPending}
         @preview-close=${() => this.closePreviewModal()}
         @preview-add-comment=${(e: CustomEvent) => this.handleAddComment(e.detail.text)}
         @preview-revert=${() => this.handleRevertStage()}
         @preview-next=${() => this.handleNextStage()}
+        @checklist-toggle=${(e: CustomEvent) => this.handleChecklistToggle(Number(e.detail.stageId), Number(e.detail.itemUid), !!e.detail.checked)}
         @toast=${(e: CustomEvent) => showToast(e.detail.message, e.detail.type)}></typo3-kanban-preview-modal>
 
       <typo3-kanban-send-to-stage-modal
@@ -700,7 +837,7 @@ export class KanbanBoardElement extends LitElement {
         .formData=${this.sendFormData}
         .context=${this.sendContext}
         ?pending=${this.sendPending}
-        @send-submit=${(e: CustomEvent) => this.handleSendSubmit(e.detail.comments, e.detail.additional, e.detail.recipients)}
+        @send-submit=${(e: CustomEvent) => this.handleSendSubmit(e.detail.comments, e.detail.additional, e.detail.recipients, e.detail.checklist || [])}
         @send-cancel=${() => this.handleSendCancel()}></typo3-kanban-send-to-stage-modal>
 
       <typo3-kanban-assign-modal

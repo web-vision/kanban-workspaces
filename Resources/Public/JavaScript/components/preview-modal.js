@@ -23,7 +23,9 @@ import { extractWatcherMentionsFromHtml, sanitizeCommentHtml, } from '@web-visio
 /**
  * Card preview modal (Jira-style two-column layout).
  * Data is supplied by the board; user actions are emitted as events
- * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`).
+ * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`,
+ * `checklist-toggle`). Checklist is shown inline on the Comment panel
+ * (after Description, before the comment editor); checks appear in Activity.
  */
 let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitElement {
     constructor() {
@@ -34,8 +36,10 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
         this.comments = [];
         this.history = [];
         this.diffs = [];
+        this.checklistStages = [];
         this.loading = false;
         this.commentPending = false;
+        this.checklistPending = false;
         this.activeTab = 'comments';
         this.detailsOpen = true;
         this.watchersOpen = true;
@@ -102,16 +106,10 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
         }
         this.emit('preview-add-comment', { text });
     }
-    currentStage() {
-        return this.stages.find((s) => s.id == this.card?.stage);
-    }
-    stageLabel() {
-        const stage = this.currentStage();
-        return stage ? stage.label : String(this.card?.stage ?? '');
-    }
-    checklistItems() {
-        const raw = this.currentStage()?.checklist || [];
-        return Array.isArray(raw) ? raw.filter((item) => item && String(item.title || '').trim() !== '') : [];
+    stageLabel(stageId) {
+        const id = stageId ?? this.card?.stage;
+        const stage = this.stages.find((s) => s.id == id);
+        return stage ? stage.label : String(id ?? '');
     }
     userComments() {
         return (this.comments || []).filter((comment) => this.isUserComment(comment));
@@ -123,9 +121,12 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
         if (typeof comment.isUserComment === 'boolean') {
             return comment.isUserComment;
         }
-        // Fallback for stale payloads: stage-move templates are not user comments.
+        // Fallback for stale payloads: stage moves and checklist audits are Activity.
         const content = String(comment.content || '');
-        return !/^Moved from "/.test(content);
+        if (/^Moved from "/.test(content) || /^(Checked|Unchecked):/.test(content)) {
+            return false;
+        }
+        return true;
     }
     collectWatchers() {
         const users = new Map();
@@ -155,22 +156,35 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
       </div>`;
     }
     renderChecklist() {
-        const items = this.checklistItems();
-        if (items.length === 0) {
+        const hasStages = this.checklistStages.some((group) => group.items.length > 0);
+        if (!hasStages) {
             return nothing;
         }
         return html `
       <section class="preview-checklist" aria-label="Checklist">
-        <h5 class="preview-section-title">Checklist</h5>
-        <ul class="stage-checklist-ul preview-checklist-list">
-          ${items.map((item) => html `
-            <li class="stage-checklist-item">
-              <span class="stage-checklist-item-icon">
-                <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
-              </span>
-              <span class="stage-checklist-item-title">${item.title}</span>
-            </li>`)}
-        </ul>
+        ${this.checklistStages.map((group) => html `
+          <div class="preview-checklist-group">
+            <h5 class="preview-section-title">${this.stageLabel(group.stage_id)}</h5>
+            <p class="preview-checklist-hint">Checking items is optional</p>
+            <div class="preview-description-body" role="list">
+              ${group.items.map((item) => html `
+                <div class="preview-description-field" role="listitem">
+                  <label class="preview-checklist-item-label" for=${`previewChecklist-${group.stage_id}-${item.id}`}>
+                    <input type="checkbox"
+                      class="stage-checklist-checkbox"
+                      id=${`previewChecklist-${group.stage_id}-${item.id}`}
+                      .checked=${!!item.checked}
+                      ?disabled=${this.checklistPending}
+                      @change=${(e) => this.emit('checklist-toggle', {
+            stageId: group.stage_id,
+            itemUid: item.id,
+            checked: e.target.checked,
+        })}>
+                    <span class="preview-description-field-content">${item.title}</span>
+                  </label>
+                </div>`)}
+            </div>
+          </div>`)}
       </section>`;
     }
     renderPillTabs() {
@@ -416,7 +430,6 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
                   <h4 class="modal-title preview-issue-title" id="modalTitle">${this.card.title}</h4>
                 </header>
 
-                ${this.renderChecklist()}
                 ${this.renderPillTabs()}
 
                 <div class="preview-main-body modal-body">
@@ -424,6 +437,7 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
                     <div class="tab-content preview-tab-content">
                       <div class="tab-pane ${this.activeTab === 'comments' ? 'active' : ''}" role="tabpanel">
                         ${this.renderDescription()}
+                        ${this.renderChecklist()}
                         ${this.renderCommentForm()}
                         <div class="comments-container">${this.renderUserCommentList()}</div>
                       </div>
@@ -476,11 +490,17 @@ __decorate([
     property({ attribute: false })
 ], KanbanPreviewModalElement.prototype, "diffs", void 0);
 __decorate([
+    property({ attribute: false })
+], KanbanPreviewModalElement.prototype, "checklistStages", void 0);
+__decorate([
     property({ type: Boolean })
 ], KanbanPreviewModalElement.prototype, "loading", void 0);
 __decorate([
     property({ type: Boolean })
 ], KanbanPreviewModalElement.prototype, "commentPending", void 0);
+__decorate([
+    property({ type: Boolean })
+], KanbanPreviewModalElement.prototype, "checklistPending", void 0);
 __decorate([
     state()
 ], KanbanPreviewModalElement.prototype, "activeTab", void 0);

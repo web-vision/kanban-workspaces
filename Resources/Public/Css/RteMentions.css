@@ -1,0 +1,20 @@
+/* Mention chips inside CKEditor content area */
+.mention {
+  background-color: color-mix(in srgb, var(--typo3-component-primary-color, #0078e6) 15%, transparent);
+  color: var(--typo3-component-primary-color, #0078e6);
+  border-radius: 0.2rem;
+  padding: 0 0.15rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/*
+ * Mention autocomplete balloon is rendered on document.body (outside the editor).
+ * Kanban modals use z-index 2000; CKEditor balloons default lower (~999) and were
+ * opening invisibly behind the modal.
+ */
+.ck-body-wrapper,
+.ck.ck-balloon-panel,
+.ck.ck-balloon-panel.ck-balloon-panel_visible {
+  z-index: 10050 !important;
+}

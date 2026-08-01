@@ -58,6 +58,7 @@ You can move items between stages, filter by depth/language/stage, search, and u
    Administrator/Index
    Editor/Index
    Editor/AssignUser
+   Editor/Mentions
    Configuration/Index
    Developer/Index
    KnownProblems/Index

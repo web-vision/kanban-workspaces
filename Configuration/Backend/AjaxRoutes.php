@@ -11,4 +11,29 @@ return [
         'target' => \WebVision\KanbanWorkspaces\Controller\AssignAjaxController::class . '::assignAction',
         'inheritAccessFromModule' => 'web_kanbanworkspaces',
     ],
+    'kanban_workspace_mention_suggest' => [
+        'path' => '/kanban-workspace/mention-suggest',
+        'target' => \WebVision\KanbanWorkspaces\Controller\MentionSuggestAjaxController::class . '::suggestAction',
+        'inheritAccessFromModule' => 'web_kanbanworkspaces',
+    ],
+    'kanban_workspace_mention_notify' => [
+        'path' => '/kanban-workspace/mention-notify',
+        'target' => \WebVision\KanbanWorkspaces\Controller\MentionNotifyAjaxController::class . '::notifyAction',
+        'inheritAccessFromModule' => 'web_kanbanworkspaces',
+    ],
+    'kanban_workspace_checklist_get' => [
+        'path' => '/kanban-workspace/checklist/get',
+        'target' => \WebVision\KanbanWorkspaces\Controller\ChecklistAjaxController::class . '::getAction',
+        'inheritAccessFromModule' => 'web_kanbanworkspaces',
+    ],
+    'kanban_workspace_checklist_save' => [
+        'path' => '/kanban-workspace/checklist/save',
+        'target' => \WebVision\KanbanWorkspaces\Controller\ChecklistAjaxController::class . '::saveAction',
+        'inheritAccessFromModule' => 'web_kanbanworkspaces',
+    ],
+    'kanban_workspace_checklist_toggle' => [
+        'path' => '/kanban-workspace/checklist/toggle',
+        'target' => \WebVision\KanbanWorkspaces\Controller\ChecklistAjaxController::class . '::toggleAction',
+        'inheritAccessFromModule' => 'web_kanbanworkspaces',
+    ],
 ];

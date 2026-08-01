@@ -12,7 +12,6 @@ use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Tree\View\PageTreeView;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
-use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Imaging\IconSize;
@@ -23,6 +22,9 @@ use TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository;
 use TYPO3\CMS\Workspaces\Service\StagesService;
 use TYPO3\CMS\Workspaces\Service\WorkspaceService;
 use WebVision\KanbanWorkspaces\Configuration\EmConfiguration;
+use WebVision\KanbanWorkspaces\Mention\CommentRteConfigurationService;
+use WebVision\KanbanWorkspaces\Mention\WorkspaceMentionDirectory;
+use WebVision\KanbanWorkspaces\Service\ChecklistTemplateService;
 
 /**
  * Backend module controller for Kanban Workspaces - TYPO3 v13 compatible
@@ -44,6 +46,9 @@ class KanbanWorkspacesController extends ActionController
         protected readonly TranslationConfigurationProvider $translationConfigurationProvider,
         protected readonly ConnectionPool $connectionPool,
         protected readonly UriBuilder $backendUriBuilder,
+        protected readonly CommentRteConfigurationService $commentRteConfigurationService,
+        protected readonly WorkspaceMentionDirectory $workspaceMentionDirectory,
+        protected readonly ChecklistTemplateService $checklistTemplateService,
     ) {
     }
 
@@ -73,10 +78,11 @@ class KanbanWorkspacesController extends ActionController
         // Build stage config. If disabling default stages, include only custom stages (uid >= 1).
         $order = 0;
         foreach ($stages as $stage) {
-            $checklist = $this->getChecklistForStage((int)$stage->uid);
+            $stageUid = (int)$stage->uid;
+            $checklist = $this->checklistTemplateService->getChecklistForStage($stageUid, $activeWorkspace);
             $stageConfig[] = [
                 'id' => $stage->uid,
-                'label' => $this->stagesService->getStageTitle((int)$stage->uid),
+                'label' => $this->stagesService->getStageTitle($stageUid),
                 'color' => '#FF5733',
                 'allowEdit' => $stage->isEditStage,
                 'allowDelete' => $stage->isAllowed,
@@ -115,6 +121,15 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$this->backendUriBuilder->buildUriFromRoute('web_layout'));
         $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_mention_suggest', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_suggest'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_mention_notify', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_notify'));
+        foreach (['get', 'save', 'toggle'] as $checklistAction) {
+            $this->pageRenderer->addInlineSetting(
+                'ajaxUrls',
+                'kanban_workspace_checklist_' . $checklistAction,
+                (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_checklist_' . $checklistAction)
+            );
+        }
 
         // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([
@@ -133,10 +148,17 @@ class KanbanWorkspacesController extends ActionController
             'labels.description' => 'Description',
             'labels.assignee' => 'Assignee (Backend user UID)',
             'labels.selectUser' => '-- Select user --',
+            'labels.checklist' => 'Checklist',
+            'labels.checklistOptional' => 'Checking items is optional',
         ]);
 
         // Add CSS and JS
         $this->addAssets();
+
+        $mentionDirectory = $workspaceIsAccessible
+            ? $this->workspaceMentionDirectory->getDirectory($activeWorkspace, $this->request)
+            : ['users' => [], 'groups' => []];
+
         $this->configureKanban([
             'pageUid' => $pageUid,
             'workspaceId' => $activeWorkspace,
@@ -145,6 +167,17 @@ class KanbanWorkspacesController extends ActionController
             'selectedDepth' => $selectedDepth,
             'selectedStage' => $selectedStage,
             'beUsers' => $this->getBackendUsersList(),
+            'mentionDirectory' => [
+                'users' => array_map(static fn ($item) => $item->toArray(), $mentionDirectory['users']),
+                'groups' => array_map(static fn ($item) => $item->toArray(), $mentionDirectory['groups']),
+            ],
+            'rte' => [
+                'editor' => $this->commentRteConfigurationService->getEditorOptions($pageUid),
+            ],
+            'ajaxUrls' => [
+                'mentionSuggest' => (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_suggest'),
+                'mentionNotify' => (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_mention_notify'),
+            ],
             'filters' => [
                 'depth' => [
                     'label' => 'Depth',
@@ -170,7 +203,10 @@ class KanbanWorkspacesController extends ActionController
     {
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Styles.css');
         $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/Fontawesome.min.css');
+        $this->pageRenderer->addCssFile('EXT:kanban_workspaces/Resources/Public/Css/RteMentions.css');
+        $this->pageRenderer->addCssFile('EXT:rte_ckeditor/Resources/Public/Css/editor.css');
         $this->pageRenderer->loadJavaScriptModule('@web-vision/kanban-workspaces/App.js');
+        $this->pageRenderer->loadJavaScriptModule('@typo3/rte-ckeditor/ckeditor5.js');
 
         // Load workspaces send-to-stage-form Web Component
         $this->pageRenderer->loadJavaScriptModule('@typo3/workspaces/renderable/send-to-stage-form.js');
@@ -185,42 +221,6 @@ class KanbanWorkspacesController extends ActionController
     {
         $inlineScript = 'window.WorkspaceConfig = ' . json_encode($stageConfig) . ';';
         $this->pageRenderer->addJsFooterInlineCode('kanban-config', $inlineScript, true, true, true);
-    }
-
-    /**
-     * Get checklist items for a workspace stage (only custom stages with uid > 0).
-     *
-     * @return array<int, array{id: int, title: string}>
-     */
-    protected function getChecklistForStage(int $stageUid): array
-    {
-        if ($stageUid < 1) {
-            return [];
-        }
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tx_kanbanworkspaces_stage_checklist');
-        $result = $queryBuilder
-            ->select('uid', 'title')
-            ->from('tx_kanbanworkspaces_stage_checklist')
-            ->where(
-                $queryBuilder->expr()->eq('stage', $queryBuilder->createNamedParameter($stageUid, Connection::PARAM_INT)),
-                $queryBuilder->expr()->eq('deleted', 0)
-            )
-            ->orderBy('sorting', 'ASC')
-            ->executeQuery();
-        $checklistByUid = [];
-        $seenTitles = [];
-        while ($row = $result->fetchAssociative()) {
-            $uid = (int)$row['uid'];
-            $title = (string)($row['title'] ?? '');
-            if ($title !== '' && !in_array($title, $seenTitles, true)) {
-                $seenTitles[] = $title;
-                $checklistByUid[$uid] = [
-                    'id' => $uid,
-                    'title' => $title,
-                ];
-            }
-        }
-        return array_values($checklistByUid);
     }
 
     /**

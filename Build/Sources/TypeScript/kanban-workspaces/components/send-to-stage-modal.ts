@@ -1,13 +1,21 @@
 import { html, nothing, LitElement, type PropertyValues, type TemplateResult } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import '@typo3/backend/element/icon-element.js';
+import { destroyCommentRte, mountCommentRte, type CommentRteHandle } from '@web-vision/kanban-workspaces/rte/CommentRte.js';
+import { extractMentionsFromHtml } from '@web-vision/kanban-workspaces/mention/MentionFeed.js';
 import type { Stage } from '@web-vision/kanban-workspaces/types.js';
+
+export interface ChecklistItemView {
+  id: number;
+  title: string;
+  checked?: boolean;
+}
 
 export interface SendToStageContext {
   url: string;
   executeMethod: string;
   cardIds: (string | number)[];
-  targetStage: (Stage & { checklist?: any[] }) | null;
+  targetStage: (Stage & { checklist?: ChecklistItemView[] }) | null;
   sourceStage?: Stage | null;
   isDragDrop: boolean;
 }
@@ -24,19 +32,49 @@ export class KanbanSendToStageModalElement extends LitElement {
   @property({ attribute: false }) context: SendToStageContext | null = null;
   @property({ type: Boolean }) pending = false;
 
+  @state() private checklistState: Record<number, boolean> = {};
+  private commentRte: CommentRteHandle | null = null;
+
   protected override createRenderRoot(): HTMLElement {
     return this;
   }
 
-  // Prefill the (uncontrolled) textareas once when the modal opens, so a later
-  // re-render (e.g. the pending flag toggling) does not wipe user input.
   protected override updated(changed: PropertyValues): void {
     if (changed.has('open') && this.open) {
-      const comments = this.querySelector<HTMLTextAreaElement>('#stageComments');
-      if (comments) { comments.value = this.formData?.comments?.value || ''; }
       const additional = this.querySelector<HTMLTextAreaElement>('#stageAdditionalRecipients');
-      if (additional) { additional.value = this.formData?.additional?.value || ''; }
+      if (additional) {
+        additional.value = this.formData?.additional?.value || '';
+      }
+      this.seedChecklistState();
+      void this.ensureCommentRte(this.formData?.comments?.value || '');
     }
+    if (changed.has('context') && this.open) {
+      this.seedChecklistState();
+    }
+    if (changed.has('open') && !this.open) {
+      this.teardownCommentRte();
+    }
+  }
+
+  private seedChecklistState(): void {
+    const next: Record<number, boolean> = {};
+    for (const item of this.checklistItems()) {
+      next[item.id] = !!item.checked;
+    }
+    this.checklistState = next;
+  }
+
+  private async ensureCommentRte(initialHtml: string): Promise<void> {
+    this.teardownCommentRte();
+    await this.updateComplete;
+    requestAnimationFrame(async () => {
+      this.commentRte = await mountCommentRte('stageComments', initialHtml);
+    });
+  }
+
+  private teardownCommentRte(): void {
+    destroyCommentRte('stageComments');
+    this.commentRte = null;
   }
 
   private emit(type: string, detail: Record<string, unknown> = {}): void {
@@ -50,23 +88,78 @@ export class KanbanSendToStageModalElement extends LitElement {
   }
 
   private submit(): void {
-    const comments = this.querySelector<HTMLTextAreaElement>('#stageComments')?.value || '';
-    const additional = this.querySelector<HTMLTextAreaElement>('#stageAdditionalRecipients')?.value || '';
-    const recipients = Array.from(this.querySelectorAll<HTMLInputElement>('.t3js-workspace-recipient:checked')).map((cb) => cb.value);
-    this.emit('send-submit', { comments, additional, recipients });
+    const comments = this.commentRte?.getData()
+      || this.querySelector<HTMLTextAreaElement>('#stageComments')?.value
+      || '';
+    let additional = this.querySelector<HTMLTextAreaElement>('#stageAdditionalRecipients')?.value || '';
+    const recipients = Array.from(
+      this.querySelectorAll<HTMLInputElement>('.t3js-workspace-recipient:checked'),
+    ).map((cb) => cb.value);
+
+    // Auto-check recipients / append emails from @mentions.
+    const { userIds, emails } = extractMentionsFromHtml(comments);
+    const recipientSet = new Set(recipients);
+    this.querySelectorAll<HTMLInputElement>('.t3js-workspace-recipient').forEach((cb) => {
+      if (userIds.includes(Number(cb.value)) && !cb.disabled) {
+        cb.checked = true;
+        recipientSet.add(cb.value);
+      }
+    });
+
+    const existingAdditional = additional
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const mergedEmails = Array.from(new Set([...existingAdditional, ...emails]));
+    const additionalOnly = mergedEmails.filter((email) => {
+      const matchedUser = (window.WorkspaceConfig?.mentionDirectory?.users || [])
+        .find((u: any) => u.email === email);
+      if (matchedUser && recipientSet.has(String(matchedUser.uid))) {
+        return false;
+      }
+      return true;
+    });
+    additional = additionalOnly.join('\n');
+
+    const willNotify = [
+      ...Array.from(recipientSet),
+      ...additionalOnly,
+    ];
+
+    const checklist = this.checklistItems().map((item) => ({
+      id: item.id,
+      checked: !!this.checklistState[item.id],
+    }));
+
+    this.emit('send-submit', {
+      comments,
+      additional,
+      recipients: Array.from(recipientSet),
+      willNotifyCount: willNotify.length,
+      checklist,
+    });
   }
 
-  private checklistItems(): any[] {
+  private checklistItems(): ChecklistItemView[] {
     const raw = this.context?.targetStage?.checklist || [];
     const seen = new Set<string>();
     return raw.filter((item: any) => {
-      const key = String(item.id ?? item.uid ?? item.title ?? '');
-      if (!item.title || seen.has(key)) {
+      const id = Number(item.id ?? item.uid ?? 0);
+      const key = String(id || item.title || '');
+      if (!item.title || id <= 0 || seen.has(key)) {
         return false;
       }
       seen.add(key);
       return true;
-    });
+    }).map((item: any) => ({
+      id: Number(item.id ?? item.uid),
+      title: String(item.title),
+      checked: !!item.checked,
+    }));
+  }
+
+  private onChecklistChange(itemId: number, checked: boolean): void {
+    this.checklistState = { ...this.checklistState, [itemId]: checked };
   }
 
   protected override render(): TemplateResult {
@@ -98,14 +191,20 @@ export class KanbanSendToStageModalElement extends LitElement {
                 </div>` : nothing}
 
               ${checklist.length > 0 ? html`
-                <div class="form-group stage-checklist-section" style="display: block;">
+                <div class="form-group stage-checklist-section stage-checklist-list" style="display: block;">
                   <label class="form-label">Checklist</label>
-                  <ul class="stage-checklist-ul">
-                    ${checklist.map((item: any) => html`
+                  <p class="form-text">Checking items is optional</p>
+                  <ul class="stage-checklist-ul" role="list">
+                    ${checklist.map((item) => html`
                       <li class="stage-checklist-item">
-                        <span class="stage-checklist-item-icon">
-                          <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
-                        </span>${item.title}
+                        <label class="stage-checklist-item-label" for=${`stageChecklist-${item.id}`}>
+                          <input type="checkbox"
+                            class="stage-checklist-checkbox"
+                            id=${`stageChecklist-${item.id}`}
+                            .checked=${!!this.checklistState[item.id]}
+                            @change=${(e: Event) => this.onChecklistChange(item.id, (e.target as HTMLInputElement).checked)}>
+                          <span class="stage-checklist-item-title">${item.title}</span>
+                        </label>
                       </li>`)}
                   </ul>
                 </div>` : nothing}
@@ -127,13 +226,13 @@ export class KanbanSendToStageModalElement extends LitElement {
                 <div class="form-group" id="additionalRecipientsGroup">
                   <label for="stageAdditionalRecipients" class="form-label">Additional recipients</label>
                   <textarea class="form-control" id="stageAdditionalRecipients" rows="2"
-                    placeholder="One recipient per line"></textarea>
-                  <div class="form-text">One recipient per line</div>
+                    placeholder="One recipient per line (or @mention coworkers in the comment)"></textarea>
+                  <div class="form-text">One recipient per line — prefer @mentions in the comment</div>
                 </div>` : nothing}
 
               <div class="form-group">
-                <label for="stageComments" class="form-label">Comments</label>
-                <textarea class="form-control" id="stageComments" rows="4" placeholder="Add a comment..."></textarea>
+                <label class="form-label" id="stageCommentsLabel">Comments</label>
+                <div class="kanban-rte-host" data-rte-for="stageComments" aria-labelledby="stageCommentsLabel"></div>
               </div>
             </div>
 

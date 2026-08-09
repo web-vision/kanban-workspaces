@@ -36,6 +36,19 @@ export class WorkspaceApi {
             return response.json();
         });
     }
+    checklistUrl(routeKey) {
+        return window.TYPO3?.settings?.ajaxUrls?.[routeKey] || null;
+    }
+    async postChecklist(routeKey, payload, missingMessage, softFail = false) {
+        const url = this.checklistUrl(routeKey);
+        if (!url) {
+            if (softFail) {
+                return { success: false, error: missingMessage, items: [], stages: [] };
+            }
+            throw new Error(missingMessage);
+        }
+        return this.postJson(url, payload);
+    }
     // Fetch the workspace records for the given dispatch payload and map to cards.
     async fetchData(apiPayload) {
         const apiResponse = await this.postJson(this.dataUrl, apiPayload);
@@ -55,6 +68,15 @@ export class WorkspaceApi {
     // Generic "Actions" dispatch call (view/delete/send-to-stage/add-comment).
     dispatch(payload) {
         return this.postJson(this.dataUrl, payload);
+    }
+    async fetchChecklist(payload) {
+        return this.postChecklist('kanban_workspace_checklist_get', payload, 'Checklist endpoint unavailable', true);
+    }
+    async saveChecklist(payload) {
+        return this.postChecklist('kanban_workspace_checklist_save', payload, 'Checklist save endpoint unavailable');
+    }
+    async toggleChecklistItem(payload) {
+        return this.postChecklist('kanban_workspace_checklist_toggle', payload, 'Checklist toggle endpoint unavailable');
     }
     // Persist a module-data value (filter selection) via the user settings endpoint.
     processData(action, filterType, filterValue) {

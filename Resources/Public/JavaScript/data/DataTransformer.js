@@ -115,10 +115,17 @@ export class DataTransformer {
             // Extract avatar from HTML or use username
             const avatarMatch = comment.user_avatar?.match(/src="([^"]+)"/);
             const avatarUrl = avatarMatch ? avatarMatch[1] : null;
-            // Build content: show user comment if exists, otherwise show stage movement
+            // Build content: show user comment if exists, otherwise show stage movement.
+            // Checklist audits reuse stage-change `comment` with Checked:/Unchecked: prefixes
+            // and belong in Activity, not the Comment tab.
             let content = '';
-            if (comment.user_comment && comment.user_comment.trim() !== '') {
-                content = comment.user_comment;
+            let isHtml = false;
+            const rawComment = (comment.user_comment && String(comment.user_comment).trim()) || '';
+            const isChecklistActivity = /^(Checked|Unchecked):/.test(rawComment);
+            const hasUserComment = rawComment !== '' && !isChecklistActivity;
+            if (rawComment !== '') {
+                content = rawComment;
+                isHtml = /<[a-z][\s\S]*>/i.test(content);
             }
             else {
                 // Show stage movement without comment
@@ -129,6 +136,8 @@ export class DataTransformer {
                 author: comment.user_username || 'Unknown User',
                 timestamp: convertWorkspaceDate(comment.tstamp),
                 content: content,
+                isHtml,
+                isUserComment: hasUserComment,
                 avatar: avatarUrl,
                 stageTitle: comment.stage_title,
                 previousStageTitle: comment.previous_stage_title

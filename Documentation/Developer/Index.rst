@@ -275,32 +275,53 @@ Events
 Stage Checklist Feature (Implementation)
 =========================================
 
-The Stage Checklist feature adds optional checklist items per workspace stage. When editors move a card to a stage (drag or Approve/Revert), the "Send to Stage" modal shows that stage's checklist at the top. The checklist is display-only (no checkboxes or submission).
+The Stage Checklist feature adds optional interactive checklist items per workspace
+stage (custom and default). Editors can check items in the Send to Stage modal and
+inline on the card preview Comment panel (after Description, before the comment
+editor). Checked state is per card × stage × item.
+Check/uncheck and transition snapshots are written to core ``sys_history`` as
+``ACTION_STAGECHANGE`` via ``RecordHistoryStore::changeStageForRecord()`` and appear
+in the **Activity** tab (same stream as stage moves / comments). Element field
+edits remain in the **History** tab.
 
 Database and TCA
 ----------------
 
-* **Table:** ``tx_kanbanworkspaces_stage_checklist`` (see ``ext_tables.sql``). Columns: ``uid``, ``pid``, ``tstamp``, ``crdate``, ``deleted``, ``sorting``, ``stage`` (FK to ``sys_workspace_stage.uid``), ``title``.
-* **TCA:** ``Configuration/TCA/tx_kanbanworkspaces_stage_checklist.php`` defines the checklist table (label, sorting, delete, columns ``stage``, ``title``; record icon ``kanban-workspaces-stage-checklist``).
-* **TCA override:** ``Configuration/TCA/Overrides/sys_workspace_stage.php`` adds ``checklist_items`` inline field to ``sys_workspace_stage`` (after ``responsible_persons``). Inline: sortable, ``expandSingle``, no sync/localization links.
+* **Templates:** ``tx_kanbanworkspaces_stage_checklist`` — ``stage`` (custom UID or
+  ``0`` / ``-10`` / ``-20``), ``workspace_id`` (for default-stage rows), ``title``,
+  ``sorting``.
+* **State:** ``tx_kanbanworkspaces_checklist_state`` — per-card checked flags.
+* **Activity audit:** core ``sys_history`` with ``actiontype`` stage-change; comment
+  holds Checked/Unchecked text (no separate checklist history table).
+* **TCA:** custom-stage IRRE on ``sys_workspace_stage``; default-stage IRRE fields on
+  ``sys_workspace`` (``checklist_items_edit``, ``checklist_items_publish``,
+  ``checklist_items_execute``).
 
 Icons
 ~~~~~
 
-* **File:** ``Configuration/Icons.php`` registers ``kanban-workspaces-stage-checklist`` with ``SvgIconProvider``, source ``EXT:kanban_workspaces/Resources/Public/Icons/checklist.svg``. Used for TCA record icons and for each checklist row in the Send to Stage modal.
+* **File:** ``Configuration/Icons.php`` registers ``kanban-workspaces-stage-checklist`` with ``SvgIconProvider``, source ``EXT:kanban_workspaces/Resources/Public/Icons/checklist.svg``.
 
-Controller
-~~~~~~~~~~
+Services / Ajax
+~~~~~~~~~~~~~~~
 
-* In ``KanbanWorkspacesController::indexAction()``, each stage in the config is enriched with a ``checklist`` array. For each stage with ``uid >= 1``, ``getChecklistForStage($stageUid)`` is called.
-* ``getChecklistForStage(int $stageUid): array`` – queries ``tx_kanbanworkspaces_stage_checklist`` for the given ``stage``, ``deleted = 0``, ordered by ``sorting``. Deduplicates by ``uid`` and by ``title``. Returns ``[ ['id' => uid, 'title' => title], ... ]``. The array is part of ``WorkspaceConfig`` (JSON) passed to the frontend.
+* ``ChecklistTemplateService`` loads templates for a stage/workspace.
+* ``ChecklistStateService`` saves state and writes Activity entries via
+  ``changeStageForRecord`` (comment = checklist summary).
+* Ajax routes: ``kanban_workspace_checklist_get|save|toggle``.
+* ``KanbanWorkspacesController`` enriches each stage in ``WorkspaceConfig`` via
+  ``ChecklistTemplateService::getChecklistForStage($stageUid, $workspaceId)``.
 
 Frontend (Template, JavaScript, CSS)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* **Template:** Send to Stage modal (``#sendToStageModal``) body order: ``#stageInfoBanner``, then ``#stageChecklistSection`` / ``#stageChecklistList``, then recipients, additional recipients, comments.
-* **JavaScript:** ``openSendToStageModal(formData, context)`` in ``ui/ModalController.js`` reads ``context.targetStage?.checklist``, deduplicates by ``id``/``title``, renders ``<ul>`` of ``<li class="stage-checklist-item">`` with ``<span class="stage-checklist-item-icon"></span>`` and title; injects icon via ``Icons.getIcon('kanban-workspaces-stage-checklist', Icons.sizes.small)`` into each icon span. When modal is opened via Approve/Revert, ``handleNextStage`` / ``handleRevertStage`` (also in ``ui/ModalController.js``) compute target stage and pass ``targetStage`` in context.
-* **CSS:** ``Resources/Public/Css/Styles.css`` – ``.stage-checklist-section``, ``.stage-checklist-list`` (max-height, overflow, scrollable), ``.stage-checklist-ul``, ``.stage-checklist-item``, ``.stage-checklist-item-icon``.
+* ``send-to-stage-modal.ts`` — optional checkboxes; submit includes checklist.
+* ``board.ts`` — persists snapshot after successful stage execute; loads/toggles in preview;
+  refreshes Activity via ``getRowDetails`` after toggle.
+* ``preview-modal.ts`` — interactive checklist inline on the Comment panel (after
+  Description, before the comment editor); Activity tab shows stage moves and
+  checklist check/uncheck comments.
+* **CSS:** ``Resources/Public/Css/Styles.css`` – ``.stage-checklist-*``, ``.checklist-*``.
 
 Assign Feature (Implementation)
 ================================

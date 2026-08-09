@@ -46,7 +46,9 @@ To move a content item to a different stage:
 
 The item will automatically transition to the new stage, and the change will be reflected in TYPO3's workspace system.
 
-When you drag a card to another column (or use **Approve** or **Revert** on a card), the **Send to Stage** modal opens. If the target stage has checklist items configured by an administrator, a **Checklist** section appears at the top of the modal (below the blue info banner). Each item is shown as a list row with a checklist icon and the item title. The list is **informational only** (no checkboxes, no submission of state). Complete recipients/comments as needed and confirm to perform the stage transition.
+When you drag a card to another column (or use **Approve** or **Revert** on a card), the **Send to Stage** modal opens. If the target stage has checklist items configured by an administrator, a **Checklist** section appears at the top of the modal (below the blue info banner). Each item is an optional checkbox. You can check none, some, or all items — the stage move is never blocked. After a successful move, the final checked state for that stage is saved on the card.
+
+You can also open the card preview: on the **Comment** panel the checklist appears below **Description** and above the comment editor. Check or uncheck items for any stage that already has a template or saved state. Check/uncheck actions are recorded in the card **Activity** tab (same stream as stage moves and comments).
 
 Viewing Item Details
 --------------------
@@ -249,6 +251,12 @@ You can assign a backend user to a content element (card) and optionally add a t
 **How to assign:** Open the card context menu (⋯) → **Assign** → fill in Title (optional), Description (optional), Assignee (required; select from dropdown) → **OK**.
 
 For a full description of the flow, email notification, and how to test it, see :doc:`AssignUser`.
+
+@ Mentions in comments
+======================
+
+Comments on the Activity tab and in the Send-to-stage modal use TYPO3 CKEditor 5.
+Type ``@`` to mention workspace users or groups. See :doc:`Mentions` for details.
 
 Getting Help
 ============

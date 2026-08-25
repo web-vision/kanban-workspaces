@@ -14,9 +14,16 @@ reporting an issue against them.
 
 | Version        | Supported           |
 | -------------- | ------------------- |
-| 0.x            | :white_check_mark:  |
+| 13,14.x        | :x:                 |
+| none.x         | :x:                 |
+| < none.0       | :x:                 |
 
-Planned end of support for this product: **30 June 2029 (end of regular TYPO3 14 LTS support)**.
+> **Note:** this product declares no TYPO3 version requirement, so its supported
+> versions cannot be derived from the TYPO3 release lifecycle. Support for a current
+> TYPO3 version may be added in the future; if you depend on this product, please get
+> in touch through the reporting channel below.
+
+Planned end of support for this product: **unknown (end of regular TYPO3 0 LTS support)**.
 
 ## Reporting a Vulnerability
 

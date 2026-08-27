@@ -12,18 +12,9 @@ Security updates are provided for the following versions. Versions marked
 unsupported no longer receive security fixes; please upgrade before
 reporting an issue against them.
 
-| Version  | Supported |
-| -------- | --------- |
-| 13,14.x  | :x:       |
-| none.x   | :x:       |
-| < none.0 | :x:       |
-
-> **Note:** this product declares no TYPO3 version requirement, so its supported
-> versions cannot be derived from the TYPO3 release lifecycle. Support for a current
-> TYPO3 version may be added in the future; if you depend on this product, please get
-> in touch through the reporting channel below.
-
-Planned end of support for this product: **unknown (end of regular TYPO3 0 LTS support)**.
+| Version | Supported          | End of Support |
+|---------|--------------------|----------------|
+| 0.x     | :white_check_mark: | 2029-06-30     |
 
 ## Reporting a Vulnerability
 
@@ -37,7 +28,7 @@ open a public GitHub/GitLab issue.
 ### What to expect
 
 | Step                                | Timeframe                                                              |
-| ----------------------------------- | ---------------------------------------------------------------------- |
+|-------------------------------------|------------------------------------------------------------------------|
 | Acknowledgement of your report      | within 1 business day (typically much faster)                          |
 | Status updates                      | at least every 7 days until resolved                                   |
 | Fix / mitigation, based on severity | Critical/High: as fast as possible; Medium/Low: next scheduled release |
@@ -62,8 +53,11 @@ researchers who:
 
 ## Scope
 
-In scope: the source code, released versions, and official distribution
-channels of "web-vision/kanban-workspaces" (e.g. TER / Packagist).
+In scope: the source code, released versions, and the official distribution
+channels of "web-vision/kanban-workspaces":
+
+- TYPO3 Extension Repository (TER) — https://extensions.typo3.org/extension/kanban_workspaces
+- Packagist — https://packagist.org/packages/web-vision/kanban-workspaces
 
 Out of scope: third-party dependencies (please report those upstream, but
 feel free to let us know so we can track and update them), and

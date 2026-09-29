@@ -14,6 +14,7 @@ final class WorkspaceLanguageFallbackListenerTest extends FunctionalTestCase
 {
     protected array $coreExtensionsToLoad = [
         'workspaces',
+        'rte_ckeditor',
     ];
 
     protected array $testExtensionsToLoad = [

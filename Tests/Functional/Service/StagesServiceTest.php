@@ -24,6 +24,7 @@ final class StagesServiceTest extends FunctionalTestCase
      */
     protected array $coreExtensionsToLoad = [
         'typo3/cms-workspaces',
+        'typo3/cms-rte-ckeditor',
     ];
 
     /**

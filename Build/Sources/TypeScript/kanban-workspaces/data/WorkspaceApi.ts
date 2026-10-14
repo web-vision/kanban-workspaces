@@ -7,6 +7,18 @@ export interface CardDetails {
   diff: any[];
 }
 
+export interface ChecklistStageGroup {
+  stage_id: number;
+  items: Array<{ id: number; title: string; checked: boolean }>;
+}
+
+export interface ChecklistResponse {
+  success: boolean;
+  items?: Array<{ id: number; title: string; checked: boolean }>;
+  stages?: ChecklistStageGroup[];
+  error?: string;
+}
+
 /**
  * Transport layer over the TYPO3 workspace AJAX dispatch endpoint. Stateless
  * apart from its configured endpoints and the pure {@link DataTransformer};
@@ -37,6 +49,26 @@ export class WorkspaceApi {
     });
   }
 
+  private checklistUrl(routeKey: string): string | null {
+    return (window as any).TYPO3?.settings?.ajaxUrls?.[routeKey] || null;
+  }
+
+  private async postChecklist(
+    routeKey: string,
+    payload: Record<string, unknown>,
+    missingMessage: string,
+    softFail = false,
+  ): Promise<ChecklistResponse> {
+    const url = this.checklistUrl(routeKey);
+    if (!url) {
+      if (softFail) {
+        return { success: false, error: missingMessage, items: [], stages: [] };
+      }
+      throw new Error(missingMessage);
+    }
+    return this.postJson(url, payload);
+  }
+
   // Fetch the workspace records for the given dispatch payload and map to cards.
   async fetchData(apiPayload: unknown): Promise<{ cards: Card[]; total: number }> {
     const apiResponse = await this.postJson(this.dataUrl, apiPayload);
@@ -58,6 +90,23 @@ export class WorkspaceApi {
   // Generic "Actions" dispatch call (view/delete/send-to-stage/add-comment).
   dispatch(payload: unknown): Promise<any> {
     return this.postJson(this.dataUrl, payload);
+  }
+
+  async fetchChecklist(payload: Record<string, unknown>): Promise<ChecklistResponse> {
+    return this.postChecklist(
+      'kanban_workspace_checklist_get',
+      payload,
+      'Checklist endpoint unavailable',
+      true,
+    );
+  }
+
+  async saveChecklist(payload: Record<string, unknown>): Promise<ChecklistResponse> {
+    return this.postChecklist('kanban_workspace_checklist_save', payload, 'Checklist save endpoint unavailable');
+  }
+
+  async toggleChecklistItem(payload: Record<string, unknown>): Promise<ChecklistResponse> {
+    return this.postChecklist('kanban_workspace_checklist_toggle', payload, 'Checklist toggle endpoint unavailable');
   }
 
   // Persist a module-data value (filter selection) via the user settings endpoint.

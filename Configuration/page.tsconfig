@@ -1,0 +1,3 @@
+# Page TSconfig for EXT:kanban_workspaces.
+# Comment CKEditor uses the core `default` RTE preset (same as content elements).
+# @mention is enabled client-side in the Kanban module only.

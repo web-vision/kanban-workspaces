@@ -20,9 +20,18 @@ return [
         'stage' => [
             'label' => 'LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:stage_checklist.stage',
             'config' => [
-                'type' => 'select',
-                'renderType' => 'selectSingle',
-                'foreign_table' => 'sys_workspace_stage',
+                'type' => 'number',
+                'size' => 10,
+                'default' => 0,
+                'readOnly' => true,
+            ],
+        ],
+        'workspace_id' => [
+            'label' => 'LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:stage_checklist.workspace_id',
+            'config' => [
+                'type' => 'number',
+                'size' => 10,
+                'default' => 0,
                 'readOnly' => true,
             ],
         ],

@@ -241,6 +241,21 @@ The extension uses the same pattern as EXT:workspaces for email (FluidEmail, Sys
 
 **Troubleshooting:** If assignment emails are not sent, ensure the assignee has a valid email in the backend user record, check ``MAIL.transport`` and ``defaultMailFromAddress``, and review TYPO3 logs (e.g. ``var/log/typo3_*.log``) for transport or template errors.
 
+Comment RTE (CKEditor + @mentions)
+==================================
+
+Kanban comment fields use the **core ``default`` RTE preset** (same toolbar and
+plugins as content elements in the backend). The CKEditor **Mention** plugin and
+``@`` feed are injected only in the Kanban module UI.
+
+Integrators can still override site-wide RTE via the usual Page TSconfig
+(``RTE.default.preset``); Kanban does not register a separate custom preset.
+
+Mention suggest/notify Ajax routes:
+
+* ``/kanban-workspace/mention-suggest``
+* ``/kanban-workspace/mention-notify``
+
 JavaScript Module Configuration
 ================================
 

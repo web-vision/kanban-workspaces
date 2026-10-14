@@ -1,0 +1,7 @@
+"tx_kanbanworkspaces_stage_checklist"
+,"uid","pid","tstamp","crdate","deleted","sorting","stage","workspace_id","title"
+,1,0,1700000000,1700000000,0,10,5,0,"Custom QA passed"
+,2,0,1700000000,1700000000,0,20,5,0,"Custom Docs updated"
+,3,0,1700000000,1700000000,0,10,0,1,"Editing: content review"
+,4,0,1700000000,1700000000,0,10,-10,1,"Ready: stakeholder OK"
+,5,0,1700000000,1700000000,0,10,0,2,"Other workspace editing item"

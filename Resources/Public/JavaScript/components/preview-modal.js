@@ -19,9 +19,9 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { getInitials, formatDate } from '@web-vision/kanban-workspaces/core/utils.js';
 /**
- * Card preview modal: summary-of-changes, activity (comments) and history tabs.
- * Data is supplied by the board; user actions are emitted as events
- * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`).
+ * Card preview modal: summary-of-changes, activity (comments), history and
+ * checklist tabs. Checklist check/uncheck is written as ACTION_STAGECHANGE and
+ * appears in the Activity tab (same as EXT:workspaces stage moves).
  */
 let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitElement {
     constructor() {
@@ -32,8 +32,10 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
         this.comments = [];
         this.history = [];
         this.diffs = [];
+        this.checklistStages = [];
         this.loading = false;
         this.commentPending = false;
+        this.checklistPending = false;
         this.activeTab = 'changes';
     }
     createRenderRoot() {
@@ -59,9 +61,10 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
         }
         this.emit('preview-add-comment', { text });
     }
-    stageLabel() {
-        const stage = this.stages.find((s) => s.id == this.card?.stage);
-        return stage ? stage.label : String(this.card?.stage ?? '');
+    stageLabel(stageId) {
+        const id = stageId ?? this.card?.stage;
+        const stage = this.stages.find((s) => s.id == id);
+        return stage ? stage.label : String(id ?? '');
     }
     renderMeta() {
         const card = this.card;
@@ -124,10 +127,55 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
         </div>
       </div>`)}`;
     }
+    renderChecklist() {
+        const hasStages = this.checklistStages.some((group) => group.items.length > 0);
+        if (!hasStages) {
+            return html `<div class="empty-state">No checklist items for this card yet</div>`;
+        }
+        return html `
+      <div class="checklist-panel">
+        ${this.checklistStages.map((group) => html `
+          <div class="checklist-stage-group stage-checklist-list">
+            <h5 class="checklist-stage-title">${this.stageLabel(group.stage_id)}</h5>
+            <p class="form-text">Checking items is optional</p>
+            <ul class="stage-checklist-ul" role="list">
+              ${group.items.map((item) => html `
+                <li class="stage-checklist-item">
+                  <label class="stage-checklist-item-label" for=${`previewChecklist-${group.stage_id}-${item.id}`}>
+                    <input type="checkbox"
+                      class="stage-checklist-checkbox"
+                      id=${`previewChecklist-${group.stage_id}-${item.id}`}
+                      .checked=${!!item.checked}
+                      ?disabled=${this.checklistPending}
+                      @change=${(e) => this.emit('checklist-toggle', {
+            stageId: group.stage_id,
+            itemUid: item.id,
+            checked: e.target.checked,
+        })}>
+                    <span class="stage-checklist-item-title">${item.title}</span>
+                  </label>
+                </li>`)}
+            </ul>
+          </div>`)}
+      </div>`;
+    }
+    tabLabel(tab) {
+        switch (tab) {
+            case 'changes':
+                return 'Summary of changes';
+            case 'comments':
+                return html `Activity (${this.comments.length})`;
+            case 'checklist':
+                return 'Checklist';
+            case 'history':
+                return 'History';
+        }
+    }
     render() {
         if (!this.card) {
             return html `<div class="modal-overlay" id="previewModal" style="display: none;"></div>`;
         }
+        const tabs = ['changes', 'comments', 'history', 'checklist'];
         return html `
       <div class="modal-overlay" id="previewModal" style=${`display: ${this.open ? 'flex' : 'none'}`}
         @click=${(e) => this.onOverlayClick(e)}>
@@ -144,11 +192,11 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
             </div>
 
             <ul class="nav nav-tabs" role="tablist">
-              ${['changes', 'comments', 'history'].map((tab) => html `
+              ${tabs.map((tab) => html `
                 <li class="nav-item" role="presentation">
                   <button class="nav-link ${this.activeTab === tab ? 'active' : ''}" role="tab"
                     @click=${() => { this.activeTab = tab; }}>
-                    ${tab === 'changes' ? 'Summary of changes' : tab === 'comments' ? html `Activity (${this.comments.length})` : 'History'}
+                    ${this.tabLabel(tab)}
                   </button>
                 </li>`)}
             </ul>
@@ -170,6 +218,9 @@ let KanbanPreviewModalElement = class KanbanPreviewModalElement extends LitEleme
                   </div>
                   <div class="tab-pane ${this.activeTab === 'history' ? 'active' : ''}">
                     <div class="history-container">${this.renderHistory()}</div>
+                  </div>
+                  <div class="tab-pane ${this.activeTab === 'checklist' ? 'active' : ''}">
+                    <div class="checklist-container">${this.renderChecklist()}</div>
                   </div>
                 </div>`}
             </div>
@@ -207,11 +258,17 @@ __decorate([
     property({ attribute: false })
 ], KanbanPreviewModalElement.prototype, "diffs", void 0);
 __decorate([
+    property({ attribute: false })
+], KanbanPreviewModalElement.prototype, "checklistStages", void 0);
+__decorate([
     property({ type: Boolean })
 ], KanbanPreviewModalElement.prototype, "loading", void 0);
 __decorate([
     property({ type: Boolean })
 ], KanbanPreviewModalElement.prototype, "commentPending", void 0);
+__decorate([
+    property({ type: Boolean })
+], KanbanPreviewModalElement.prototype, "checklistPending", void 0);
 __decorate([
     state()
 ], KanbanPreviewModalElement.prototype, "activeTab", void 0);

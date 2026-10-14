@@ -2457,6 +2457,38 @@ textarea:focus {
   height: 1rem;
 }
 
+.stage-checklist-item-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.stage-checklist-checkbox {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.stage-checklist-item-title {
+  flex: 1;
+}
+
+.checklist-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.checklist-stage-title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .form-text {
   font-size: 12px;
   color: var(--text-muted);

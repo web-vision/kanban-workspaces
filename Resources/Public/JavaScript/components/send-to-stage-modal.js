@@ -15,7 +15,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { html, nothing, LitElement } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import '@typo3/backend/element/icon-element.js';
 /**
  * "Send to stage" modal. Presents the recipients / checklist / comments form
@@ -29,6 +29,7 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
         this.formData = null;
         this.context = null;
         this.pending = false;
+        this.checklistState = {};
     }
     createRenderRoot() {
         return this;
@@ -45,7 +46,18 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
             if (additional) {
                 additional.value = this.formData?.additional?.value || '';
             }
+            this.seedChecklistState();
         }
+        if (changed.has('context') && this.open) {
+            this.seedChecklistState();
+        }
+    }
+    seedChecklistState() {
+        const next = {};
+        for (const item of this.checklistItems()) {
+            next[item.id] = !!item.checked;
+        }
+        this.checklistState = next;
     }
     emit(type, detail = {}) {
         this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
@@ -59,19 +71,31 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
         const comments = this.querySelector('#stageComments')?.value || '';
         const additional = this.querySelector('#stageAdditionalRecipients')?.value || '';
         const recipients = Array.from(this.querySelectorAll('.t3js-workspace-recipient:checked')).map((cb) => cb.value);
-        this.emit('send-submit', { comments, additional, recipients });
+        const checklist = this.checklistItems().map((item) => ({
+            id: item.id,
+            checked: !!this.checklistState[item.id],
+        }));
+        this.emit('send-submit', { comments, additional, recipients, checklist });
     }
     checklistItems() {
         const raw = this.context?.targetStage?.checklist || [];
         const seen = new Set();
         return raw.filter((item) => {
-            const key = String(item.id ?? item.uid ?? item.title ?? '');
-            if (!item.title || seen.has(key)) {
+            const id = Number(item.id ?? item.uid ?? 0);
+            const key = String(id || item.title || '');
+            if (!item.title || id <= 0 || seen.has(key)) {
                 return false;
             }
             seen.add(key);
             return true;
-        });
+        }).map((item) => ({
+            id: Number(item.id ?? item.uid),
+            title: String(item.title),
+            checked: !!item.checked,
+        }));
+    }
+    onChecklistChange(itemId, checked) {
+        this.checklistState = { ...this.checklistState, [itemId]: checked };
     }
     render() {
         const formData = this.formData || {};
@@ -101,14 +125,20 @@ let KanbanSendToStageModalElement = class KanbanSendToStageModalElement extends 
                 </div>` : nothing}
 
               ${checklist.length > 0 ? html `
-                <div class="form-group stage-checklist-section" style="display: block;">
+                <div class="form-group stage-checklist-section stage-checklist-list" style="display: block;">
                   <label class="form-label">Checklist</label>
-                  <ul class="stage-checklist-ul">
+                  <p class="form-text">Checking items is optional</p>
+                  <ul class="stage-checklist-ul" role="list">
                     ${checklist.map((item) => html `
                       <li class="stage-checklist-item">
-                        <span class="stage-checklist-item-icon">
-                          <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
-                        </span>${item.title}
+                        <label class="stage-checklist-item-label" for=${`stageChecklist-${item.id}`}>
+                          <input type="checkbox"
+                            class="stage-checklist-checkbox"
+                            id=${`stageChecklist-${item.id}`}
+                            .checked=${!!this.checklistState[item.id]}
+                            @change=${(e) => this.onChecklistChange(item.id, e.target.checked)}>
+                          <span class="stage-checklist-item-title">${item.title}</span>
+                        </label>
                       </li>`)}
                   </ul>
                 </div>` : nothing}
@@ -166,6 +196,9 @@ __decorate([
 __decorate([
     property({ type: Boolean })
 ], KanbanSendToStageModalElement.prototype, "pending", void 0);
+__decorate([
+    state()
+], KanbanSendToStageModalElement.prototype, "checklistState", void 0);
 KanbanSendToStageModalElement = __decorate([
     customElement('typo3-kanban-send-to-stage-modal')
 ], KanbanSendToStageModalElement);

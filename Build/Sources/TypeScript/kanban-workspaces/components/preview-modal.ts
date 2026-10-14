@@ -3,13 +3,14 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { getInitials, formatDate } from '@web-vision/kanban-workspaces/core/utils.js';
 import type { Card, Stage } from '@web-vision/kanban-workspaces/types.js';
+import type { ChecklistStageGroup } from '@web-vision/kanban-workspaces/data/WorkspaceApi.js';
 
-type PreviewTab = 'changes' | 'comments' | 'history';
+type PreviewTab = 'changes' | 'comments' | 'history' | 'checklist';
 
 /**
- * Card preview modal: summary-of-changes, activity (comments) and history tabs.
- * Data is supplied by the board; user actions are emitted as events
- * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`).
+ * Card preview modal: summary-of-changes, activity (comments), history and
+ * checklist tabs. Checklist check/uncheck is written as ACTION_STAGECHANGE and
+ * appears in the Activity tab (same as EXT:workspaces stage moves).
  */
 @customElement('typo3-kanban-preview-modal')
 export class KanbanPreviewModalElement extends LitElement {
@@ -19,8 +20,10 @@ export class KanbanPreviewModalElement extends LitElement {
   @property({ attribute: false }) comments: any[] = [];
   @property({ attribute: false }) history: any[] = [];
   @property({ attribute: false }) diffs: any[] = [];
+  @property({ attribute: false }) checklistStages: ChecklistStageGroup[] = [];
   @property({ type: Boolean }) loading = false;
   @property({ type: Boolean }) commentPending = false;
+  @property({ type: Boolean }) checklistPending = false;
 
   @state() private activeTab: PreviewTab = 'changes';
 
@@ -52,9 +55,10 @@ export class KanbanPreviewModalElement extends LitElement {
     this.emit('preview-add-comment', { text });
   }
 
-  private stageLabel(): string {
-    const stage = this.stages.find((s) => s.id == this.card?.stage);
-    return stage ? stage.label : String(this.card?.stage ?? '');
+  private stageLabel(stageId?: string | number): string {
+    const id = stageId ?? this.card?.stage;
+    const stage = this.stages.find((s) => s.id == id);
+    return stage ? stage.label : String(id ?? '');
   }
 
   private renderMeta(): TemplateResult {
@@ -123,10 +127,57 @@ export class KanbanPreviewModalElement extends LitElement {
       </div>`)}`;
   }
 
+  private renderChecklist(): TemplateResult {
+    const hasStages = this.checklistStages.some((group) => group.items.length > 0);
+    if (!hasStages) {
+      return html`<div class="empty-state">No checklist items for this card yet</div>`;
+    }
+    return html`
+      <div class="checklist-panel">
+        ${this.checklistStages.map((group) => html`
+          <div class="checklist-stage-group stage-checklist-list">
+            <h5 class="checklist-stage-title">${this.stageLabel(group.stage_id)}</h5>
+            <p class="form-text">Checking items is optional</p>
+            <ul class="stage-checklist-ul" role="list">
+              ${group.items.map((item) => html`
+                <li class="stage-checklist-item">
+                  <label class="stage-checklist-item-label" for=${`previewChecklist-${group.stage_id}-${item.id}`}>
+                    <input type="checkbox"
+                      class="stage-checklist-checkbox"
+                      id=${`previewChecklist-${group.stage_id}-${item.id}`}
+                      .checked=${!!item.checked}
+                      ?disabled=${this.checklistPending}
+                      @change=${(e: Event) => this.emit('checklist-toggle', {
+                        stageId: group.stage_id,
+                        itemUid: item.id,
+                        checked: (e.target as HTMLInputElement).checked,
+                      })}>
+                    <span class="stage-checklist-item-title">${item.title}</span>
+                  </label>
+                </li>`)}
+            </ul>
+          </div>`)}
+      </div>`;
+  }
+
+  private tabLabel(tab: PreviewTab): TemplateResult | string {
+    switch (tab) {
+      case 'changes':
+        return 'Summary of changes';
+      case 'comments':
+        return html`Activity (${this.comments.length})`;
+      case 'checklist':
+        return 'Checklist';
+      case 'history':
+        return 'History';
+    }
+  }
+
   protected override render(): TemplateResult {
     if (!this.card) {
       return html`<div class="modal-overlay" id="previewModal" style="display: none;"></div>`;
     }
+    const tabs: PreviewTab[] = ['changes', 'comments', 'history', 'checklist'];
     return html`
       <div class="modal-overlay" id="previewModal" style=${`display: ${this.open ? 'flex' : 'none'}`}
         @click=${(e: Event) => this.onOverlayClick(e)}>
@@ -143,11 +194,11 @@ export class KanbanPreviewModalElement extends LitElement {
             </div>
 
             <ul class="nav nav-tabs" role="tablist">
-              ${(['changes', 'comments', 'history'] as PreviewTab[]).map((tab) => html`
+              ${tabs.map((tab) => html`
                 <li class="nav-item" role="presentation">
                   <button class="nav-link ${this.activeTab === tab ? 'active' : ''}" role="tab"
                     @click=${() => { this.activeTab = tab; }}>
-                    ${tab === 'changes' ? 'Summary of changes' : tab === 'comments' ? html`Activity (${this.comments.length})` : 'History'}
+                    ${this.tabLabel(tab)}
                   </button>
                 </li>`)}
             </ul>
@@ -169,6 +220,9 @@ export class KanbanPreviewModalElement extends LitElement {
                   </div>
                   <div class="tab-pane ${this.activeTab === 'history' ? 'active' : ''}">
                     <div class="history-container">${this.renderHistory()}</div>
+                  </div>
+                  <div class="tab-pane ${this.activeTab === 'checklist' ? 'active' : ''}">
+                    <div class="checklist-container">${this.renderChecklist()}</div>
                   </div>
                 </div>`}
             </div>

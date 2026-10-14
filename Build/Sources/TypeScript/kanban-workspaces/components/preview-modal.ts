@@ -1,13 +1,19 @@
-import { html, nothing, LitElement, type TemplateResult } from 'lit';
+import { html, nothing, LitElement, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { getInitials, formatDate } from '@web-vision/kanban-workspaces/core/utils.js';
-import type { Card, Stage } from '@web-vision/kanban-workspaces/types.js';
+import { getInitials, formatDate, extractCurrentValueFromDiffHtml } from '@web-vision/kanban-workspaces/core/utils.js';
+import { destroyCommentRte, mountCommentRte, type CommentRteHandle } from '@web-vision/kanban-workspaces/rte/CommentRte.js';
+import {
+  extractWatcherMentionsFromHtml,
+  sanitizeCommentHtml,
+  type MentionFeedItem,
+} from '@web-vision/kanban-workspaces/mention/MentionFeed.js';
+import type { Card, Stage, StageChecklistItem } from '@web-vision/kanban-workspaces/types.js';
 
-type PreviewTab = 'changes' | 'comments' | 'history';
+type PreviewTab = 'comments' | 'activity' | 'history' | 'changes';
 
 /**
- * Card preview modal: summary-of-changes, activity (comments) and history tabs.
+ * Card preview modal (Jira-style two-column layout).
  * Data is supplied by the board; user actions are emitted as events
  * (`preview-close`, `preview-add-comment`, `preview-revert`, `preview-next`).
  */
@@ -22,14 +28,61 @@ export class KanbanPreviewModalElement extends LitElement {
   @property({ type: Boolean }) loading = false;
   @property({ type: Boolean }) commentPending = false;
 
-  @state() private activeTab: PreviewTab = 'changes';
+  @state() private activeTab: PreviewTab = 'comments';
+  @state() private detailsOpen = true;
+  @state() private watchersOpen = true;
+  @state() private descriptionOpen = true;
+  private commentRte: CommentRteHandle | null = null;
 
   protected override createRenderRoot(): HTMLElement {
     return this;
   }
 
   public resetTab(): void {
-    this.activeTab = 'changes';
+    this.activeTab = 'comments';
+  }
+
+  public clearCommentField(): void {
+    this.teardownCommentRte();
+    if (this.canCompose() && this.open) {
+      void this.ensureCommentRte();
+    }
+  }
+
+  protected override updated(changed: PropertyValues): void {
+    if (changed.has('open') && !this.open) {
+      this.teardownCommentRte();
+      return;
+    }
+    if (!this.open || this.loading) {
+      return;
+    }
+    if (changed.has('activeTab') && !this.canCompose()) {
+      this.teardownCommentRte();
+      return;
+    }
+    if ((changed.has('open') || changed.has('activeTab') || changed.has('loading')) && this.canCompose()) {
+      void this.ensureCommentRte();
+    }
+  }
+
+  private canCompose(): boolean {
+    return this.activeTab === 'comments';
+  }
+
+  private async ensureCommentRte(): Promise<void> {
+    if (this.commentRte) {
+      return;
+    }
+    await this.updateComplete;
+    requestAnimationFrame(async () => {
+      this.commentRte = await mountCommentRte('newComment');
+    });
+  }
+
+  private teardownCommentRte(): void {
+    destroyCommentRte('newComment');
+    this.commentRte = null;
   }
 
   private emit(type: string, detail: Record<string, unknown> = {}): void {
@@ -43,8 +96,7 @@ export class KanbanPreviewModalElement extends LitElement {
   }
 
   private submitComment(): void {
-    const textarea = this.querySelector<HTMLTextAreaElement>('#newComment');
-    const text = (textarea?.value || '').trim();
+    const text = (this.commentRte?.getData() || this.querySelector<HTMLTextAreaElement>('#newComment')?.value || '').trim();
     if (!text) {
       this.emit('toast', { message: 'Please enter a comment', type: 'warning' });
       return;
@@ -52,32 +104,163 @@ export class KanbanPreviewModalElement extends LitElement {
     this.emit('preview-add-comment', { text });
   }
 
+  private currentStage(): Stage | undefined {
+    return this.stages.find((s) => s.id == this.card?.stage);
+  }
+
   private stageLabel(): string {
-    const stage = this.stages.find((s) => s.id == this.card?.stage);
+    const stage = this.currentStage();
     return stage ? stage.label : String(this.card?.stage ?? '');
   }
 
-  private renderMeta(): TemplateResult {
+  private checklistItems(): StageChecklistItem[] {
+    const raw = this.currentStage()?.checklist || [];
+    return Array.isArray(raw) ? raw.filter((item) => item && String(item.title || '').trim() !== '') : [];
+  }
+
+  private userComments(): any[] {
+    return (this.comments || []).filter((comment) => this.isUserComment(comment));
+  }
+
+  private activityItems(): any[] {
+    return (this.comments || []).filter((comment) => !this.isUserComment(comment));
+  }
+
+  private isUserComment(comment: any): boolean {
+    if (typeof comment.isUserComment === 'boolean') {
+      return comment.isUserComment;
+    }
+    // Fallback for stale payloads: stage-move templates are not user comments.
+    const content = String(comment.content || '');
+    return !/^Moved from "/.test(content);
+  }
+
+  private collectWatchers(): { users: MentionFeedItem[]; groups: MentionFeedItem[] } {
+    const users = new Map<number, MentionFeedItem>();
+    const groups = new Map<number, MentionFeedItem>();
+    this.userComments().forEach((comment) => {
+      const htmlContent = String(comment.content || '');
+      if (!htmlContent.includes('data-mention')) {
+        return;
+      }
+      const extracted = extractWatcherMentionsFromHtml(htmlContent);
+      extracted.users.forEach((user) => users.set(user.uid, user));
+      extracted.groups.forEach((group) => groups.set(group.uid, group));
+    });
+    return {
+      users: Array.from(users.values()),
+      groups: Array.from(groups.values()),
+    };
+  }
+
+  private renderBreadcrumb(): TemplateResult {
     const card = this.card!;
+    const typeLabel = card.type || card.table || 'record';
     return html`
-      <span>UID: ${card.uid}</span>
-      <span>Page: ${card.pageName}</span>
-      ${card.editor ? html`<span>Editor: ${card.editor}</span>` : nothing}
-      <span class="card-badge">${this.stageLabel()}</span>`;
+      <div class="preview-breadcrumb">
+        <span class="preview-breadcrumb-type">${typeLabel}</span>
+        <span class="preview-breadcrumb-sep">/</span>
+        <span class="preview-breadcrumb-key">${card.uid}</span>
+      </div>`;
+  }
+
+  private renderChecklist(): TemplateResult | typeof nothing {
+    const items = this.checklistItems();
+    if (items.length === 0) {
+      return nothing;
+    }
+    return html`
+      <section class="preview-checklist" aria-label="Checklist">
+        <h5 class="preview-section-title">Checklist</h5>
+        <ul class="stage-checklist-ul preview-checklist-list">
+          ${items.map((item) => html`
+            <li class="stage-checklist-item">
+              <span class="stage-checklist-item-icon">
+                <typo3-backend-icon identifier="kanban-workspaces-stage-checklist" size="small"></typo3-backend-icon>
+              </span>
+              <span class="stage-checklist-item-title">${item.title}</span>
+            </li>`)}
+        </ul>
+      </section>`;
+  }
+
+  private renderPillTabs(): TemplateResult {
+    const userCount = this.userComments().length;
+    const tabs: { id: PreviewTab; label: string; count?: number }[] = [
+      { id: 'comments', label: 'Comment', count: userCount },
+      { id: 'activity', label: 'Activity' },
+      { id: 'history', label: 'History' },
+      { id: 'changes', label: 'Changes' },
+    ];
+    return html`
+      <div class="preview-pill-tabs" role="tablist" aria-label="Preview sections">
+        ${tabs.map((tab) => html`
+          <button type="button" role="tab"
+            class="preview-pill-tab ${this.activeTab === tab.id ? 'active' : ''}"
+            aria-selected=${this.activeTab === tab.id ? 'true' : 'false'}
+            @click=${() => { this.activeTab = tab.id; }}>
+            ${tab.label}${tab.count ? html` (${tab.count})` : nothing}
+          </button>`)}
+      </div>`;
   }
 
   private renderChanges(): TemplateResult {
     if (!this.diffs || this.diffs.length === 0) {
       return html`<div class="empty-state">No changes detected</div>`;
     }
-    return html`${this.diffs.map((diff) => html`
+    return html`${this.diffs.map((diff) => this.renderDiffItem(diff))}`;
+  }
+
+  private renderDiffItem(diff: any): TemplateResult {
+    return html`
       <div class="change-item">
         <div class="change-label">${diff.label}</div>
-        <div class="change-content">${unsafeHTML(diff.content)}</div>
-      </div>`)}`;
+        <div class="change-content">${unsafeHTML(diff.content || '')}</div>
+      </div>`;
+  }
+
+  /**
+   * Content-element / record field content shown like Jira Description.
+   * Uses the workspace (current) value only — not live/workspace diff markup.
+   */
+  private renderDescription(): TemplateResult | typeof nothing {
+    const fields = (this.diffs || [])
+      .map((diff) => ({
+        label: String(diff.label || '').trim(),
+        content: extractCurrentValueFromDiffHtml(String(diff.content || '')).trim(),
+      }))
+      .filter((field) => {
+        if (!field.content) {
+          return false;
+        }
+        // Drop empty processed-value shells (nbsp / empty tags only).
+        const text = field.content.replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').trim();
+        return text !== '';
+      });
+
+    if (fields.length === 0) {
+      return nothing;
+    }
+    return html`
+      <section class="preview-description" aria-label="Description">
+        <button type="button" class="preview-description-toggle"
+          @click=${() => { this.descriptionOpen = !this.descriptionOpen; }}>
+          <span class="preview-section-title">Description</span>
+          <i class="fas fa-chevron-${this.descriptionOpen ? 'down' : 'right'}"></i>
+        </button>
+        ${this.descriptionOpen ? html`
+          <div class="preview-description-body">
+            ${fields.map((field) => html`
+              <div class="preview-description-field">
+                ${field.label ? html`<div class="preview-description-field-label">${field.label}</div>` : nothing}
+                <div class="preview-description-field-content">${unsafeHTML(field.content)}</div>
+              </div>`)}
+          </div>` : nothing}
+      </section>`;
   }
 
   private renderComment(comment: any): TemplateResult {
+    const safe = sanitizeCommentHtml(String(comment.content || ''));
     return html`
       <div class="comment">
         <div class="comment-avatar">
@@ -88,24 +271,37 @@ export class KanbanPreviewModalElement extends LitElement {
             <span class="comment-author">${comment.author}</span>
             <span class="comment-date">${formatDate(comment.timestamp)}</span>
           </div>
-          <div class="comment-content">${comment.content}</div>
+          <div class="comment-content">${unsafeHTML(safe)}</div>
           ${(comment.replies || []).map((reply: any) => this.renderComment(reply))}
         </div>
       </div>`;
   }
 
-  private renderComments(): TemplateResult {
-    if (!this.comments || this.comments.length === 0) {
+  private renderUserCommentList(): TemplateResult {
+    const items = this.userComments();
+    if (items.length === 0) {
       return html`<div class="empty-state">No comments yet</div>`;
     }
-    return html`${this.comments.map((comment) => this.renderComment(comment))}`;
+    return html`${items.map((comment) => this.renderComment(comment))}`;
+  }
+
+  private renderActivity(): TemplateResult {
+    const items = this.activityItems();
+    if (items.length === 0) {
+      return html`<div class="empty-state">No activity yet</div>`;
+    }
+    return html`${items.map((comment) => this.renderComment(comment))}`;
   }
 
   private renderHistory(): TemplateResult {
     if (!this.history || this.history.length === 0) {
       return html`<div class="empty-state">No history available</div>`;
     }
-    return html`${this.history.map((item) => html`
+    return html`${this.history.map((item) => this.renderHistoryItem(item))}`;
+  }
+
+  private renderHistoryItem(item: any): TemplateResult {
+    return html`
       <div class="history-item">
         <div class="comment-avatar">
           ${item.avatar ? html`<img src=${item.avatar} alt=${item.author}>` : html`<span>${getInitials(item.author || 'Unknown')}</span>`}
@@ -120,7 +316,112 @@ export class KanbanPreviewModalElement extends LitElement {
                 <div class="history-diff-item"><strong>${diff.label}</strong> ${unsafeHTML(diff.html || '')}</div>`)
             : html`<div class="history-action">${item.action || 'Updated record'}</div>`}
         </div>
-      </div>`)}`;
+      </div>`;
+  }
+
+  private renderCommentForm(): TemplateResult {
+    return html`
+      <div class="comment-form preview-comment-form preview-comment-form--top">
+        <div class="kanban-rte-host" data-rte-for="newComment"></div>
+        <button class="btn btn-primary" ?disabled=${this.commentPending} @click=${() => this.submitComment()}>
+          <i class="fas ${this.commentPending ? 'fa-spinner fa-spin' : 'fa-comment'}"></i> Add Comment
+        </button>
+      </div>`;
+  }
+
+  private renderDetailRow(label: string, value: TemplateResult | string | typeof nothing): TemplateResult | typeof nothing {
+    if (value === nothing || value === '' || value == null) {
+      return nothing;
+    }
+    return html`
+      <div class="preview-detail-row">
+        <div class="preview-detail-label">${label}</div>
+        <div class="preview-detail-value">${value}</div>
+      </div>`;
+  }
+
+  private renderDetails(): TemplateResult {
+    const card = this.card!;
+    const assignee = card.assignee;
+    const assigneeLabel = assignee
+      ? html`
+          <span class="preview-assignee">
+            ${assignee.avatar_url
+              ? html`<img class="preview-assignee-avatar" src=${assignee.avatar_url} alt="">`
+              : html`<span class="preview-assignee-avatar preview-assignee-initials">${getInitials(assignee.username || 'U')}</span>`}
+            <span>${assignee.username || 'User ' + assignee.uid}</span>
+          </span>`
+      : 'None';
+
+    const languageTitle = card.language?.title || card.languageCode || '';
+    const integrity = card.integrityStatus && card.integrityStatus !== 'ok'
+      ? html`<span class="preview-integrity preview-integrity--${card.integrityStatus}">${card.integrityStatus}${card.integrityMessages ? html`: ${card.integrityMessages}` : nothing}</span>`
+      : nothing;
+
+    return html`
+      <div class="preview-accordion ${this.detailsOpen ? 'is-open' : ''}">
+        <button type="button" class="preview-accordion-toggle" @click=${() => { this.detailsOpen = !this.detailsOpen; }}>
+          <span>Details</span>
+          <i class="fas fa-chevron-${this.detailsOpen ? 'down' : 'right'}"></i>
+        </button>
+        ${this.detailsOpen ? html`
+          <div class="preview-accordion-body">
+            ${this.renderDetailRow('Priority', card.priority || nothing)}
+            ${this.renderDetailRow('Assignee', assigneeLabel)}
+            ${languageTitle ? this.renderDetailRow('Language', languageTitle) : nothing}
+            ${card.pageName ? this.renderDetailRow('Page', card.pageName) : nothing}
+            ${card.type ? this.renderDetailRow('Type', card.type) : nothing}
+            ${integrity !== nothing ? this.renderDetailRow('Integrity', integrity) : nothing}
+            ${card.modifiedDate ? this.renderDetailRow('Updated', formatDate(card.modifiedDate)) : nothing}
+            ${card.editor ? this.renderDetailRow('Editor', card.editor) : nothing}
+          </div>` : nothing}
+      </div>`;
+  }
+
+  private renderWatchers(): TemplateResult {
+    const { users, groups } = this.collectWatchers();
+    const empty = users.length === 0 && groups.length === 0;
+    return html`
+      <div class="preview-accordion ${this.watchersOpen ? 'is-open' : ''}">
+        <button type="button" class="preview-accordion-toggle" @click=${() => { this.watchersOpen = !this.watchersOpen; }}>
+          <span>Watchers</span>
+          <i class="fas fa-chevron-${this.watchersOpen ? 'down' : 'right'}"></i>
+        </button>
+        ${this.watchersOpen ? html`
+          <div class="preview-accordion-body">
+            ${empty ? html`<div class="preview-watchers-empty">None</div>` : html`
+              <ul class="preview-watchers-list">
+                ${users.map((user) => html`
+                  <li class="preview-watcher-item">
+                    ${user.avatarUrl
+                      ? html`<img class="preview-watcher-avatar" src=${user.avatarUrl} alt="">`
+                      : html`<span class="preview-watcher-avatar preview-watcher-initials">${getInitials(user.username || user.text || 'U')}</span>`}
+                    <span class="preview-watcher-name">${user.text || user.username || `@user:${user.uid}`}</span>
+                  </li>`)}
+                ${groups.map((group) => html`
+                  <li class="preview-watcher-item preview-watcher-group">
+                    <span class="preview-watcher-avatar preview-watcher-group-icon"><i class="fas fa-users"></i></span>
+                    <span class="preview-watcher-name">
+                      ${group.text || `@group:${group.uid}`}
+                      ${group.memberCount != null ? html`<span class="preview-watcher-meta">${group.memberCount} members</span>` : nothing}
+                    </span>
+                  </li>`)}
+              </ul>`}
+          </div>` : nothing}
+      </div>`;
+  }
+
+  private renderSidebar(): TemplateResult {
+    return html`
+      <aside class="preview-sidebar" aria-label="Issue details">
+        <div class="preview-status">
+          <button type="button" class="preview-status-btn" disabled title="Stage transitions use Approve / board actions">
+            <span class="preview-status-label">${this.stageLabel()}</span>
+          </button>
+        </div>
+        ${this.renderDetails()}
+        ${this.renderWatchers()}
+      </aside>`;
   }
 
   protected override render(): TemplateResult {
@@ -130,47 +431,44 @@ export class KanbanPreviewModalElement extends LitElement {
     return html`
       <div class="modal-overlay" id="previewModal" style=${`display: ${this.open ? 'flex' : 'none'}`}
         @click=${(e: Event) => this.onOverlayClick(e)}>
-        <div class="modal modal-dialog modal-xl" role="dialog" aria-modal="true">
-          <div class="modal-content">
-            <div class="modal-header">
-              <div class="modal-title-section">
-                <h4 class="modal-title" id="modalTitle">${this.card.title}</h4>
-                <div class="modal-meta" id="modalMeta">${this.renderMeta()}</div>
+        <div class="modal modal-dialog modal-xl preview-issue-dialog" role="dialog" aria-modal="true">
+          <div class="modal-content preview-issue-content">
+            <button class="modal-close btn-close preview-issue-close" aria-label="Close" @click=${() => this.emit('preview-close')}>
+              <i class="fas fa-times"></i>
+            </button>
+
+            <div class="preview-issue-layout">
+              <div class="preview-main">
+                <header class="preview-main-header">
+                  ${this.renderBreadcrumb()}
+                  <h4 class="modal-title preview-issue-title" id="modalTitle">${this.card.title}</h4>
+                </header>
+
+                ${this.renderChecklist()}
+                ${this.renderPillTabs()}
+
+                <div class="preview-main-body modal-body">
+                  ${this.loading ? html`<div class="empty-state">Loading…</div>` : html`
+                    <div class="tab-content preview-tab-content">
+                      <div class="tab-pane ${this.activeTab === 'comments' ? 'active' : ''}" role="tabpanel">
+                        ${this.renderDescription()}
+                        ${this.renderCommentForm()}
+                        <div class="comments-container">${this.renderUserCommentList()}</div>
+                      </div>
+                      <div class="tab-pane ${this.activeTab === 'activity' ? 'active' : ''}" role="tabpanel">
+                        <div class="comments-container preview-activity-feed">${this.renderActivity()}</div>
+                      </div>
+                      <div class="tab-pane ${this.activeTab === 'history' ? 'active' : ''}" role="tabpanel">
+                        <div class="history-container">${this.renderHistory()}</div>
+                      </div>
+                      <div class="tab-pane ${this.activeTab === 'changes' ? 'active' : ''}" role="tabpanel">
+                        <div class="changes-container">${this.renderChanges()}</div>
+                      </div>
+                    </div>`}
+                </div>
               </div>
-              <button class="modal-close btn-close" aria-label="Close" @click=${() => this.emit('preview-close')}>
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
 
-            <ul class="nav nav-tabs" role="tablist">
-              ${(['changes', 'comments', 'history'] as PreviewTab[]).map((tab) => html`
-                <li class="nav-item" role="presentation">
-                  <button class="nav-link ${this.activeTab === tab ? 'active' : ''}" role="tab"
-                    @click=${() => { this.activeTab = tab; }}>
-                    ${tab === 'changes' ? 'Summary of changes' : tab === 'comments' ? html`Activity (${this.comments.length})` : 'History'}
-                  </button>
-                </li>`)}
-            </ul>
-
-            <div class="modal-body">
-              ${this.loading ? html`<div class="empty-state">Loading…</div>` : html`
-                <div class="tab-content">
-                  <div class="tab-pane ${this.activeTab === 'changes' ? 'active' : ''}">
-                    <div class="changes-container">${this.renderChanges()}</div>
-                  </div>
-                  <div class="tab-pane ${this.activeTab === 'comments' ? 'active' : ''}">
-                    <div class="comments-container">${this.renderComments()}</div>
-                    <div class="comment-form">
-                      <textarea id="newComment" class="form-control" placeholder="Add a comment..." rows="3"></textarea>
-                      <button class="btn btn-primary" ?disabled=${this.commentPending} @click=${() => this.submitComment()}>
-                        <i class="fas ${this.commentPending ? 'fa-spinner fa-spin' : 'fa-comment'}"></i> Add Comment
-                      </button>
-                    </div>
-                  </div>
-                  <div class="tab-pane ${this.activeTab === 'history' ? 'active' : ''}">
-                    <div class="history-container">${this.renderHistory()}</div>
-                  </div>
-                </div>`}
+              ${this.renderSidebar()}
             </div>
 
             <div class="modal-footer">

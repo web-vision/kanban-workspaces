@@ -63,11 +63,14 @@ Editing Items
 
 To edit a content item's actual content:
 
-1. **Click** on a card to view item details
-2. Look for an **Edit** button or link
-3. Click to open the item in the record editor
-4. Make your changes in the editor interface
-5. Save your changes
+1. Click the **pencil** icon (Edit Element) in the header of the card
+2. Make your changes in the record editor
+3. Save your changes
+
+The card header holds two more icon buttons: the **eye** icon (Preview Element)
+opens a preview of the record in a new window and the **page** icon (Open version
+of page) opens the page of the record in the Page module. The **⋯** menu holds
+**Assign** and **Discard version of record**.
 
 The changes will be applied in your current workspace, not the live website.
 

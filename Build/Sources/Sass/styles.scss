@@ -1049,9 +1049,13 @@ body {
 
 .card-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+}
+
+.card-header > .card-type {
+  margin-right: auto;
 }
 
 .card-type {
@@ -1064,22 +1068,29 @@ body {
   letter-spacing: 0.5px;
 }
 
+.card-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-action,
 .card-menu {
   background: none;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
+  line-height: 1;
   padding: 4px;
   border-radius: var(--border-radius-sm);
   transition: var(--transition);
-  opacity: 0;
 }
 
-.kanban-card:hover .card-menu {
-  opacity: 1;
-}
-
-.card-menu:hover {
+.card-action:hover,
+.card-action:focus-visible,
+.card-menu:hover,
+.card-menu:focus-visible {
   background-color: var(--bg-secondary);
   color: var(--text-secondary);
 }

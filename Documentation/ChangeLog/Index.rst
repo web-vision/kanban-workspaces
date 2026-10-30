@@ -7,6 +7,15 @@ ChangeLog
 Version [UNRELEASED]
 ====================
 
+New Features
+------------
+
+* **Hide "Ready to publish" stage** – New extension configuration option ``hideReadyToPublishStage``; when enabled the
+  default "Ready to publish" stage (stage -10) is removed from the workflow, so records move directly from "Editing"
+  to "Publish". Implemented by extending the core ``WorkspaceStageRepository``. The upgrade wizard
+  ``kanbanWorkspaces_readyToPublishStage`` moves records still in that stage back to "Editing". The wizard needs
+  ``typo3/cms-install``.
+
 Version 0.0.2
 =============
 

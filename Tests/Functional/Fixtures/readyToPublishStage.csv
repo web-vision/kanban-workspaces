@@ -1,0 +1,17 @@
+"be_users"
+,"uid","pid","username","password","admin"
+,1,0,"admin","$argon2i$v=19$m=65536,t=16,p=1$dummy$dummy",1
+"sys_workspace"
+,"uid","pid","title","adminusers","publish_access"
+,1,0,"Two-stage Workspace","be_users_1",0
+,2,0,"Publish-stage Workspace","be_users_1",1
+"pages"
+,"uid","pid","title","t3ver_oid","t3ver_wsid","t3ver_state","t3ver_stage"
+,1,0,"Root",0,0,0,0
+,2,1,"Ready in two-stage workspace",0,1,1,-10
+,3,1,"Ready in publish-stage workspace",0,2,1,-10
+,4,1,"Publish in two-stage workspace",0,1,1,-20
+"tt_content"
+,"uid","pid","header","t3ver_oid","t3ver_wsid","t3ver_state","t3ver_stage"
+,10,1,"Live element",0,0,0,-10
+,11,1,"Ready in two-stage workspace",0,1,1,-10

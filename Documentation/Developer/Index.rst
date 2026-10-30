@@ -123,6 +123,7 @@ the immutable value object only exposes properly typed settings:
    {
        public function __construct(
            private bool $disableResetToEditingStage = false,
+           private bool $hideReadyToPublishStage = false,
        ) {}
 
        public static function create(ExtensionConfiguration $extensionConfiguration): self
@@ -135,6 +136,11 @@ the immutable value object only exposes properly typed settings:
 
    Returns whether resetting a workspace record to the editing stage (stage 0)
    after a field update should be prevented.
+
+.. php:method:: getHideReadyToPublishStage(): bool
+
+   Returns whether the default "Ready to publish" stage (stage -10) is removed
+   from the workflow.
 
 .. php:method:: getCustomStageEditTitle(): string
                 getCustomStageReadyToPublishTitle(): string
@@ -173,6 +179,22 @@ dependencies keep being autowired through the inherited constructor. The
            // return the configured title (resolving LLL:) or fall back to parent
        }
    }
+
+Hidden "Ready to publish" stage (WorkspaceStageRepository override)
+===================================================================
+
+``WebVision\KanbanWorkspaces\Domain\Repository\WorkspaceStageRepository``
+extends the core ``TYPO3\CMS\Workspaces\Domain\Repository\WorkspaceStageRepository``
+and replaces it through ``#[AsAlias]``, like the ``StagesService`` above. When
+``hideReadyToPublishStage`` is enabled, ``findAllStagesByWorkspace()`` drops the
+``STAGE_PUBLISH_ID`` (-10) stage, so ``StagesService::getNextStage()`` and
+``getPreviousStage()`` step directly between the edit and the execute stage.
+Workspaces with ``PUBLISH_ACCESS_ONLY_IN_PUBLISH_STAGE`` keep the stage, because
+the core workflow requires it there.
+
+The upgrade wizard ``WebVision\KanbanWorkspaces\Upgrades\ReadyToPublishStageUpgradeWizard``
+(``kanbanWorkspaces_readyToPublishStage``) moves workspace versions from stage -10
+back to stage 0. It is only offered while the option is enabled.
 
 DataHandler Hook
 ================

@@ -28,6 +28,7 @@ final readonly class EmConfiguration
 {
     public function __construct(
         private bool $disableResetToEditingStage = false,
+        private bool $hideReadyToPublishStage = false,
         private string $customStageEditTitle = '',
         private string $customStageReadyToPublishTitle = '',
         private string $customStagePublishTitle = '',
@@ -61,6 +62,7 @@ final readonly class EmConfiguration
 
         return new self(
             disableResetToEditingStage: (bool)($configuration['disableResetToEditingStage'] ?? false),
+            hideReadyToPublishStage: (bool)($configuration['hideReadyToPublishStage'] ?? false),
             customStageEditTitle: (string)($configuration['customStageEditTitle'] ?? ''),
             customStageReadyToPublishTitle: (string)($configuration['customStageReadyToPublishTitle'] ?? ''),
             customStagePublishTitle: (string)($configuration['customStagePublishTitle'] ?? ''),
@@ -78,6 +80,18 @@ final readonly class EmConfiguration
     public function getDisableResetToEditingStage(): bool
     {
         return $this->disableResetToEditingStage;
+    }
+
+    /**
+     * Whether the default "Ready to publish" stage (``StagesService::STAGE_PUBLISH_ID``) is hidden.
+     *
+     * When `true`, the {@see \WebVision\KanbanWorkspaces\Domain\Repository\WorkspaceStageRepository}
+     * drops the stage from the stage list of every workspace that does not require it, so the
+     * workflow steps directly from "Editing" to "Publish". Defaults to `false`.
+     */
+    public function getHideReadyToPublishStage(): bool
+    {
+        return $this->hideReadyToPublishStage;
     }
 
     /**

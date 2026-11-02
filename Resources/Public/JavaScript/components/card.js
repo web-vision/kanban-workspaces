@@ -19,8 +19,18 @@ import { customElement, property } from 'lit/decorators.js';
 import '@typo3/backend/element/icon-element.js';
 import { getTypeIcon, formatDate } from '@web-vision/kanban-workspaces/core/utils.js';
 /**
+ * The actions shown as always-visible icon buttons in the card header. The
+ * board runs them (see `KanbanBoardElement.runCardAction()`); the less frequent
+ * ones stay in the "..." context menu.
+ */
+const cardActions = [
+    { action: 'preview-element', label: 'Preview Element', icon: 'fas fa-eye' },
+    { action: 'edit-element', label: 'Edit Element', icon: 'fas fa-pencil-alt' },
+    { action: 'page-version', label: 'Open version of page', icon: 'fas fa-file-alt' },
+];
+/**
  * A single kanban card. Presentational: it renders the card markup and emits
- * DOM events (`card-click`, `card-menu`, `card-dragstart`, `card-dragend`) that
+ * DOM events (`card-click`, `card-action`, `card-menu`, `card-dragstart`, `card-dragend`) that
  * the board coordinates. The host uses `display: contents` (see SCSS) so the
  * inner `.kanban-card` stays the flex item and existing styles apply unchanged.
  */
@@ -103,6 +113,13 @@ let KanbanCardElement = class KanbanCardElement extends LitElement {
             ${this.renderIntegrity()}
             ${card.attachments && card.attachments.length > 0 ? html `
               <div class="card-attachments"><i class="fas fa-paperclip"></i><span>${card.attachments.length}</span></div>` : nothing}
+          </div>
+          <div class="card-actions">
+            ${cardActions.map(({ action, label, icon }) => html `
+              <button type="button" class="card-action" data-action=${action} title=${label} aria-label=${label}
+                @click=${(e) => { e.stopPropagation(); this.emit('card-action', { action }); }}>
+                <i class=${icon} aria-hidden="true"></i>
+              </button>`)}
           </div>
           <button class="card-menu" title="Card actions" aria-label="Card menu"
             @click=${(e) => { e.stopPropagation(); this.emit('card-menu', { anchor: e.currentTarget }); }}>

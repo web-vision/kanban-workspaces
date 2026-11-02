@@ -974,40 +974,46 @@ body{
 }
 
 .card-header{
-  align-items:flex-start;
+  align-items:center;
   display:flex;
-  justify-content:space-between;
+  gap:var(--spacing-sm);
   margin-bottom:var(--spacing-md);
 }
 
+.card-header>.card-type{
+  margin-right:auto;
+}
+
 .card-type{
-  align-items:center;
-  display:flex;
+  color:var(--text-muted);
   font-size:12px;
   gap:var(--spacing-sm);
   letter-spacing:.5px;
   text-transform:uppercase;
 }
 
-.card-menu,.card-type{
-  color:var(--text-muted);
+.card-actions,.card-type{
+  align-items:center;
+  display:flex;
 }
 
-.card-menu{
+.card-actions{
+  flex-shrink:0;
+  gap:2px;
+}
+
+.card-action,.card-menu{
   background:none;
   border:none;
   border-radius:var(--border-radius-sm);
+  color:var(--text-muted);
   cursor:pointer;
-  opacity:0;
+  line-height:1;
   padding:4px;
   transition:var(--transition);
 }
 
-.kanban-card:hover .card-menu{
-  opacity:1;
-}
-
-.card-menu:hover{
+.card-action:focus-visible,.card-action:hover,.card-menu:focus-visible,.card-menu:hover{
   background-color:var(--bg-secondary);
   color:var(--text-secondary);
 }

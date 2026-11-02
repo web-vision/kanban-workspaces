@@ -7,6 +7,12 @@ ChangeLog
 Version [UNRELEASED]
 ====================
 
+New Features
+------------
+
+* **Card action buttons** – Preview Element, Edit Element and Open version of page are always-visible icon buttons in
+  the card header instead of entries of the hover-only "⋯" menu, which keeps Assign and Discard version of record.
+
 Version 0.0.2
 =============
 

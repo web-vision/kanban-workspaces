@@ -145,6 +145,7 @@ class KanbanWorkspacesController extends ActionController
             'selectedDepth' => $selectedDepth,
             'selectedStage' => $selectedStage,
             'beUsers' => $this->getBackendUsersList(),
+            'skipSendToStageDialog' => $this->emSettings->getSkipSendToStageDialog(),
             'filters' => [
                 'depth' => [
                     'label' => 'Depth',

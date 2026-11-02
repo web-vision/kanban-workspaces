@@ -84,6 +84,19 @@ You can configure the extension under **Admin Tools** > **Settings** >
   default disabled. When enabled, it prevents TYPO3's DataHandler from resetting
   a workspace record's stage back to the editing stage (stage 0) after a field
   update, so the record keeps its current workflow stage.
+* **Hide "Ready to publish" stage** (``hideReadyToPublishStage``) - By default
+  disabled. When enabled, the default "Ready to publish" stage (stage ``-10``)
+  is removed from the workflow of the kanban board, the core Workspaces module
+  and the preview toolbar, so records move directly from "Editing" to "Publish".
+  Workspaces with "Publish only content in publish stage" keep the stage. After
+  enabling it on an existing installation, run the upgrade wizard
+  ``kanbanWorkspaces_readyToPublishStage`` to move records still in that stage
+  back to "Editing".
+* **Skip "Send to stage" dialog** (``skipSendToStageDialog``) - By default
+  disabled. When enabled, stage changes on the kanban board (drag & drop, the
+  stage buttons in the preview) are executed right away without asking for a
+  comment. The dialog still opens when there are mail recipients to choose
+  (the stage has "Show dialog" enabled) or a stage checklist to confirm.
 * **Custom titles for default stages** (``customStageEditTitle``,
   ``customStageReadyToPublishTitle``, ``customStagePublishTitle``) - Optional
   custom titles for the default "Editing" (stage ``0``), "Ready to publish"

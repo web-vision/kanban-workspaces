@@ -28,6 +28,8 @@ final readonly class EmConfiguration
 {
     public function __construct(
         private bool $disableResetToEditingStage = false,
+        private bool $hideReadyToPublishStage = false,
+        private bool $skipSendToStageDialog = false,
         private string $customStageEditTitle = '',
         private string $customStageReadyToPublishTitle = '',
         private string $customStagePublishTitle = '',
@@ -61,6 +63,8 @@ final readonly class EmConfiguration
 
         return new self(
             disableResetToEditingStage: (bool)($configuration['disableResetToEditingStage'] ?? false),
+            hideReadyToPublishStage: (bool)($configuration['hideReadyToPublishStage'] ?? false),
+            skipSendToStageDialog: (bool)($configuration['skipSendToStageDialog'] ?? false),
             customStageEditTitle: (string)($configuration['customStageEditTitle'] ?? ''),
             customStageReadyToPublishTitle: (string)($configuration['customStageReadyToPublishTitle'] ?? ''),
             customStagePublishTitle: (string)($configuration['customStagePublishTitle'] ?? ''),
@@ -78,6 +82,30 @@ final readonly class EmConfiguration
     public function getDisableResetToEditingStage(): bool
     {
         return $this->disableResetToEditingStage;
+    }
+
+    /**
+     * Whether the default "Ready to publish" stage (``StagesService::STAGE_PUBLISH_ID``) is hidden.
+     *
+     * When `true`, the {@see \WebVision\KanbanWorkspaces\Domain\Repository\WorkspaceStageRepository}
+     * drops the stage from the stage list of every workspace that does not require it, so the
+     * workflow steps directly from "Editing" to "Publish". Defaults to `false`.
+     */
+    public function getHideReadyToPublishStage(): bool
+    {
+        return $this->hideReadyToPublishStage;
+    }
+
+    /**
+     * Whether the kanban board skips the "Send to stage" dialog.
+     *
+     * When `true`, a stage change on the board (drag & drop, the stage buttons in the
+     * preview modal) is executed right away without a comment, unless the dialog has
+     * something to decide: mail recipients or a stage checklist. Defaults to `false`.
+     */
+    public function getSkipSendToStageDialog(): bool
+    {
+        return $this->skipSendToStageDialog;
     }
 
     /**

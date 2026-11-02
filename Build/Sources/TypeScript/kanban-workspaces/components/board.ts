@@ -60,6 +60,7 @@ export class KanbanBoardElement extends LitElement {
   private diffs: Record<string, any[]> = {};
   private beUsers: CardUser[] = [];
   private multiSelectMode = false;
+  private skipSendToStageDialog = false;
   private draggedCard: Card | null = null;
 
   private api!: WorkspaceApi;
@@ -142,6 +143,7 @@ export class KanbanBoardElement extends LitElement {
     this.stages = [...(config.stages || [])];
     this.filters = { ...(config.filters || {}) };
     this.beUsers = config.beUsers || [];
+    this.skipSendToStageDialog = !!config.skipSendToStageDialog;
     this.stages.forEach((stage) => {
       this.columnUserFilters[stage.id] = null;
       this.columnSorts[stage.id] = null;
@@ -347,12 +349,30 @@ export class KanbanBoardElement extends LitElement {
         url: '', executeMethod, cardIds, targetStage,
         isDragDrop: false,
       };
-      this.sendOpen = true;
-      document.body.style.overflow = 'hidden';
+      await this.openSendModal();
     } catch (error) {
       console.error(error);
       showToast('Failed to load stage form', 'error');
     }
+  }
+
+  /**
+   * Show the send-to-stage modal for the prepared sendFormData / sendContext.
+   * With the skipSendToStageDialog option the transition is executed right away,
+   * unless the modal has something to decide: mail recipients (the stage has
+   * "Show dialog" enabled) or a stage checklist.
+   */
+  private async openSendModal(): Promise<void> {
+    const recipients = this.sendFormData?.sendMailTo;
+    const checklist = this.sendContext?.targetStage?.checklist;
+    const needsDialog = (Array.isArray(recipients) && recipients.length > 0)
+      || (Array.isArray(checklist) && checklist.length > 0);
+    if (this.skipSendToStageDialog && !needsDialog) {
+      await this.handleSendSubmit('', '', []);
+      return;
+    }
+    this.sendOpen = true;
+    document.body.style.overflow = 'hidden';
   }
 
   /**
@@ -382,8 +402,7 @@ export class KanbanBoardElement extends LitElement {
         sourceStage,
         isDragDrop: true,
       };
-      this.sendOpen = true;
-      document.body.style.overflow = 'hidden';
+      await this.openSendModal();
     } catch (error) {
       console.error(error);
       showToast('Failed to load stage form', 'error');

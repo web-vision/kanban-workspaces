@@ -16,7 +16,9 @@ $EM_CONF[$_EXTKEY] = [
             'php' => '8.2.0-8.5.99',
         ],
         'conflicts' => [],
-        'suggests' => [],
+        'suggests' => [
+            'install' => '13.4.25-14.99.99',
+        ],
     ],
     'autoload' => [
         'psr-4' => [

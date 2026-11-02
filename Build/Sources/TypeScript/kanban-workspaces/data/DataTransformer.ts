@@ -63,7 +63,9 @@ export class DataTransformer {
         pageName: extractPageNameFromPath(item.path_Workspace) || 'Home',
         editor: editor,
         editorId: `user_${item.cruser_id || item.uid}`,
-        modifiedDate: convertWorkspaceDate(item.lastChangedFormatted),
+        // lastChanged: timestamp added by the LastChangedTimestampListener
+        lastChanged: Number(item.lastChanged) || 0,
+        modifiedDate: item.lastChanged ? new Date(item.lastChanged * 1000).toISOString() : convertWorkspaceDate(item.lastChangedFormatted),
         stage: item.stage || 0,
         language: item.language || { icon: '', title: 'Default', title_crop: 'Default' },
         languageCode: item.language ? item.language.title_crop.toLowerCase().substring(0, 2) : 'en',

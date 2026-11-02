@@ -22,6 +22,8 @@ export interface Card {
   pageName?: string;
   editor?: string;
   editorId?: string;
+  /** Unix timestamp of the last change of the workspace version */
+  lastChanged?: number;
   modifiedDate?: string;
   stage: string | number;
   language?: CardLanguage;

@@ -54,7 +54,6 @@ export class KanbanBoardElement extends LitElement {
   @state() private contextMenu: { card: Card; x: number; y: number } | null = null;
 
   private columnUserFilters: Record<string, string | null> = {};
-  private columnSorts: Record<string, string | null> = {};
   private comments: Record<string, any[]> = {};
   private history: Record<string, any[]> = {};
   private diffs: Record<string, any[]> = {};
@@ -144,7 +143,6 @@ export class KanbanBoardElement extends LitElement {
     this.beUsers = config.beUsers || [];
     this.stages.forEach((stage) => {
       this.columnUserFilters[stage.id] = null;
-      this.columnSorts[stage.id] = null;
     });
     this.activeFilters = {
       depth: config.selectedDepth ? [String(config.selectedDepth)] : [],
@@ -198,10 +196,8 @@ export class KanbanBoardElement extends LitElement {
     if (userFilter) {
       list = list.filter((card) => (card.assignedUsers || []).some((u) => u.uid === userFilter));
     }
-    if (this.columnSorts[stage.id] === 'modifiedDate') {
-      list = [...list].sort((a, b) => new Date(b.modifiedDate as string).getTime() - new Date(a.modifiedDate as string).getTime());
-    }
-    return list;
+    // newest change first
+    return list.sort((a, b) => (b.lastChanged || 0) - (a.lastChanged || 0));
   }
 
   private getCardById(id: string | number): Card | undefined {

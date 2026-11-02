@@ -6,6 +6,9 @@ disableResetToEditingStage = 0
 # cat=config/stages/90; type=boolean; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.hideReadyToPublishStage
 hideReadyToPublishStage = 0
 
+# cat=config/stages/95; type=boolean; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.skipSendToStageDialog
+skipSendToStageDialog = 0
+
 # cat=config/stages/100; type=string; label=LLL:EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf:extConf.customStageEditTitle
 customStageEditTitle =
 

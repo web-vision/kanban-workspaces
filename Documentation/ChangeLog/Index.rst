@@ -15,6 +15,9 @@ New Features
   to "Publish". Implemented by extending the core ``WorkspaceStageRepository``. The upgrade wizard
   ``kanbanWorkspaces_readyToPublishStage`` moves records still in that stage back to "Editing". The wizard needs
   ``typo3/cms-install``.
+* **Skip "Send to stage" dialog** – New extension configuration option ``skipSendToStageDialog``; when enabled stage
+  changes on the kanban board are executed right away without the "Send to stage" dialog. The dialog still opens when
+  mail recipients or a stage checklist need a decision.
 
 Version 0.0.2
 =============

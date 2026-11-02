@@ -72,6 +72,9 @@
 			<trans-unit id="extConf.hideReadyToPublishStage">
 				<source>Hide "Ready to publish" stage: When enabled, the default "Ready to publish" stage (stage -10) is removed from the workflow, so records move directly from "Editing" to "Publish". Workspaces with "Publish only content in publish stage" keep the stage.</source>
 			</trans-unit>
+			<trans-unit id="extConf.skipSendToStageDialog">
+				<source>Skip "Send to stage" dialog: When enabled, stage changes on the kanban board are executed right away without asking for a comment. The dialog still opens when there are mail recipients to choose or a stage checklist to confirm.</source>
+			</trans-unit>
 			<trans-unit id="extConf.customStageEditTitle">
 				<source>Custom "Editing" stage title: Overrides the title of the default "Editing" stage (stage 0). Accepts a plain string or a LLL:EXT:... translation reference; leave empty to keep the TYPO3 default.</source>
 			</trans-unit>

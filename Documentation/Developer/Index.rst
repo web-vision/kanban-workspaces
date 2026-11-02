@@ -124,6 +124,7 @@ the immutable value object only exposes properly typed settings:
        public function __construct(
            private bool $disableResetToEditingStage = false,
            private bool $hideReadyToPublishStage = false,
+           private bool $skipSendToStageDialog = false,
        ) {}
 
        public static function create(ExtensionConfiguration $extensionConfiguration): self
@@ -141,6 +142,12 @@ the immutable value object only exposes properly typed settings:
 
    Returns whether the default "Ready to publish" stage (stage -10) is removed
    from the workflow.
+
+.. php:method:: getSkipSendToStageDialog(): bool
+
+   Returns whether the kanban board executes stage changes without the "Send to
+   stage" dialog. The controller passes it to the board as
+   ``window.WorkspaceConfig.skipSendToStageDialog``.
 
 .. php:method:: getCustomStageEditTitle(): string
                 getCustomStageReadyToPublishTitle(): string

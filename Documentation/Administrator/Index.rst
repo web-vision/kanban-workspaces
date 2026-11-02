@@ -92,6 +92,11 @@ You can configure the extension under **Admin Tools** > **Settings** >
   enabling it on an existing installation, run the upgrade wizard
   ``kanbanWorkspaces_readyToPublishStage`` to move records still in that stage
   back to "Editing".
+* **Skip "Send to stage" dialog** (``skipSendToStageDialog``) - By default
+  disabled. When enabled, stage changes on the kanban board (drag & drop, the
+  stage buttons in the preview) are executed right away without asking for a
+  comment. The dialog still opens when there are mail recipients to choose
+  (the stage has "Show dialog" enabled) or a stage checklist to confirm.
 * **Custom titles for default stages** (``customStageEditTitle``,
   ``customStageReadyToPublishTitle``, ``customStagePublishTitle``) - Optional
   custom titles for the default "Editing" (stage ``0``), "Ready to publish"

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" target-language="de" datatype="plaintext" original="EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf" date="2026-10-28T12:00:00Z" product-name="kanban_workspaces">
+		<header/>
+		<body>
+			<trans-unit id="publishedHistory.title">
+				<source>Live</source>
+				<target>Live</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.description">
+				<source>Published from this workspace in the last %s days</source>
+				<target>In den letzten %s Tagen aus diesem Workspace veröffentlicht</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.days">
+				<source>Number of days</source>
+				<target>Anzahl der Tage</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.empty">
+				<source>Nothing has been published from this workspace in the last %s days.</source>
+				<target>In den letzten %s Tagen wurde aus diesem Workspace nichts veröffentlicht.</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.publishedBy">
+				<source>Published %s by %s</source>
+				<target>Veröffentlicht %s von %s</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.showChanges">
+				<source>Show changes</source>
+				<target>Änderungen anzeigen</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.loadError">
+				<source>Error loading the published records</source>
+				<target>Die veröffentlichten Datensätze konnten nicht geladen werden</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.action.new">
+				<source>New</source>
+				<target>Neu</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.action.modified">
+				<source>Changed</source>
+				<target>Geändert</target>
+			</trans-unit>
+			<trans-unit id="publishedHistory.action.deleted">
+				<source>Deleted</source>
+				<target>Gelöscht</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

@@ -46,6 +46,26 @@ export interface Card {
   [key: string]: unknown;
 }
 
+/** A record published from the current workspace (sys_history), shown in the "Live" column. */
+export interface PublishedRecord {
+  /** uid of the sys_history entry */
+  id: number;
+  table: string;
+  uid: number;
+  title: string;
+  /** translated table title */
+  type: string;
+  action: 'new' | 'modified' | 'deleted';
+  pid: number;
+  pageTitle: string;
+  /** ISO 8601 */
+  publishedAt: string;
+  publishedBy: string;
+  comment: string;
+  /** backend URL of the record history (diff view) */
+  historyUrl: string;
+}
+
 export interface Stage {
   id: string | number;
   label: string;

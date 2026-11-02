@@ -11,4 +11,9 @@ return [
         'target' => \WebVision\KanbanWorkspaces\Controller\AssignAjaxController::class . '::assignAction',
         'inheritAccessFromModule' => 'web_kanbanworkspaces',
     ],
+    'kanban_workspace_published_history' => [
+        'path' => '/kanban-workspace/published-history',
+        'target' => \WebVision\KanbanWorkspaces\Controller\PublishedHistoryAjaxController::class . '::listAction',
+        'inheritAccessFromModule' => 'web_kanbanworkspaces',
+    ],
 ];

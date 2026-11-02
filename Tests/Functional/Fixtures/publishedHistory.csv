@@ -1,0 +1,19 @@
+"pages"
+,"uid","pid","title","doktype","slug","perms_everybody","perms_groupid","perms_group"
+,1,0,"Root",1,"/",0,0,0
+,2,1,"Editor page",1,"/editor-page",0,1,31
+"be_users"
+,"uid","pid","username","realName","password","admin","workspace_id","usergroup"
+,1,0,"admin","Admin User","$argon2i$v=19$m=65536,t=16,p=1$dummy$dummy",1,1,""
+,2,0,"editor","","$argon2i$v=19$m=65536,t=16,p=1$dummy$dummy",0,1,"1"
+"be_groups"
+,"uid","pid","title","tables_select","tables_modify","db_mountpoints","workspace_perms"
+,1,0,"Editors","tt_content,pages","tt_content,pages",2,1
+"sys_workspace"
+,"uid","pid","title","adminusers","members"
+,1,0,"Editor Workspace","be_users_1","be_users_2"
+,2,0,"Other Workspace","be_users_1",""
+"tt_content"
+,"uid","pid","CType","header","sorting","tstamp","crdate"
+,10,1,"text","Root element",1,1734875000,1734875000
+,20,2,"text","Editor element",1,1734875000,1734875000

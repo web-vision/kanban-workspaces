@@ -78,6 +78,36 @@
 			<trans-unit id="extConf.customStagePublishTitle">
 				<source>Custom "Publish" stage title: Overrides the title of the default "Publish" stage. Accepts a plain string or a LLL:EXT:... translation reference; leave empty to keep the TYPO3 default.</source>
 			</trans-unit>
+			<trans-unit id="publishedHistory.title">
+				<source>Live</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.description">
+				<source>Published from this workspace in the last %s days</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.days">
+				<source>Number of days</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.empty">
+				<source>Nothing has been published from this workspace in the last %s days.</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.publishedBy">
+				<source>Published %s by %s</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.showChanges">
+				<source>Show changes</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.loadError">
+				<source>Error loading the published records</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.action.new">
+				<source>New</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.action.modified">
+				<source>Changed</source>
+			</trans-unit>
+			<trans-unit id="publishedHistory.action.deleted">
+				<source>Deleted</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

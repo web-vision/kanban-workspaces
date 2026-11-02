@@ -9,14 +9,17 @@ import { WorkspaceApi } from '@web-vision/kanban-workspaces/data/WorkspaceApi.js
 import { showToast, showLoading, hideLoading, debounce } from '@web-vision/kanban-workspaces/core/utils.js';
 import { initHorizontalScroll } from '@web-vision/kanban-workspaces/core/HorizontalScroll.js';
 import '@web-vision/kanban-workspaces/components/column.js';
+import '@web-vision/kanban-workspaces/components/published-column.js';
 import '@web-vision/kanban-workspaces/components/filter-sidebar.js';
 import '@web-vision/kanban-workspaces/components/preview-modal.js';
 import '@web-vision/kanban-workspaces/components/send-to-stage-modal.js';
 import '@web-vision/kanban-workspaces/components/assign-modal.js';
 import type { SendToStageContext } from '@web-vision/kanban-workspaces/components/send-to-stage-modal.js';
-import type { Card, Stage, FilterConfig, CardUser } from '@web-vision/kanban-workspaces/types.js';
+import type { Card, Stage, FilterConfig, CardUser, PublishedRecord } from '@web-vision/kanban-workspaces/types.js';
 
 declare const TYPO3: any;
+
+const PUBLISHED_DAYS_STORAGE_KEY = 'kanban-workspaces.publishedHistoryDays';
 
 /**
  * Root Kanban board component. Owns the reactive state (cards, stages, filters,
@@ -33,6 +36,11 @@ export class KanbanBoardElement extends LitElement {
   @state() private searchQuery = '';
   @state() private selectedCards = new Set<string | number>();
   @state() private filtersOpen = false;
+
+  // Live column: records published from the workspace
+  @state() private publishedRecords: PublishedRecord[] = [];
+  @state() private publishedDays = 0;
+  private publishedRequest = 0;
 
   // Preview modal state
   @state() private previewOpen = false;
@@ -190,6 +198,55 @@ export class KanbanBoardElement extends LitElement {
       .then((data) => { this.cards = data.cards || []; })
       .catch((error) => { console.error('Failed to load data:', error); showToast('Error loading data', 'error'); this.cards = []; })
       .finally(() => hideLoading());
+    this.loadPublishedHistory();
+  }
+
+  private loadPublishedHistory(): void {
+    const url = TYPO3?.settings?.ajaxUrls?.kanban_workspace_published_history;
+    if (!url) {
+      return;
+    }
+    // only the latest request is applied, the days input may fire several in a row
+    const request = ++this.publishedRequest;
+    // same page and depth filter as the stage columns (set in loadData())
+    const { id, depth } = this.apiPayload.data[0];
+    this.api.fetchPublishedHistory(url, id, depth, this.storedPublishedDays())
+      .then(({ days, records }) => {
+        if (request !== this.publishedRequest) {
+          return;
+        }
+        this.publishedDays = days;
+        this.publishedRecords = records;
+      })
+      .catch((error) => {
+        if (request !== this.publishedRequest) {
+          return;
+        }
+        console.error('Failed to load published records:', error);
+        showToast(TYPO3?.lang?.['publishedHistory.loadError'] || 'Error loading the published records', 'error');
+        this.publishedRecords = [];
+      });
+  }
+
+  // The number of days of the Live column is remembered per browser; null lets the server use its default.
+  private storedPublishedDays(): number | null {
+    const days = parseInt(localStorage.getItem(PUBLISHED_DAYS_STORAGE_KEY) || '', 10);
+    return Number.isFinite(days) && days > 0 ? days : null;
+  }
+
+  private handlePublishedDaysChange(days: number): void {
+    localStorage.setItem(PUBLISHED_DAYS_STORAGE_KEY, String(days));
+    this.loadPublishedHistory();
+  }
+
+  // The header search applies to the Live column as well (the stage columns are filtered server side).
+  private filteredPublishedRecords(): PublishedRecord[] {
+    const query = this.searchQuery.trim().toLowerCase();
+    if (!query) {
+      return this.publishedRecords;
+    }
+    return this.publishedRecords.filter((record) => [record.title, record.pageTitle, record.type, String(record.uid)]
+      .some((value) => value.toLowerCase().includes(query)));
   }
 
   private cardsForStage(stage: Stage): Card[] {
@@ -634,6 +691,11 @@ export class KanbanBoardElement extends LitElement {
               .stage=${stage}
               .cards=${this.cardsForStage(stage)}
               .selectedCards=${this.selectedCards}></typo3-kanban-column>`)}
+          ${TYPO3?.settings?.ajaxUrls?.kanban_workspace_published_history ? html`
+            <typo3-kanban-published-column
+              .records=${this.filteredPublishedRecords()}
+              .days=${this.publishedDays}
+              @published-days-change=${(e: CustomEvent) => this.handlePublishedDaysChange(e.detail.days)}></typo3-kanban-published-column>` : nothing}
         </div>
       </section>
 

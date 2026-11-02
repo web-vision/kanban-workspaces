@@ -115,6 +115,8 @@ class KanbanWorkspacesController extends ActionController
         $this->pageRenderer->addInlineSetting('Workspaces', 'id', $pageUid);
         $this->pageRenderer->addInlineSetting('WebLayout', 'moduleUrl', (string)$this->backendUriBuilder->buildUriFromRoute('web_layout'));
         $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_assign', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_assign'));
+        $this->pageRenderer->addInlineSetting('ajaxUrls', 'kanban_workspace_published_history', (string)$this->backendUriBuilder->buildUriFromRoute('ajax_kanban_workspace_published_history'));
+        $this->pageRenderer->addInlineLanguageLabelFile('EXT:kanban_workspaces/Resources/Private/Language/locallang.xlf', 'publishedHistory.');
 
         // Add TYPO3.lang labels for workspace stage transitions (matching EXT:workspaces)
         $this->pageRenderer->addInlineLanguageLabelArray([

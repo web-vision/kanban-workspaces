@@ -2468,6 +2468,7 @@ textarea:focus {
 typo3-kanban-board,
 typo3-kanban-filter-sidebar,
 typo3-kanban-column,
+typo3-kanban-published-column,
 typo3-kanban-card,
 typo3-kanban-preview-modal,
 typo3-kanban-send-to-stage-modal,
@@ -2489,4 +2490,73 @@ typo3-kanban-assign-modal {
 // header to its natural height so only the modal body grows.
 .modal-overlay .nav-tabs {
   flex: 0 0 auto;
+}
+
+// "Live" column: read-only list of the records published from the workspace.
+// The cards are links to the record history instead of draggable cards.
+.kanban-column-published {
+  .stage-indicator {
+    background-color: var(--success);
+  }
+
+  .column-count {
+    background: var(--success);
+    box-shadow: none;
+  }
+
+  .column-title-row {
+    margin-bottom: var(--spacing-xs);
+  }
+}
+
+.column-description {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.published-days-input {
+  display: inline-block;
+  width: 5em;
+  margin: 0 var(--spacing-xs);
+  padding: 0 var(--spacing-xs);
+  font-size: 12px;
+  vertical-align: baseline;
+}
+
+.kanban-card-published {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-left: 3px solid var(--success);
+
+  &:hover,
+  &:focus {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.published-action {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: white;
+  background-color: var(--success);
+}
+
+.published-action-new {
+  background-color: var(--info);
+}
+
+.published-action-deleted {
+  background-color: var(--danger);
+}
+
+.published-comment {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  font-size: 12px;
+  color: var(--text-secondary);
 }

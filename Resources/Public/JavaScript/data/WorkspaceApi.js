@@ -52,6 +52,22 @@ export class WorkspaceApi {
         const apiResponse = await this.postJson(this.dataUrl, apiPayload);
         return this.transformer.convertCardDetailsToFormat(apiResponse, card.id);
     }
+    // Fetch the records published from the current workspace (Live column) on the given page and depth,
+    // optionally for the given number of days.
+    async fetchPublishedHistory(url, pageId, depth, days = null) {
+        const requestUrl = new URL(url, window.location.origin);
+        requestUrl.searchParams.set('id', String(pageId));
+        requestUrl.searchParams.set('depth', depth);
+        if (days !== null) {
+            requestUrl.searchParams.set('days', String(days));
+        }
+        const response = await fetch(requestUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+        }
+        const result = await response.json();
+        return { days: result.days || 0, records: result.records || [] };
+    }
     // Generic "Actions" dispatch call (view/delete/send-to-stage/add-comment).
     dispatch(payload) {
         return this.postJson(this.dataUrl, payload);

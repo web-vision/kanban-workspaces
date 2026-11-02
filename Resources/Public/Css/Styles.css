@@ -2317,6 +2317,15 @@ typo3-kanban-assign-modal,typo3-kanban-board,typo3-kanban-card,typo3-kanban-colu
   font-size:12px;
 }
 
+.published-days-input{
+  display:inline-block;
+  font-size:12px;
+  margin:0 var(--spacing-xs);
+  padding:0 var(--spacing-xs);
+  vertical-align:baseline;
+  width:5em;
+}
+
 .kanban-card-published{
   border-left:3px solid var(--success);
   display:block;

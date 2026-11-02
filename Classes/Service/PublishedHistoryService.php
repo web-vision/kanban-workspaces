@@ -23,6 +23,7 @@ use TYPO3\CMS\Core\Type\Bitmask\Permission;
 class PublishedHistoryService
 {
     public const DEFAULT_MAX_AGE_DAYS = 30;
+    public const MAX_AGE_DAYS = 365;
     public const DEFAULT_LIMIT = 200;
 
     /**

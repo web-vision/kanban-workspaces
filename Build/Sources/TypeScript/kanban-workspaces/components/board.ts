@@ -19,6 +19,8 @@ import type { Card, Stage, FilterConfig, CardUser, PublishedRecord } from '@web-
 
 declare const TYPO3: any;
 
+const PUBLISHED_DAYS_STORAGE_KEY = 'kanban-workspaces.publishedHistoryDays';
+
 /**
  * Root Kanban board component. Owns the reactive state (cards, stages, filters,
  * selection, modal state), loads data through {@link WorkspaceApi} and
@@ -38,6 +40,7 @@ export class KanbanBoardElement extends LitElement {
   // Live column: records published from the workspace
   @state() private publishedRecords: PublishedRecord[] = [];
   @state() private publishedDays = 0;
+  private publishedRequest = 0;
 
   // Preview modal state
   @state() private previewOpen = false;
@@ -203,13 +206,35 @@ export class KanbanBoardElement extends LitElement {
     if (!url) {
       return;
     }
-    this.api.fetchPublishedHistory(url)
-      .then(({ days, records }) => { this.publishedDays = days; this.publishedRecords = records; })
+    // only the latest request is applied, the days input may fire several in a row
+    const request = ++this.publishedRequest;
+    this.api.fetchPublishedHistory(url, this.storedPublishedDays())
+      .then(({ days, records }) => {
+        if (request !== this.publishedRequest) {
+          return;
+        }
+        this.publishedDays = days;
+        this.publishedRecords = records;
+      })
       .catch((error) => {
+        if (request !== this.publishedRequest) {
+          return;
+        }
         console.error('Failed to load published records:', error);
         showToast(TYPO3?.lang?.['publishedHistory.loadError'] || 'Error loading the published records', 'error');
         this.publishedRecords = [];
       });
+  }
+
+  // The number of days of the Live column is remembered per browser; null lets the server use its default.
+  private storedPublishedDays(): number | null {
+    const days = parseInt(localStorage.getItem(PUBLISHED_DAYS_STORAGE_KEY) || '', 10);
+    return Number.isFinite(days) && days > 0 ? days : null;
+  }
+
+  private handlePublishedDaysChange(days: number): void {
+    localStorage.setItem(PUBLISHED_DAYS_STORAGE_KEY, String(days));
+    this.loadPublishedHistory();
   }
 
   // The header search applies to the Live column as well (the stage columns are filtered server side).
@@ -667,7 +692,8 @@ export class KanbanBoardElement extends LitElement {
           ${TYPO3?.settings?.ajaxUrls?.kanban_workspace_published_history ? html`
             <typo3-kanban-published-column
               .records=${this.filteredPublishedRecords()}
-              .days=${this.publishedDays}></typo3-kanban-published-column>` : nothing}
+              .days=${this.publishedDays}
+              @published-days-change=${(e: CustomEvent) => this.handlePublishedDaysChange(e.detail.days)}></typo3-kanban-published-column>` : nothing}
         </div>
       </section>
 

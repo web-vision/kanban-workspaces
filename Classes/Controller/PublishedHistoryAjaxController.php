@@ -26,7 +26,7 @@ class PublishedHistoryAjaxController
 
     public function listAction(ServerRequestInterface $request): ResponseInterface
     {
-        $days = PublishedHistoryService::DEFAULT_MAX_AGE_DAYS;
+        $days = $this->getDays($request);
         $now = (int)$this->context->getPropertyFromAspect('date', 'timestamp');
         $records = $this->publishedHistoryService->findPublishedRecords(
             (int)$this->getBackendUser()->workspace,
@@ -38,6 +38,19 @@ class PublishedHistoryAjaxController
             'days' => $days,
             'records' => $records,
         ]);
+    }
+
+    /**
+     * Number of days to look back, from the "days" query parameter (the input in the column header),
+     * limited to 1 - MAX_AGE_DAYS. Falls back to the default when the parameter is missing or no number.
+     */
+    protected function getDays(ServerRequestInterface $request): int
+    {
+        $days = $request->getQueryParams()['days'] ?? null;
+        if (!is_numeric($days)) {
+            return PublishedHistoryService::DEFAULT_MAX_AGE_DAYS;
+        }
+        return max(1, min(PublishedHistoryService::MAX_AGE_DAYS, (int)$days));
     }
 
     protected function getBackendUser(): BackendUserAuthentication

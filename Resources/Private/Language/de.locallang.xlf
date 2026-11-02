@@ -11,6 +11,10 @@
 				<source>Published from this workspace in the last %s days</source>
 				<target>In den letzten %s Tagen aus diesem Workspace veröffentlicht</target>
 			</trans-unit>
+			<trans-unit id="publishedHistory.days">
+				<source>Number of days</source>
+				<target>Anzahl der Tage</target>
+			</trans-unit>
 			<trans-unit id="publishedHistory.empty">
 				<source>Nothing has been published from this workspace in the last %s days.</source>
 				<target>In den letzten %s Tagen wurde aus diesem Workspace nichts veröffentlicht.</target>

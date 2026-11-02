@@ -17,9 +17,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { html, nothing, LitElement } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { formatDate } from '@web-vision/kanban-workspaces/core/utils.js';
+// PublishedHistoryService::MAX_AGE_DAYS, the AJAX controller clamps to it as well.
+const maxDays = 365;
 const fallbackLabels = {
     'publishedHistory.title': 'Live',
     'publishedHistory.description': 'Published from this workspace in the last %s days',
+    'publishedHistory.days': 'Number of days',
     'publishedHistory.empty': 'Nothing has been published from this workspace in the last %s days.',
     'publishedHistory.publishedBy': 'Published %s by %s',
     'publishedHistory.showChanges': 'Show changes',
@@ -37,6 +40,9 @@ function label(key, ...args) {
  * workspace (sys_history publish entries). It is no drop target and its cards
  * are not draggable: published records can only be looked at. A card links to
  * the record history, which shows the published changes.
+ *
+ * The number of days in the column description is an input; changing it
+ * dispatches a `published-days-change` event the board reloads the list on.
  */
 let KanbanPublishedColumnElement = class KanbanPublishedColumnElement extends LitElement {
     constructor() {
@@ -46,6 +52,23 @@ let KanbanPublishedColumnElement = class KanbanPublishedColumnElement extends Li
     }
     createRenderRoot() {
         return this;
+    }
+    handleDaysChange(event) {
+        const input = event.target;
+        const days = Math.round(input.valueAsNumber);
+        if (!input.checkValidity() || !Number.isFinite(days) || days === this.days) {
+            input.value = String(this.days);
+            return;
+        }
+        this.dispatchEvent(new CustomEvent('published-days-change', { detail: { days }, bubbles: true }));
+    }
+    // The description label with its %s replaced by the days input.
+    renderDescription() {
+        const [before, after = ''] = label('publishedHistory.description').split('%s');
+        return html `${before}<input type="number" class="form-control form-control-sm published-days-input"
+      min="1" max=${maxDays} step="1" required .value=${String(this.days)}
+      aria-label=${label('publishedHistory.days')} title=${label('publishedHistory.days')}
+      @change=${(e) => this.handleDaysChange(e)}>${after}`;
     }
     historyUrl(record) {
         return `${record.historyUrl}&returnUrl=${encodeURIComponent(window.location.href)}`;
@@ -89,7 +112,7 @@ let KanbanPublishedColumnElement = class KanbanPublishedColumnElement extends Li
               <span class="column-count">${this.records.length}</span>
             </div>
           </div>
-          <div class="column-description">${label('publishedHistory.description', this.days)}</div>
+          <div class="column-description">${this.renderDescription()}</div>
         </div>
         <div class="column-content">
           ${this.records.length === 0

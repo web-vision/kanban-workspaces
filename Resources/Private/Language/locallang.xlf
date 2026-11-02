@@ -84,6 +84,9 @@
 			<trans-unit id="publishedHistory.description">
 				<source>Published from this workspace in the last %s days</source>
 			</trans-unit>
+			<trans-unit id="publishedHistory.days">
+				<source>Number of days</source>
+			</trans-unit>
 			<trans-unit id="publishedHistory.empty">
 				<source>Nothing has been published from this workspace in the last %s days.</source>
 			</trans-unit>

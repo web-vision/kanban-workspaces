@@ -2514,6 +2514,15 @@ typo3-kanban-assign-modal {
   color: var(--text-muted);
 }
 
+.published-days-input {
+  display: inline-block;
+  width: 5em;
+  margin: 0 var(--spacing-xs);
+  padding: 0 var(--spacing-xs);
+  font-size: 12px;
+  vertical-align: baseline;
+}
+
 .kanban-card-published {
   display: block;
   color: inherit;

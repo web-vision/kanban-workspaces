@@ -55,9 +55,13 @@ export class WorkspaceApi {
     return this.transformer.convertCardDetailsToFormat(apiResponse, card.id);
   }
 
-  // Fetch the records published from the current workspace (Live column).
-  async fetchPublishedHistory(url: string): Promise<{ days: number; records: PublishedRecord[] }> {
-    const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+  // Fetch the records published from the current workspace (Live column), optionally for the given number of days.
+  async fetchPublishedHistory(url: string, days: number | null = null): Promise<{ days: number; records: PublishedRecord[] }> {
+    const requestUrl = new URL(url, window.location.origin);
+    if (days !== null) {
+      requestUrl.searchParams.set('days', String(days));
+    }
+    const response = await fetch(requestUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`);
     }

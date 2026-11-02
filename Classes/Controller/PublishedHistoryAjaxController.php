@@ -13,7 +13,8 @@ use TYPO3\CMS\Core\Http\JsonResponse;
 use WebVision\KanbanWorkspaces\Service\PublishedHistoryService;
 
 /**
- * Lists the records published from the current workspace for the "Live" column of the board.
+ * Lists the records published from the current workspace for the "Live" column of the board,
+ * limited to the page and depth selected on the board.
  */
 #[AsController]
 class PublishedHistoryAjaxController
@@ -28,9 +29,12 @@ class PublishedHistoryAjaxController
     {
         $days = $this->getDays($request);
         $now = (int)$this->context->getPropertyFromAspect('date', 'timestamp');
+        $pageId = (int)($request->getQueryParams()['id'] ?? 0);
         $records = $this->publishedHistoryService->findPublishedRecords(
             (int)$this->getBackendUser()->workspace,
-            $now - $days * 86400
+            $now - $days * 86400,
+            PublishedHistoryService::DEFAULT_LIMIT,
+            $pageId > 0 ? $this->publishedHistoryService->getPageTreeIds($pageId, $this->getDepth($request)) : null
         );
 
         return new JsonResponse([
@@ -51,6 +55,16 @@ class PublishedHistoryAjaxController
             return PublishedHistoryService::DEFAULT_MAX_AGE_DAYS;
         }
         return max(1, min(PublishedHistoryService::MAX_AGE_DAYS, (int)$days));
+    }
+
+    /**
+     * Depth of the board's depth filter ("depth" query parameter, comma separated when several are selected):
+     * 0 = only the page, 999 = all subpages. The largest selected depth is used.
+     */
+    protected function getDepth(ServerRequestInterface $request): int
+    {
+        $depths = array_map(intval(...), explode(',', (string)($request->getQueryParams()['depth'] ?? '0')));
+        return max(0, ...$depths);
     }
 
     protected function getBackendUser(): BackendUserAuthentication

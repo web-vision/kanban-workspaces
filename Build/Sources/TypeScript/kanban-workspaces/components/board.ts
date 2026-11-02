@@ -208,7 +208,9 @@ export class KanbanBoardElement extends LitElement {
     }
     // only the latest request is applied, the days input may fire several in a row
     const request = ++this.publishedRequest;
-    this.api.fetchPublishedHistory(url, this.storedPublishedDays())
+    // same page and depth filter as the stage columns (set in loadData())
+    const { id, depth } = this.apiPayload.data[0];
+    this.api.fetchPublishedHistory(url, id, depth, this.storedPublishedDays())
       .then(({ days, records }) => {
         if (request !== this.publishedRequest) {
           return;

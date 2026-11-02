@@ -113,6 +113,38 @@ final class PublishedHistoryServiceTest extends FunctionalTestCase
         self::assertSame([20], array_column($records, 'uid'));
     }
 
+    #[Test]
+    public function onlyRecordsOnTheGivenPagesAreListed(): void
+    {
+        $this->runDataHandler([
+            'tt_content' => [
+                10 => ['header' => 'Changed root element'],
+                20 => ['header' => 'Changed editor element'],
+            ],
+            'pages' => [2 => ['title' => 'Changed editor page']],
+        ]);
+        $this->publish('tt_content', 10);
+        $this->publish('tt_content', 20);
+        $this->publish('pages', 2);
+
+        $records = $this->findPublishedRecords(pageIds: [2]);
+
+        self::assertSame([['pages', 2], ['tt_content', 20]], array_map(static fn (array $record): array => [$record['table'], $record['uid']], $records));
+        self::assertSame([], $this->findPublishedRecords(pageIds: []));
+    }
+
+    #[Test]
+    public function pageTreeIdsContainThePageAndItsSubpagesDownToTheGivenDepth(): void
+    {
+        $service = new PublishedHistoryService($this->getConnectionPool(), $this->get(UriBuilder::class));
+
+        self::assertSame([1], $service->getPageTreeIds(1, 0));
+        self::assertSame([1, 2], $service->getPageTreeIds(1, 1));
+        self::assertSame([1, 2], $service->getPageTreeIds(1, 999));
+        self::assertSame([2], $service->getPageTreeIds(2, 999));
+        self::assertSame([], $service->getPageTreeIds(0, 999));
+    }
+
     private function setUpUser(int $uid, int $workspaceId): void
     {
         $backendUser = $this->setUpBackendUser($uid);
@@ -121,12 +153,13 @@ final class PublishedHistoryServiceTest extends FunctionalTestCase
     }
 
     /**
+     * @param list<int>|null $pageIds
      * @return list<array<string, mixed>>
      */
-    private function findPublishedRecords(int $workspaceId = self::WORKSPACE_UID, int $since = 0): array
+    private function findPublishedRecords(int $workspaceId = self::WORKSPACE_UID, int $since = 0, ?array $pageIds = null): array
     {
         $service = new PublishedHistoryService($this->getConnectionPool(), $this->get(UriBuilder::class));
-        return $service->findPublishedRecords($workspaceId, $since);
+        return $service->findPublishedRecords($workspaceId, $since, PublishedHistoryService::DEFAULT_LIMIT, $pageIds);
     }
 
     private function publish(string $table, int $liveUid, int $workspaceId = self::WORKSPACE_UID): void

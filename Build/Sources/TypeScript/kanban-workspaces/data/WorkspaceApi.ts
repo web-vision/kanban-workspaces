@@ -55,9 +55,12 @@ export class WorkspaceApi {
     return this.transformer.convertCardDetailsToFormat(apiResponse, card.id);
   }
 
-  // Fetch the records published from the current workspace (Live column), optionally for the given number of days.
-  async fetchPublishedHistory(url: string, days: number | null = null): Promise<{ days: number; records: PublishedRecord[] }> {
+  // Fetch the records published from the current workspace (Live column) on the given page and depth,
+  // optionally for the given number of days.
+  async fetchPublishedHistory(url: string, pageId: number, depth: string, days: number | null = null): Promise<{ days: number; records: PublishedRecord[] }> {
     const requestUrl = new URL(url, window.location.origin);
+    requestUrl.searchParams.set('id', String(pageId));
+    requestUrl.searchParams.set('depth', depth);
     if (days !== null) {
       requestUrl.searchParams.set('days', String(days));
     }

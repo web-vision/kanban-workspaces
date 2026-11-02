@@ -72,6 +72,19 @@ final class PublishedHistoryAjaxControllerTest extends FunctionalTestCase
         self::assertSame([10, 20], array_column($this->list(['days' => '15'])['records'], 'uid'));
     }
 
+    #[Test]
+    public function onlyRecordsOnTheGivenPageAndDepthAreListed(): void
+    {
+        $this->addPublishEntry(10, self::NOW - 86400);
+        $this->addPublishEntry(20, self::NOW - 2 * 86400);
+
+        self::assertSame([10, 20], array_column($this->list([])['records'], 'uid'));
+        self::assertSame([10], array_column($this->list(['id' => '1'])['records'], 'uid'));
+        self::assertSame([10, 20], array_column($this->list(['id' => '1', 'depth' => '1'])['records'], 'uid'));
+        self::assertSame([10, 20], array_column($this->list(['id' => '1', 'depth' => '0,999'])['records'], 'uid'));
+        self::assertSame([20], array_column($this->list(['id' => '2', 'depth' => '999'])['records'], 'uid'));
+    }
+
     /**
      * @param array<string, string> $queryParams
      * @return array{success: bool, days: int, records: list<array<string, mixed>>}

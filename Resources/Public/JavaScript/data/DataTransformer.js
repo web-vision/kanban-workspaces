@@ -79,6 +79,7 @@ export class DataTransformer {
                 comments: 0, // Would need separate API call to get comments
                 assignedUsers: item.assignee_uid ? [{ uid: item.assignee_uid, username: item.assignee_username || '', avatar_url: item.assignee_avatar_url || null }] : [],
                 assignee: item.assignee_uid ? { uid: item.assignee_uid, username: item.assignee_username || '', avatar_url: item.assignee_avatar_url || null } : null,
+                lastEditor: item.last_editor_uid ? { uid: item.last_editor_uid, username: item.last_editor_username || '', realName: item.last_editor_realname || '', avatar_url: item.last_editor_avatar_url || null } : null,
                 t3ver_oid: item.t3ver_oid || null,
                 t3ver_wsid: item.t3ver_wsid || null,
                 table: item.table,

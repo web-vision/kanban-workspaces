@@ -1124,6 +1124,17 @@ body{
   color:#fff;
 }
 
+.card-last-editor{
+  align-items:center;
+  display:flex;
+  margin-left:auto;
+}
+
+.card-last-editor .user-avatar{
+  background:var(--text-muted);
+  cursor:default;
+}
+
 .user-avatar img{
   border-radius:50%;
   height:100%;

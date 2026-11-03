@@ -7,6 +7,12 @@ ChangeLog
 Version [UNRELEASED]
 ====================
 
+New Features
+------------
+
+* **Avatar of the last editor** – The cards show the avatar (or the initial) of the backend user who made the latest
+  change of the workspace version, taken from the record history. Stage changes are not counted as a change.
+
 Version 0.0.2
 =============
 

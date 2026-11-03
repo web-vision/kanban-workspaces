@@ -51,21 +51,31 @@ export class KanbanCardElement extends LitElement {
     if (assignees.length === 0) {
       return nothing;
     }
-    return html`<div class="card-assignees">${assignees.map((u) => {
-      const title = u.username || 'UID ' + u.uid;
-      const initial = (u.username || 'U' + u.uid).charAt(0).toUpperCase();
-      if (u.avatar_url) {
-        return html`<span class="user-avatar" title=${title}><img
-            src=${u.avatar_url} alt=${title} loading="lazy"
-            @error=${(e: Event) => {
-              const img = e.target as HTMLImageElement;
-              img.style.display = 'none';
-              const next = img.nextElementSibling as HTMLElement | null;
-              if (next) { next.style.display = 'flex'; }
-            }} /><span class="user-avatar-initial" style="display:none">${initial}</span></span>`;
-      }
-      return html`<span class="user-avatar" title=${title}>${initial}</span>`;
-    })}</div>`;
+    return html`<div class="card-assignees">${assignees.map((u) => this.renderUserAvatar(u, u.username || 'UID ' + u.uid))}</div>`;
+  }
+
+  private renderLastEditor(): TemplateResult | typeof nothing {
+    const editor = this.card.lastEditor;
+    if (!editor) {
+      return nothing;
+    }
+    const name = editor.realName || editor.username || 'UID ' + editor.uid;
+    return html`<div class="card-last-editor">${this.renderUserAvatar(editor, 'Last change by ' + name)}</div>`;
+  }
+
+  private renderUserAvatar(u: CardUser, title: string): TemplateResult {
+    const initial = (u.realName || u.username || 'U' + u.uid).charAt(0).toUpperCase();
+    if (u.avatar_url) {
+      return html`<span class="user-avatar" title=${title}><img
+          src=${u.avatar_url} alt=${title} loading="lazy"
+          @error=${(e: Event) => {
+            const img = e.target as HTMLImageElement;
+            img.style.display = 'none';
+            const next = img.nextElementSibling as HTMLElement | null;
+            if (next) { next.style.display = 'flex'; }
+          }} /><span class="user-avatar-initial" style="display:none">${initial}</span></span>`;
+    }
+    return html`<span class="user-avatar" title=${title}>${initial}</span>`;
   }
 
   protected override render(): TemplateResult {
@@ -129,6 +139,7 @@ export class KanbanCardElement extends LitElement {
           <div class="card-stats">
             ${card.comments && card.comments > 0 ? html`<div class="card-comments"><i class="fas fa-comment"></i><span>${card.comments}</span></div>` : nothing}
           </div>
+          ${this.renderLastEditor()}
         </div>
       </div>`;
   }

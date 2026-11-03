@@ -58,6 +58,11 @@ To see more information about an item:
 3. You can view the item's title, current stage, and other metadata
 4. Some implementations may allow inline editing of item properties
 
+The round avatar in the bottom right corner of a card shows who made the latest
+change of the item (hover it for the name). Without an avatar image it shows the
+first letter of the name. Moving an item to another stage is not counted as a
+change.
+
 Editing Items
 -------------
 

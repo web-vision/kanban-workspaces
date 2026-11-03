@@ -5,6 +5,7 @@
 export interface CardUser {
   uid: number | string;
   username?: string;
+  realName?: string;
   avatar_url?: string | null;
 }
 
@@ -35,6 +36,8 @@ export interface Card {
   comments?: number;
   assignedUsers?: CardUser[];
   assignee?: CardUser | null;
+  /** Backend user who made the latest change of the workspace version (LastEditorListener) */
+  lastEditor?: CardUser | null;
   t3ver_oid?: number | null;
   t3ver_wsid?: number | null;
   table?: string;

@@ -1194,6 +1194,18 @@ body {
   border-color: var(--typo3-orange);
 }
 
+// Avatar of the user who made the latest change, set apart from the (orange) assignees
+.card-last-editor {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.card-last-editor .user-avatar {
+  background: var(--text-muted);
+  cursor: default;
+}
+
 .user-avatar img {
   width: 100%;
   height: 100%;

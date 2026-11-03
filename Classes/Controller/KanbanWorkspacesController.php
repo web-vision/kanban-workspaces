@@ -79,6 +79,7 @@ class KanbanWorkspacesController extends ActionController
                 'label' => $this->stagesService->getStageTitle((int)$stage->uid),
                 'color' => '#FF5733',
                 'allowEdit' => $stage->isEditStage,
+                'isExecuteStage' => $stage->isExecuteStage,
                 'allowDelete' => $stage->isAllowed,
                 'order' => $order++,
                 'checklist' => $checklist,

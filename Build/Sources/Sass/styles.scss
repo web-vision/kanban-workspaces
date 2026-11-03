@@ -1049,9 +1049,16 @@ body {
 
 .card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
+}
+
+// The TYPO3 backend pads its .card-header on all sides; the kanban card has
+// its own padding already.
+.kanban-card .card-header {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .card-type {
@@ -1062,6 +1069,44 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+// The TYPO3 backend defines the checkbox variables (size, border, check mark)
+// on the .form-check wrapper; without it .form-check-input is 0px wide.
+.card-select-wrapper,
+.column-select-wrapper {
+  --typo3-form-check-margin-bottom: 0;
+  --typo3-form-check-width: 20px;
+  --typo3-form-check-height: 20px;
+  --typo3-form-check-top-correction: 0;
+  flex-shrink: 0;
+}
+
+.card-select,
+.column-select {
+  margin: 0;
+  cursor: pointer;
+}
+
+.card-select-wrapper {
+  margin-right: var(--spacing-sm);
+}
+
+.card-select-wrapper + .card-type {
+  margin-right: auto;
+}
+
+.kanban-drag-badge {
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
+  padding: 6px 12px;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--typo3-orange);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .card-menu {

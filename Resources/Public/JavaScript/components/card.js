@@ -20,9 +20,10 @@ import '@typo3/backend/element/icon-element.js';
 import { getTypeIcon, formatDate } from '@web-vision/kanban-workspaces/core/utils.js';
 /**
  * A single kanban card. Presentational: it renders the card markup and emits
- * DOM events (`card-click`, `card-menu`, `card-dragstart`, `card-dragend`) that
- * the board coordinates. The host uses `display: contents` (see SCSS) so the
- * inner `.kanban-card` stays the flex item and existing styles apply unchanged.
+ * DOM events (`card-click`, `card-select`, `card-menu`, `card-dragstart`,
+ * `card-dragend`) that the board coordinates. The host uses `display: contents`
+ * (see SCSS) so the inner `.kanban-card` stays the flex item and existing
+ * styles apply unchanged.
  */
 let KanbanCardElement = class KanbanCardElement extends LitElement {
     constructor() {
@@ -40,7 +41,7 @@ let KanbanCardElement = class KanbanCardElement extends LitElement {
         if (e.dataTransfer) {
             e.dataTransfer.effectAllowed = 'move';
         }
-        this.emit('card-dragstart', { element: e.currentTarget });
+        this.emit('card-dragstart', { element: e.currentTarget, event: e });
     }
     renderIntegrity() {
         const status = this.card.integrityStatus;
@@ -95,6 +96,12 @@ let KanbanCardElement = class KanbanCardElement extends LitElement {
         @dragstart=${(e) => this.onDragStart(e)}
         @dragend=${(e) => this.emit('card-dragend', { element: e.currentTarget })}>
         <div class="card-header">
+          <span class="form-check card-select-wrapper">
+            <input type="checkbox" class="form-check-input card-select" .checked=${this.selected}
+              title="Select card" aria-label="Select card: ${card.title}"
+              @click=${(e) => e.stopPropagation()}
+              @change=${(e) => this.emit('card-select', { selected: e.target.checked })}>
+          </span>
           <div class="card-type">
             <i class=${getTypeIcon(card.type)}></i>
             <span>${card.type}</span>

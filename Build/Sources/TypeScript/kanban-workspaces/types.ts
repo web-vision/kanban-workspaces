@@ -51,6 +51,8 @@ export interface Stage {
   label: string;
   color?: string;
   order?: number;
+  /** The "Publish" stage: dropping cards there publishes them, so it never keeps any. */
+  isExecuteStage?: boolean;
   [key: string]: unknown;
 }
 

@@ -28,6 +28,8 @@ let KanbanCardElement = class KanbanCardElement extends LitElement {
     constructor() {
         super(...arguments);
         this.selected = false;
+        /** False if there is only one language to choose from. */
+        this.showLanguage = true;
     }
     createRenderRoot() {
         return this;
@@ -130,12 +132,13 @@ let KanbanCardElement = class KanbanCardElement extends LitElement {
           ${card.dueDate ? html `<div class="card-due-date"><i class="fas fa-calendar-alt"></i><span>${formatDate(card.dueDate)}</span></div>` : nothing}
         </div>
         <div class="card-footer">
-          <div class="card-language">
-            ${card.language?.icon
+          ${this.showLanguage ? html `
+            <div class="card-language">
+              ${card.language?.icon
             ? html `<typo3-backend-icon identifier=${card.language.icon} size="small"></typo3-backend-icon>`
             : html `<span class="t3js-icon icon icon-size-small icon-state-default"><span class="icon-markup">🌐</span></span>`}
-            ${(card.languageCode || 'en').toUpperCase()}
-          </div>
+              ${(card.languageCode || 'en').toUpperCase()}
+            </div>` : nothing}
           ${this.renderAssignees()}
           <div class="card-stats">
             ${card.comments && card.comments > 0 ? html `<div class="card-comments"><i class="fas fa-comment"></i><span>${card.comments}</span></div>` : nothing}
@@ -150,6 +153,9 @@ __decorate([
 __decorate([
     property({ type: Boolean })
 ], KanbanCardElement.prototype, "selected", void 0);
+__decorate([
+    property({ attribute: false })
+], KanbanCardElement.prototype, "showLanguage", void 0);
 KanbanCardElement = __decorate([
     customElement('typo3-kanban-card')
 ], KanbanCardElement);

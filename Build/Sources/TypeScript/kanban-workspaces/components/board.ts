@@ -29,6 +29,8 @@ export class KanbanBoardElement extends LitElement {
   @state() private cards: Card[] = [];
   @state() private stages: Stage[] = [];
   @state() private filters: Record<string, FilterConfig> = {};
+  /** False if there is only one language: the cards then show no language. */
+  @state() private showLanguages = true;
   @state() private activeFilters: Record<string, string[]> = {};
   @state() private searchQuery = '';
   @state() private selectedCards = new Set<string | number>();
@@ -141,6 +143,7 @@ export class KanbanBoardElement extends LitElement {
     }
     this.stages = [...(config.stages || [])];
     this.filters = { ...(config.filters || {}) };
+    this.showLanguages = config.showLanguages !== false;
     this.beUsers = config.beUsers || [];
     this.stages.forEach((stage) => {
       this.columnUserFilters[stage.id] = null;
@@ -633,7 +636,8 @@ export class KanbanBoardElement extends LitElement {
             <typo3-kanban-column
               .stage=${stage}
               .cards=${this.cardsForStage(stage)}
-              .selectedCards=${this.selectedCards}></typo3-kanban-column>`)}
+              .selectedCards=${this.selectedCards}
+              .showLanguages=${this.showLanguages}></typo3-kanban-column>`)}
         </div>
       </section>
 

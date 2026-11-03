@@ -15,6 +15,7 @@ export class KanbanColumnElement extends LitElement {
   @property({ attribute: false }) stage: Stage;
   @property({ attribute: false }) cards: Card[] = [];
   @property({ attribute: false }) selectedCards: Set<string | number> = new Set();
+  @property({ attribute: false }) showLanguages = true;
 
   protected override createRenderRoot(): HTMLElement {
     return this;
@@ -69,7 +70,8 @@ export class KanbanColumnElement extends LitElement {
           ${this.cards.length === 0
             ? html`<div class="column-empty">No items in this stage</div>`
             : this.cards.map((card) => html`
-                <typo3-kanban-card .card=${card} ?selected=${this.selectedCards.has(card.id)}></typo3-kanban-card>`)}
+                <typo3-kanban-card .card=${card} ?selected=${this.selectedCards.has(card.id)}
+                  .showLanguage=${this.showLanguages}></typo3-kanban-card>`)}
         </div>
       </div>`;
   }

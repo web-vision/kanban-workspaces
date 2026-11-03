@@ -29,6 +29,7 @@ let KanbanColumnElement = class KanbanColumnElement extends LitElement {
         super(...arguments);
         this.cards = [];
         this.selectedCards = new Set();
+        this.showLanguages = true;
     }
     createRenderRoot() {
         return this;
@@ -79,7 +80,8 @@ let KanbanColumnElement = class KanbanColumnElement extends LitElement {
           ${this.cards.length === 0
             ? html `<div class="column-empty">No items in this stage</div>`
             : this.cards.map((card) => html `
-                <typo3-kanban-card .card=${card} ?selected=${this.selectedCards.has(card.id)}></typo3-kanban-card>`)}
+                <typo3-kanban-card .card=${card} ?selected=${this.selectedCards.has(card.id)}
+                  .showLanguage=${this.showLanguages}></typo3-kanban-card>`)}
         </div>
       </div>`;
     }
@@ -93,6 +95,9 @@ __decorate([
 __decorate([
     property({ attribute: false })
 ], KanbanColumnElement.prototype, "selectedCards", void 0);
+__decorate([
+    property({ attribute: false })
+], KanbanColumnElement.prototype, "showLanguages", void 0);
 KanbanColumnElement = __decorate([
     customElement('typo3-kanban-column')
 ], KanbanColumnElement);

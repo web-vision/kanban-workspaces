@@ -14,6 +14,8 @@ import type { Card, CardUser } from '@web-vision/kanban-workspaces/types.js';
 export class KanbanCardElement extends LitElement {
   @property({ attribute: false }) card: Card;
   @property({ type: Boolean }) selected = false;
+  /** False if there is only one language to choose from. */
+  @property({ attribute: false }) showLanguage = true;
 
   protected override createRenderRoot(): HTMLElement {
     return this;
@@ -119,12 +121,13 @@ export class KanbanCardElement extends LitElement {
           ${card.dueDate ? html`<div class="card-due-date"><i class="fas fa-calendar-alt"></i><span>${formatDate(card.dueDate)}</span></div>` : nothing}
         </div>
         <div class="card-footer">
-          <div class="card-language">
-            ${card.language?.icon
-              ? html`<typo3-backend-icon identifier=${card.language.icon} size="small"></typo3-backend-icon>`
-              : html`<span class="t3js-icon icon icon-size-small icon-state-default"><span class="icon-markup">🌐</span></span>`}
-            ${(card.languageCode || 'en').toUpperCase()}
-          </div>
+          ${this.showLanguage ? html`
+            <div class="card-language">
+              ${card.language?.icon
+                ? html`<typo3-backend-icon identifier=${card.language.icon} size="small"></typo3-backend-icon>`
+                : html`<span class="t3js-icon icon icon-size-small icon-state-default"><span class="icon-markup">🌐</span></span>`}
+              ${(card.languageCode || 'en').toUpperCase()}
+            </div>` : nothing}
           ${this.renderAssignees()}
           <div class="card-stats">
             ${card.comments && card.comments > 0 ? html`<div class="card-comments"><i class="fas fa-comment"></i><span>${card.comments}</span></div>` : nothing}

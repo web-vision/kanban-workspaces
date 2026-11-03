@@ -187,7 +187,10 @@ export class KanbanBoardElement extends LitElement {
 
     showLoading();
     this.api.fetchData(this.apiPayload)
-      .then((data) => { this.cards = data.cards || []; })
+      .then((data) => {
+        this.cards = data.cards || [];
+        this.pruneSelection();
+      })
       .catch((error) => { console.error('Failed to load data:', error); showToast('Error loading data', 'error'); this.cards = []; })
       .finally(() => hideLoading());
   }
@@ -209,6 +212,27 @@ export class KanbanBoardElement extends LitElement {
   }
 
   // --- Selection / keyboard --------------------------------------------------
+
+  private setSelected(cardIds: (string | number)[], selected: boolean): void {
+    const next = new Set(this.selectedCards);
+    cardIds.forEach((id) => {
+      if (selected) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+    });
+    this.selectedCards = next;
+  }
+
+  // Drop selected cards that are gone after a reload (published, discarded, filtered out).
+  private pruneSelection(): void {
+    const ids = new Set(this.cards.map((card) => String(card.id)));
+    const next = new Set(Array.from(this.selectedCards).filter((id) => ids.has(String(id))));
+    if (next.size !== this.selectedCards.size) {
+      this.selectedCards = next;
+    }
+  }
 
   private clearSelection(): void {
     this.selectedCards = new Set();
@@ -411,15 +435,38 @@ export class KanbanBoardElement extends LitElement {
     const targetStage = this.stages.find((s) => s.id == stageId);
     const sourceStage = this.stages.find((s) => s.id == dragged.stage);
     if (!targetStage || !sourceStage || targetStage.id == sourceStage.id) { return; }
-    // Only forward cards not already in the drop target: a multi-selection may
-    // span stages or include cards already sitting in the target column.
-    const cardIds = (this.selectedCards.size > 0 ? Array.from(this.selectedCards) : [cardId])
+    // Dragging a selected card moves the whole selection, dragging any other
+    // card only moves that card. Only forward cards not already in the drop
+    // target: a multi-selection may span stages or include cards already
+    // sitting in the target column.
+    const cardIds = this.cardIdsToDrag(dragged)
       .filter((id) => {
         const card = this.getCardById(id);
         return card != null && card.stage != targetStage.id;
       });
     if (cardIds.length === 0) { return; }
     this.openSpecificStageWindow(targetStage, cardIds, sourceStage);
+  }
+
+  private cardIdsToDrag(dragged: Card): (string | number)[] {
+    return this.selectedCards.has(dragged.id) ? Array.from(this.selectedCards) : [dragged.id];
+  }
+
+  private handleCardDragStart(card: Card, event: DragEvent): void {
+    this.draggedCard = card;
+    document.body.classList.add('dragging');
+    const count = this.cardIdsToDrag(card).length;
+    if (count > 1 && event.dataTransfer) {
+      // Replace the browser's ghost image of the single card with a badge that
+      // tells how many cards are moved. It has to be in the DOM while the drag
+      // starts and can be removed right after.
+      const badge = document.createElement('div');
+      badge.className = 'kanban-drag-badge';
+      badge.textContent = `${count} elements`;
+      document.body.appendChild(badge);
+      event.dataTransfer.setDragImage(badge, 0, 0);
+      setTimeout(() => badge.remove(), 0);
+    }
   }
 
   private async handleSendSubmit(comments: string, additional: string, recipients: string[]): Promise<void> {
@@ -582,9 +629,7 @@ export class KanbanBoardElement extends LitElement {
 
   private handleCardClick(card: Card): void {
     if (this.multiSelectMode) {
-      const next = new Set(this.selectedCards);
-      if (next.has(card.id)) { next.delete(card.id); } else { next.add(card.id); }
-      this.selectedCards = next;
+      this.setSelected([card.id], !this.selectedCards.has(card.id));
     } else {
       this.openPreviewModal(card);
     }
@@ -625,8 +670,10 @@ export class KanbanBoardElement extends LitElement {
       <section class="kanban-container ${this.filtersOpen ? 'sidebar-open' : ''}">
         <div class="kanban-board" id="kanbanBoard"
           @card-click=${(e: CustomEvent) => this.handleCardClick(e.detail.card)}
+          @card-select=${(e: CustomEvent) => this.setSelected([e.detail.card.id], e.detail.selected)}
+          @column-select=${(e: CustomEvent) => this.setSelected(e.detail.cardIds, e.detail.selected)}
           @card-menu=${(e: CustomEvent) => this.openContextMenu(e.detail.card, e.detail.anchor)}
-          @card-dragstart=${(e: CustomEvent) => { this.draggedCard = e.detail.card; document.body.classList.add('dragging'); }}
+          @card-dragstart=${(e: CustomEvent) => this.handleCardDragStart(e.detail.card, e.detail.event)}
           @card-dragend=${() => { this.draggedCard = null; document.body.classList.remove('dragging'); }}
           @column-drop=${(e: CustomEvent) => this.handleColumnDrop(e.detail.stageId, e.detail.cardId)}>
           ${sortedStages.map((stage) => html`

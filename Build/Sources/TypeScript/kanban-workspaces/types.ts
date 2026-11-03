@@ -41,6 +41,10 @@ export interface Card {
   pid?: number | null;
   nextStage?: unknown;
   prevStage?: unknown;
+  /** Collection of the record (Workspaces_CollectionCurrent), empty if it has no dependent records. */
+  collectionCurrent?: string;
+  /** Collection of the parent record (Workspaces_CollectionParent), empty for top-level records. */
+  collectionParent?: string;
   dueDate?: string;
   attachments?: unknown[];
   [key: string]: unknown;

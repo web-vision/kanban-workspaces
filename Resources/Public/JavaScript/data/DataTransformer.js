@@ -84,7 +84,10 @@ export class DataTransformer {
                 table: item.table,
                 pid: item.livepid || null,
                 nextStage: item.value_nextStage,
-                prevStage: item.value_prevStage
+                prevStage: item.value_prevStage,
+                // TYPO3 groups a record with its dependent records (inline children) into a collection
+                collectionCurrent: item.Workspaces_CollectionCurrent || '',
+                collectionParent: item.Workspaces_CollectionParent || ''
             };
         });
     }

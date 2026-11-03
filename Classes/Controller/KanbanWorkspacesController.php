@@ -135,30 +135,38 @@ class KanbanWorkspacesController extends ActionController
             'labels.selectUser' => '-- Select user --',
         ]);
 
+        // The language filter and the language of the cards are left out if there is nothing to choose from
+        $languages = $this->getSystemLanguages($pageUid);
+        $showLanguages = $this->hasMultipleLanguages($languages);
+        $filters = [
+            'depth' => [
+                'label' => 'Depth',
+                'options' => $depth,
+            ],
+        ];
+        if ($showLanguages) {
+            $filters['language'] = [
+                'label' => 'Language',
+                'options' => $languages,
+            ];
+        }
+        $filters['stage'] = [
+            'label' => 'Stage',
+            'options' => $stageConfig,
+        ];
+
         // Add CSS and JS
         $this->addAssets();
         $this->configureKanban([
             'pageUid' => $pageUid,
             'workspaceId' => $activeWorkspace,
             'stages' => $stageConfig,
-            'selectedLanguage' => $selectedLanguage,
+            'showLanguages' => $showLanguages,
+            'selectedLanguage' => $showLanguages ? $selectedLanguage : 'all',
             'selectedDepth' => $selectedDepth,
             'selectedStage' => $selectedStage,
             'beUsers' => $this->getBackendUsersList(),
-            'filters' => [
-                'depth' => [
-                    'label' => 'Depth',
-                    'options' => $depth,
-                ],
-                'language' => [
-                    'label' => 'Language',
-                    'options' => $this->getSystemLanguages($pageUid),
-                ],
-                'stage' => [
-                    'label' => 'Stage',
-                    'options' => $stageConfig,
-                ],
-            ],
+            'filters' => $filters,
         ]);
         return $this->moduleTemplate->renderResponse('KanbanWorkspaces/Index');
     }
@@ -281,5 +289,16 @@ class KanbanWorkspacesController extends ActionController
             ];
         }
         return $languagesNew;
+    }
+
+    /**
+     * Whether the user can choose between more than one language, the "All languages" entry not counted.
+     *
+     * @param list<array{id: string, label: string, flagHtml: string}> $languages see getSystemLanguages()
+     */
+    protected function hasMultipleLanguages(array $languages): bool
+    {
+        $languageIds = array_filter($languages, static fn (array $language): bool => $language['id'] !== 'all');
+        return count($languageIds) > 1;
     }
 }

@@ -86,6 +86,35 @@ final class KanbanWorkspacesControllerTest extends FunctionalTestCase
         self::assertStringContainsString('<', $all[0]['flagHtml']);
     }
 
+    #[Test]
+    public function hasMultipleLanguagesIsFalseForTheDefaultLanguageOnly(): void
+    {
+        self::assertFalse($this->invokeHasMultipleLanguages($this->invokeGetSystemLanguages()));
+    }
+
+    #[Test]
+    public function hasMultipleLanguagesIsTrueForTwoLanguages(): void
+    {
+        $languages = [
+            ['id' => 'all', 'label' => 'All languages', 'flagHtml' => ''],
+            ['id' => '0', 'label' => 'English', 'flagHtml' => ''],
+            ['id' => '1', 'label' => 'Deutsch', 'flagHtml' => ''],
+        ];
+
+        self::assertTrue($this->invokeHasMultipleLanguages($languages));
+    }
+
+    /**
+     * @param list<array{id: string, label: string, flagHtml: string}> $languages
+     */
+    private function invokeHasMultipleLanguages(array $languages): bool
+    {
+        $controller = (new \ReflectionClass(KanbanWorkspacesController::class))->newInstanceWithoutConstructor();
+        $method = new \ReflectionMethod($controller, 'hasMultipleLanguages');
+
+        return $method->invoke($controller, $languages);
+    }
+
     /**
      * Invokes the protected controller method that builds the language filter
      * options. Page id 1 has no site configuration in this test, so the core

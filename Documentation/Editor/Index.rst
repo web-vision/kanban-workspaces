@@ -102,6 +102,9 @@ For multi-language websites, filter by language:
 
 This is helpful when managing content in multiple languages separately.
 
+If the site has only one language (or you may only edit one), the board shows no
+language filter and no language on the cards.
+
 Stage Filter
 ------------
 

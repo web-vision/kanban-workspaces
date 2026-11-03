@@ -7,6 +7,12 @@ ChangeLog
 Version [UNRELEASED]
 ====================
 
+New Features
+------------
+
+* **No language on single-language sites** – If the backend user can choose from only one language, the board shows
+  neither the language filter nor the language of the cards.
+
 Version 0.0.2
 =============
 
